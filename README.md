@@ -24,10 +24,17 @@ Instalación
 
 Ejecución del proyecto
 
-Como este proyecto fue creado con Create React App, el comando para iniciar el servidor de desarrollo es:
+Este repositorio ahora incluye una API ligera basada en Express + SQLite para alimentar las tablas del frontend.
+
+1. Iniciar la API (por defecto escucha en el puerto `4000`):
+   npm run server
+
+   La primera ejecución creará el archivo `server/admintle.sqlite` con datos de ejemplo.
+
+2. En otra terminal, iniciar el servidor de desarrollo de React:
    npm start
 
-Al iniciar el servidor, la aplicación se mostrará en el navegador en:
+Al iniciar ambos servidores, la aplicación se mostrará en el navegador en:
    http://localhost:3000
 
 Construcción para producción
