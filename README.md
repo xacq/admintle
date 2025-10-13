@@ -37,6 +37,18 @@ Este repositorio ahora incluye una API ligera basada en Express + SQLite para al
 Al iniciar ambos servidores, la aplicación se mostrará en el navegador en:
    http://localhost:3000
 
+Arquitectura del backend
+
+- **Servidor**: se implementó con Express (`server/index.js`). Al iniciarse crea una instancia compartida de `sqlite3.Database`
+  apuntando al archivo `server/admintle.sqlite`.
+- **Inicialización**: la función `initializeDatabase()` ejecuta comandos `CREATE TABLE IF NOT EXISTS` para las tablas observadas
+  en la interfaz (`designaciones`, `historial_estudiantes`, `estudiantes`, `materias`, `notificaciones`). Si las tablas están
+  vacías inserta registros de ejemplo.
+- **Consultas**: cada endpoint REST (`/api/designaciones`, `/api/historial-estudiantes`, `/api/estudiantes`, `/api/materias`,
+  `/api/notificaciones`) utiliza el helper `all()` para ejecutar consultas parametrizadas contra SQLite y devolver resultados en JSON.
+- **Serialización**: los campos que guardan datos estructurados (por ejemplo `materias.details`) se guardan como texto JSON y se
+  parsean antes de enviarse al frontend.
+
 Construcción para producción
 
 Para generar una versión optimizada lista para desplegar:
