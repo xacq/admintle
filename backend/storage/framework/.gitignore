@@ -1,0 +1,12 @@
+*
+!.gitignore
+!cache
+!cache/.gitignore
+!data
+!data/.gitignore
+!sessions
+!sessions/.gitignore
+!testing
+!testing/.gitignore
+!views
+!views/.gitignore
