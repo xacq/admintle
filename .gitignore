@@ -4,12 +4,20 @@
 /node_modules
 /.pnp
 .pnp.js
+/backend/node_modules
+/backend/vendor
 
 # testing
 /coverage
 
 # production
 /build
+
+# backend runtime files
+/backend/storage
+/backend/bootstrap/cache
+/backend/.env
+/backend/database/database.sqlite
 
 # misc
 .DS_Store
