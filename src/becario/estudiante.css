@@ -1,0 +1,352 @@
+/* src/components/ReportesAvance.css */
+
+.reportes-avance-wrapper {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+/* Estilo para el indicador de estado (punto verde) */
+.status-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.status-active {
+  background-color: #28a745; /* Verde para activo */
+  box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+}
+
+/* Estilo para las tarjetas */
+.card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Estilo para la tabla */
+.table th {
+  border-top: none;
+  font-weight: 600;
+}
+
+/* Estilo para los indicadores */
+.indicador-card {
+  text-align: center;
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  margin-bottom: 1rem;
+}
+
+.indicador-card h4 {
+  margin-bottom: 0.5rem;
+}
+
+.indicador-card p {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+/* Estilo para el pie de página */
+footer {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+footer a {
+  color: #6c757d;
+}
+
+footer a:hover {
+  color: #495057;
+  text-decoration: underline;
+}
+
+/* src/components/DashboardBecario.css */
+
+.dashboard-becario-wrapper {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Encabezado */
+.dashboard-header {
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.dashboard-header h1 {
+  color: #343a40;
+}
+
+/* Tarjetas de métricas */
+.metric-card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  transition: transform 0.2s ease-in-out;
+}
+
+.metric-card:hover {
+  transform: translateY(-5px);
+}
+
+.metric-card h2 {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+/* Tarjetas principales */
+.card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.card-header {
+  background-color: #ffffff;
+  border-bottom: 2px solid #e9ecef;
+  font-weight: 600;
+}
+
+/* Tabla */
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Footer */
+.dashboard-footer {
+  background-color: #ffffff;
+  margin-top: auto;
+  color: #6c757d;
+}
+
+.dashboard-footer p {
+  margin-bottom: 0.25rem;
+}
+
+/* src/components/SubirReporte.css */
+
+.subir-reporte-wrapper {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Encabezado */
+.subir-reporte-header {
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.subir-reporte-header h1 {
+  color: #343a40;
+}
+
+/* Tarjeta del formulario */
+.form-card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  margin-bottom: 2rem;
+}
+
+.form-card .card-body {
+  padding: 2rem;
+}
+
+/* Estilo de las etiquetas */
+.form-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Footer */
+.subir-reporte-footer {
+  background-color: #ffffff;
+  margin-top: auto;
+  color: #6c757d;
+}
+
+.subir-reporte-footer p {
+  margin-bottom: 0.25rem;
+}
+
+/* src/components/ObservacionesTutor.css */
+
+.observaciones-tutor-wrapper {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Encabezado */
+.observaciones-header {
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.observaciones-header h1 {
+  color: #343a40;
+}
+
+/* Tarjeta principal */
+.observaciones-card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  margin-bottom: 2rem;
+}
+
+.observaciones-card .card-body {
+  padding: 2rem;
+}
+
+/* Bloque de contexto */
+.contexto-beca p {
+  margin-bottom: 0.5rem;
+}
+
+/* Lista de observaciones (Timeline) */
+.lista-observaciones {
+  margin-top: 1.5rem;
+}
+
+.observacion-item {
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #ced4da; /* Color por defecto */
+  background-color: #f8f9fa;
+  border-radius: 0 8px 8px 0;
+  padding: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.observacion-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+/* Líneas de color según el estado */
+.observacion-aprobado {
+  border-left-color: #198754; /* Verde */
+}
+.observacion-devuelto {
+  border-left-color: #dc3545; /* Rojo */
+}
+.observacion-pendiente de revisión {
+  border-left-color: #ffc107; /* Amarillo */
+}
+
+.observacion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.observacion-fecha {
+  font-weight: 600;
+  color: #495057;
+}
+
+.observacion-comentario {
+  margin-bottom: 0.5rem;
+  font-style: italic;
+}
+
+.observacion-calificacion {
+  margin-bottom: 0;
+  font-weight: 500;
+}
+
+/* Footer */
+.observaciones-footer {
+  background-color: #ffffff;
+  margin-top: auto;
+  color: #6c757d;
+}
+
+.observaciones-footer p {
+  margin-bottom: 0.25rem;
+}
+
+/* src/components/VerCalificaciones.css */
+
+.ver-calificaciones-wrapper {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Encabezado */
+.ver-calificaciones-header {
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.ver-calificaciones-header h1 {
+  color: #343a40;
+}
+
+/* Tarjeta principal */
+.calificaciones-card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  margin-bottom: 2rem;
+}
+
+.calificaciones-card .card-body {
+  padding: 2rem;
+}
+
+/* Bloque de contexto */
+.contexto-beca p {
+  margin-bottom: 0.5rem;
+}
+
+/* Estilo de la tabla */
+.calificaciones-table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Bloque del promedio final */
+.promedio-final {
+  background-color: #e7f5ff; /* Azul claro */
+  border: 1px solid #bde0fe;
+}
+
+.promedio-final h4 {
+  color: #0c5460;
+}
+
+/* Footer */
+.ver-calificaciones-footer {
+  background-color: #ffffff;
+  margin-top: auto;
+  color: #6c757d;
+}
+
+.ver-calificaciones-footer p {
+  margin-bottom: 0.25rem;
+}

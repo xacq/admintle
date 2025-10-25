@@ -1,0 +1,61 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+/backend/node_modules
+/backend/vendor
+
+# testing
+/coverage
+
+# production
+/build
+
+# backend runtime files
+/backend/storage
+!/backend/storage
+/backend/storage/*
+!/backend/storage/.gitignore
+!/backend/storage/framework
+/backend/storage/framework/*
+!/backend/storage/framework/.gitignore
+!/backend/storage/framework/cache
+/backend/storage/framework/cache/*
+!/backend/storage/framework/cache/.gitignore
+!/backend/storage/framework/data
+/backend/storage/framework/data/*
+!/backend/storage/framework/data/.gitignore
+!/backend/storage/framework/sessions
+/backend/storage/framework/sessions/*
+!/backend/storage/framework/sessions/.gitignore
+!/backend/storage/framework/testing
+/backend/storage/framework/testing/*
+!/backend/storage/framework/testing/.gitignore
+!/backend/storage/framework/views
+/backend/storage/framework/views/*
+!/backend/storage/framework/views/.gitignore
+!/backend/storage/logs
+/backend/storage/logs/*
+!/backend/storage/logs/.gitignore
+/backend/bootstrap/cache
+!/backend/bootstrap
+!/backend/bootstrap/cache
+/backend/bootstrap/cache/*
+!/backend/bootstrap/cache/.gitignore
+/backend/.env
+/backend/database/database.sqlite
+
+# misc
+.DS_Store
+.sqlite
+server/admintle.sqlite
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

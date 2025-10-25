@@ -1,0 +1,182 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root, .App {
+  height: 100%; /* asegurar que la app ocupe toda la ventana */
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 5px solid rgb(58, 58, 138);
+}
+
+.App-header {
+  padding: 1rem 0;
+  display: flex;
+  justify-content: left;
+}
+
+.logo_universidad {
+  width: 5rem;
+  height: 5rem;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  margin: 0 2rem;
+}
+
+.l_container {
+  flex: 1; /* ocupa todo el espacio restante */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* centra contenido en vertical */
+  background-color: rgb(232, 232, 255);
+}
+
+.login{
+  border: 1px solid rgb(94, 94, 94);
+  padding: 2rem;
+  background-color: rgb(179, 179, 179);
+  display: flex;
+  box-shadow: 0.3rem 0.3rem 0rem rgb(141, 141, 141);
+}
+
+.login h3, .login h5{
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.content_login {
+  padding-right: 1rem;
+  border-right: 1px solid rgb(104, 104, 104);
+}
+
+.data_content{
+  display: flex;
+  flex-direction: column;
+}
+
+.text_input{
+  position: relative;
+}
+
+.text_input .icon_login{
+  position: absolute;
+  top: 22%;
+  padding-left: 0.3rem;
+}
+
+.option .material-symbols-outlined {
+  font-size: 24px;
+  color: #9b9b9b;
+  position: absolute;
+  top: 15%;
+  padding-left: 0.8rem;
+}
+
+.option button p{
+  margin-left: 1.5rem;
+}
+
+.login_input{
+  padding: 0.5rem;
+  margin: 0.3rem 0;
+  width: 100%;
+  padding-left: 2rem;
+}
+
+.login_input:focus{
+  outline: none;
+}
+
+.button_container{
+  display: flex;
+  justify-content: center;
+}
+
+.button_login{
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  background-color: rgb(58, 58, 138);
+  border: none;
+  color: white;
+}
+
+.button_login:hover{
+  background-color: rgb(15, 15, 51);
+  cursor: pointer;
+}
+
+.container_locked{
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.locked_img {
+  width: 10rem;
+  height: 10rem;
+}
+
+a{
+  color: black;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 500px) {
+
+  header{
+    padding: 0.5rem;
+  }
+
+  header h1{
+    font-size: 1.2rem;
+    margin: 0.5rem;
+  }
+
+  .logo_universidad {
+    width: 60px;
+    height: 60px;
+  }
+
+  .login{
+    display: grid;
+     grid-template-areas: 'locked'
+                          'login';
+  }
+
+  .content_login {
+    padding: 0;
+    border: none;
+    grid-area: login;
+  }
+
+  .container_locked{
+    justify-content: center;
+    margin-bottom: 1rem;
+    grid-area: locked;
+  }
+
+  .locked_img{
+    height: 70px;
+    width: 70px;
+  }
+
+}

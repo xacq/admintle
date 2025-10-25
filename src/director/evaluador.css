@@ -1,0 +1,107 @@
+/* src/components/EvaluacionDesempeno.css */
+
+.evaluacion-desempeno-container {
+  margin-top: 2rem;
+}
+
+/* Aseguramos que el encabezado tenga un buen espaciado */
+.evaluacion-desempeno-container h1 {
+  margin-bottom: 0.5rem;
+}
+
+.evaluacion-desempeno-container .lead {
+  margin-bottom: 1rem;
+}
+
+/* Estilo adicional para la tarjeta de información */
+.evaluacion-desempeno-container .card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+/* Estilo para los rangos de evaluación cuantitativa */
+.form-range::-webkit-slider-thumb {
+  background: #0d6efd;
+}
+
+.form-range::-moz-range-thumb {
+  background: #0d6efd;
+}
+
+/* Estilo para la tabla de historial */
+.table th {
+  border-top: none;
+  font-weight: 600;
+}
+
+/* Estilo para el bloque de resultados finales */
+.border-success {
+  border-width: 2px !important;
+}
+
+/* src/components/DashboardDirector.css */
+
+.dashboard-director-wrapper {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Encabezado */
+.dashboard-header {
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.dashboard-header h1 {
+  color: #343a40;
+}
+
+/* Tarjetas de métricas */
+.metric-card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  transition: transform 0.2s ease-in-out;
+}
+
+.metric-card:hover {
+  transform: translateY(-5px);
+}
+
+.metric-card h2 {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+/* Tarjetas principales */
+.card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.card-header {
+  background-color: #ffffff;
+  border-bottom: 2px solid #e9ecef;
+  font-weight: 600;
+}
+
+/* Tabla */
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Footer */
+.dashboard-footer {
+  background-color: #ffffff;
+  margin-top: auto;
+  color: #6c757d;
+}
+
+.dashboard-footer p {
+  margin-bottom: 0.25rem;
+}

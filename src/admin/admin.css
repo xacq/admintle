@@ -1,0 +1,403 @@
+/* src/components/ListadoBecas.css */
+
+.listado-becas-container {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  margin-top: 2rem;
+}
+
+.table th {
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  color: #495057;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.025);
+  cursor: pointer;
+}
+
+/* Para los iconos de Bootstrap, añade el CDN en index.html si no lo tienes */
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css");
+
+/* src/components/GeneracionReportes.css */
+
+.generacion-reportes-wrapper {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+/* Estilo para las tarjetas */
+.card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Estilo para la tabla */
+.table th {
+  border-top: none;
+  font-weight: 600;
+}
+
+/* Estilo para los indicadores numéricos dentro del reporte */
+.indicador-card {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  height: 100%;
+}
+
+.indicador-card h4 {
+  margin-bottom: 0.5rem;
+}
+
+.indicador-card p {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+/* Estilo para el pie de página */
+footer {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+footer a {
+  color: #6c757d;
+}
+
+footer a:hover {
+  color: #495057;
+  text-decoration: underline;
+}
+
+/* Estilo para la barra de progreso */
+.progress {
+  height: 1.5rem;
+}
+
+.progress-bar {
+  background-color: #0d6efd;
+}
+
+/* src/components/CentroNotificaciones.css */
+
+.centro-notificaciones-wrapper {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+/* Estilo para las tarjetas */
+.card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Estilo para la lista de notificaciones */
+.notification-list .list-group-item {
+  border-left: 4px solid transparent;
+  transition: all 0.2s ease-in-out;
+}
+
+.notification-list .list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Estilo para notificaciones no leídas */
+.notification-list .list-group-item.unread {
+  border-left-color: #0d6efd;
+  background-color: #e7f1ff;
+}
+
+.notification-list .list-group-item.unread .fw-bold {
+  color: #0a58ca;
+}
+
+/* Hacemos el panel de detalle y configuración "pegajoso" para que no baje al hacer scroll */
+.sticky-top {
+  position: sticky;
+}
+
+/* src/components/PanelConfiguracion.css */
+
+.panel-configuracion-wrapper {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+/* Estilo para las tarjetas */
+.card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Estilo para el menú lateral */
+.menu-lateral .list-group-item {
+  border-left: 4px solid transparent;
+}
+
+.menu-lateral .list-group-item:hover:not(.active) {
+  background-color: #f8f9fa;
+  border-left-color: #dee2e6;
+}
+
+/* Estilo para las tablas */
+.table th {
+  border-top: none;
+  font-weight: 600;
+}
+
+/* Estilo para las tarjetas de mantenimiento */
+.card-body h5 {
+  color: #495057;
+}
+
+/* Estilo para los checkboxes de permisos */
+.form-check-input:checked {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+/* src/components/ArchivoHistorico.css */
+
+.archivo-historico-wrapper {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+/* Estilo para las tarjetas */
+.card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Estilo para las tablas */
+.table th {
+  border-top: none;
+  font-weight: 600;
+}
+
+/* Estilo para el modal */
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Estilo para las listas de archivos */
+.list-group-item {
+  padding: 0.5rem 1rem;
+}
+
+/* Estilo para las estadísticas */
+.card-body h6 {
+  color: #495057;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.card-body ul {
+  padding-left: 1.2rem;
+}
+
+.card-body h3 {
+  margin-top: 0;
+}
+
+/* src/components/PanelAuditoria.css */
+
+.panel-auditoria-wrapper {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+/* Estilo para las tarjetas */
+.card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Estilo para las tablas */
+.table th {
+  border-top: none;
+  font-weight: 600;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.025);
+}
+
+/* Estilo para el modal */
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Estilo para los datos previos/posteriores */
+pre {
+  font-size: 0.8rem;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* Estilo para las estadísticas */
+.card-body h6 {
+  color: #495057;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.card-body h3 {
+  margin-top: 0;
+}
+
+.card-body ul {
+  padding-left: 1.2rem;
+}
+
+/* src/components/CentroSoporte.css */
+
+.centro-soporte-wrapper {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+/* Estilo para las tarjetas */
+.card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Estilo para las tablas */
+.table th {
+  border-top: none;
+  font-weight: 600;
+}
+
+/* Estilo para el modal */
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Estilo para las listas */
+.list-group-item {
+  border-left: 4px solid transparent;
+  transition: all 0.2s ease-in-out;
+}
+
+.list-group-item:hover {
+  background-color: #f8f9fa;
+  border-left-color: #0d6efd;
+}
+
+/* Estilo para los botones de acción */
+.btn-sm {
+  margin-right: 0.25rem;
+}
+
+/* Estilo para los badges */
+.badge {
+  font-size: 0.8rem;
+}
+
+/* src/components/DashboardAdmin.css */
+
+.dashboard-admin-wrapper {
+  background-color: #f8f9fa; /* Fondo ligeramente gris para contrastar */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Encabezado */
+.dashboard-header {
+  background-color: #ffffff; /* Fondo blanco para el header */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.dashboard-header h1 {
+  color: #343a40;
+}
+
+/* Tarjetas de métricas */
+.metric-card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  transition: transform 0.2s ease-in-out;
+}
+
+.metric-card:hover {
+  transform: translateY(-5px);
+}
+
+.metric-card h2 {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+/* Tarjetas principales */
+.card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.card-header {
+  background-color: #ffffff;
+  border-bottom: 2px solid #e9ecef;
+  font-weight: 600;
+}
+
+/* Tabla */
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Footer */
+.dashboard-footer {
+  background-color: #ffffff;
+  margin-top: auto; /* Empuja el footer hacia abajo */
+  color: #6c757d;
+}
+
+.dashboard-footer p {
+  margin-bottom: 0.25rem;
+}
