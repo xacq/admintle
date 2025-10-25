@@ -74,7 +74,6 @@ const DashboardDirector = () => {
     }
   };
 
-  // --- Colores de estado ---
   const getEstadoBadgeVariant = (estado) => {
     switch (estado) {
       case 'Activa':
