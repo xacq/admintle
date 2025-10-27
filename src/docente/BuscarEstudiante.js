@@ -38,7 +38,7 @@ const BuscarEstudiantes = () => {
          <main>
             <div className='head_part'>
                 <div className='left_title'>
-                    <span class="material-symbols-outlined">person</span>
+                    <span className="material-symbols-outlined">person</span>
                     <h3>Docente</h3>
                 </div>
 
