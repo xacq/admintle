@@ -15,7 +15,7 @@ function DocenteConfig() {
                     <main>
                         <div className='head_part'>
                             <div className='left_title'>
-                                <span class="material-symbols-outlined">book_2</span>
+                                <span className="material-symbols-outlined">book_2</span>
                                 <h3>Docente</h3>
                             </div>
 
@@ -39,17 +39,17 @@ function DocenteConfig() {
                             <h2>CONFIGURACIÓN</h2>
                             
                             <div className='option'>
-                                <span class="material-symbols-outlined">menu_book</span>
+                                <span className="material-symbols-outlined">menu_book</span>
                                 <button><p>GUARDAR NOTAS</p></button>
                             </div>
 
                             <div className='option'>
-                                <span class="material-symbols-outlined">person</span>
+                                <span className="material-symbols-outlined">person</span>
                                 <button><p>TÍTULO DOCENTE</p></button>
                             </div>
 
                             <div className='option'>
-                                <span class="material-symbols-outlined">notifications</span>
+                                <span className="material-symbols-outlined">notifications</span>
                                 <button><p>ACTIVAR NOTIFICACIONES</p></button>
                             </div>
                         </div>

@@ -1,0 +1,16 @@
+*
+!.gitignore
+!framework
+!framework/.gitignore
+!framework/cache
+!framework/cache/.gitignore
+!framework/data
+!framework/data/.gitignore
+!framework/sessions
+!framework/sessions/.gitignore
+!framework/testing
+!framework/testing/.gitignore
+!framework/views
+!framework/views/.gitignore
+!logs
+!logs/.gitignore
