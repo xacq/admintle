@@ -5,6 +5,10 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+<<<<<<< HEAD
+=======
+use Illuminate\Support\Facades\Hash;
+>>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
 
 class DocenteModuleSeeder extends Seeder
 {
@@ -13,6 +17,88 @@ class DocenteModuleSeeder extends Seeder
      */
     public function run(): void
     {
+<<<<<<< HEAD
+=======
+        DB::table('users')->delete();
+        DB::table('roles')->delete();
+
+        $timestamp = Carbon::now();
+
+        $roles = [
+            [
+                'name' => 'tutor',
+                'display_name' => 'Tutor',
+                'dashboard_route' => '/dashboard/tutor',
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+            [
+                'name' => 'becario',
+                'display_name' => 'Becario',
+                'dashboard_route' => '/dashboard/becario',
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+            [
+                'name' => 'admin',
+                'display_name' => 'Administrador',
+                'dashboard_route' => '/dashboard/admin',
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+            [
+                'name' => 'director',
+                'display_name' => 'Director',
+                'dashboard_route' => '/dashboard/director',
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+        ];
+
+        DB::table('roles')->insert($roles);
+
+        $roleIds = DB::table('roles')->pluck('id', 'name');
+
+        DB::table('users')->insert([
+            [
+                'name' => 'Laura Tutor',
+                'email' => 'tutor@example.com',
+                'username' => 'tutor',
+                'password' => Hash::make('password123'),
+                'role_id' => $roleIds['tutor'],
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+            [
+                'name' => 'Bruno Becario',
+                'email' => 'becario@example.com',
+                'username' => 'becario',
+                'password' => Hash::make('password123'),
+                'role_id' => $roleIds['becario'],
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+            [
+                'name' => 'Ana Administradora',
+                'email' => 'admin@example.com',
+                'username' => 'admin',
+                'password' => Hash::make('password123'),
+                'role_id' => $roleIds['admin'],
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+            [
+                'name' => 'Diego Director',
+                'email' => 'director@example.com',
+                'username' => 'director',
+                'password' => Hash::make('password123'),
+                'role_id' => $roleIds['director'],
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+        ]);
+
+>>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
         DB::table('designaciones')->insert([
             [
                 'fecha' => '2024-01-03',

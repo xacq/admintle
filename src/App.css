@@ -124,6 +124,22 @@ header h1 {
   cursor: pointer;
 }
 
+<<<<<<< HEAD
+=======
+.button_login:disabled,
+.button_login[disabled]{
+  background-color: rgba(58, 58, 138, 0.65);
+  cursor: not-allowed;
+}
+
+.login_error{
+  margin-top: 1rem;
+  color: #b00020;
+  font-weight: 600;
+  text-align: center;
+}
+
+>>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
 .container_locked{
   height: 100%;
   display: flex;

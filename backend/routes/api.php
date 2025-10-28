@@ -2,9 +2,17 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+<<<<<<< HEAD
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('api')->prefix('api')->group(function () {
+=======
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
+
+Route::middleware('api')->group(function () {
+>>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
     Route::get('/designaciones', function () {
         return DB::table('designaciones')
             ->select('id', 'fecha', 'empleado', 'puesto', 'departamento', 'estado')
@@ -49,4 +57,43 @@ Route::middleware('api')->prefix('api')->group(function () {
             ->orderBy('numero')
             ->get();
     });
+<<<<<<< HEAD
+=======
+
+    Route::post('/login', function (Request $request) {
+        $validated = $request->validate([
+            'username' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ]);
+
+        $user = DB::table('users')
+            ->join('roles', 'users.role_id', '=', 'roles.id')
+            ->select(
+                'users.id',
+                'users.name',
+                'users.username',
+                'users.password',
+                'roles.name as role',
+                'roles.display_name as roleLabel',
+                'roles.dashboard_route as dashboardRoute'
+            )
+            ->where('users.username', $validated['username'])
+            ->first();
+
+        if (! $user || ! Hash::check($validated['password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'username' => ['Las credenciales proporcionadas no son válidas.'],
+            ]);
+        }
+
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'username' => $user->username,
+            'role' => $user->role,
+            'roleLabel' => $user->roleLabel,
+            'dashboardRoute' => $user->dashboardRoute,
+        ];
+    });
+>>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
 });
