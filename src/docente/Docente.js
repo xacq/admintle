@@ -19,7 +19,7 @@ function Docente() {
                     <main>
                         <div className='head_part'>
                             <div className='left_title'>
-                                <span class="material-symbols-outlined">book_2</span>
+                                <span className="material-symbols-outlined">book_2</span>
                                 <h3>Docente</h3>
                             </div>
 
@@ -45,17 +45,17 @@ function Docente() {
                     <div className='main_options'>
                         <div className='main_options_content'>
                             <div className='option'>
-                                <span class="material-symbols-outlined">person_search</span>
+                                <span className="material-symbols-outlined">person_search</span>
                                 <button><p><Link to="/buscarestudiante">BUSCAR ESTUDIANTES</Link></p></button>
                             </div>
 
                             <div className='option'>
-                                <span class="material-symbols-outlined">list_alt</span>
+                                <span className="material-symbols-outlined">list_alt</span>
                                 <button><p><Link to="/listadomaterias">LISTADO POR MATERIAS</Link></p></button>
                             </div>
 
                             <div className='option'>
-                                <span class="material-symbols-outlined">account_circle</span>
+                                <span className="material-symbols-outlined">account_circle</span>
                                 <button><p><Link to="/historialestudiante">HISTORIAL DEL ESTUDIANTE</Link></p></button>
                             </div>
                         </div>

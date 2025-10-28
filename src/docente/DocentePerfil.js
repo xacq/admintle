@@ -17,7 +17,7 @@ function DocentePerfil() {
                     <main>
                         <div className='head_part'>
                             <div className='left_title'>
-                                <span class="material-symbols-outlined">book_2</span>
+                                <span className="material-symbols-outlined">book_2</span>
                                 <h3>Perfil del docente</h3>
                             </div>
 
@@ -70,12 +70,12 @@ function DocentePerfil() {
                           <div className='buttons_input'>
 
                             <button>
-                              <span class="material-symbols-outlined">save</span>
+                              <span className="material-symbols-outlined">save</span>
                               <p>Guardar</p>
                             </button>
 
                             <button>
-                              <span class="material-symbols-outlined">print</span>
+                              <span className="material-symbols-outlined">print</span>
                               <p>Imprimir</p>
                             </button>
 

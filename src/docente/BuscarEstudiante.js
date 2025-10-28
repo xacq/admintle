@@ -1,23 +1,30 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import './docente.css';
 import Menu from '../components/Menu';
 import Header from '../components/Header';
+import useApiData from '../hooks/useApiData';
 
 const BuscarEstudiantes = () => {
-  // Datos de ejemplo para la tabla
-  const estudiantes = [
-    { 
-      numero: 1, 
-      ru: '123456', 
-      name: 'FULANO MENCHACA', 
-      ci: '12345678', 
-      nota: 60, 
-      celular: '60148532' 
-    },
-    // Puedes agregar más estudiantes aquí
-  ];
-
   const [searchTerm, setSearchTerm] = useState('');
+  const { data: estudiantes, loading, error } = useApiData('/api/estudiantes');
+
+  const filteredEstudiantes = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) {
+      return estudiantes;
+    }
+
+    return estudiantes.filter((estudiante) => {
+      const valuesToSearch = [
+        estudiante.name,
+        estudiante.ci,
+        estudiante.ru,
+        estudiante.celular,
+      ];
+
+      return valuesToSearch.some((value) => value.toLowerCase().includes(term));
+    });
+  }, [estudiantes, searchTerm]);
 
   return (
     <div className="Docente">
@@ -31,7 +38,7 @@ const BuscarEstudiantes = () => {
          <main>
             <div className='head_part'>
                 <div className='left_title'>
-                    <span class="material-symbols-outlined">person</span>
+                    <span className="material-symbols-outlined">person</span>
                     <h3>Docente</h3>
                 </div>
 
@@ -83,17 +90,31 @@ const BuscarEstudiantes = () => {
             </tr>
           </thead>
           <tbody>
-            {estudiantes
-              .filter(estudiante => 
-                searchTerm === '' || 
-                estudiante.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                estudiante.ci.includes(searchTerm) ||
-                estudiante.ru.includes(searchTerm) ||
-                estudiante.celular.includes(searchTerm)
-              )
-              .map(estudiante => (
-                <tr key={estudiante.numero}>
-                  <td>{estudiante.numero}</td>
+            {loading && (
+              <tr>
+                <td colSpan="6" className="no-data">
+                  Cargando estudiantes...
+                </td>
+              </tr>
+            )}
+            {error && !loading && (
+              <tr>
+                <td colSpan="6" className="no-data">
+                  Error al obtener la lista de estudiantes.
+                </td>
+              </tr>
+            )}
+            {!loading && !error && filteredEstudiantes.length === 0 && (
+              <tr>
+                <td colSpan="6" className="no-data">
+                  No se encontraron estudiantes con los criterios ingresados.
+                </td>
+              </tr>
+            )}
+            {!loading && !error &&
+              filteredEstudiantes.map((estudiante, index) => (
+                <tr key={estudiante.id}>
+                  <td>{index + 1}</td>
                   <td>{estudiante.ru}</td>
                   <td>{estudiante.name}</td>
                   <td>{estudiante.ci}</td>
