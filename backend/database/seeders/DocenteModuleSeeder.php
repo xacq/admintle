@@ -5,10 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-<<<<<<< HEAD
-=======
 use Illuminate\Support\Facades\Hash;
->>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
 
 class DocenteModuleSeeder extends Seeder
 {
@@ -17,8 +14,6 @@ class DocenteModuleSeeder extends Seeder
      */
     public function run(): void
     {
-<<<<<<< HEAD
-=======
         DB::table('users')->delete();
         DB::table('roles')->delete();
 
@@ -98,7 +93,6 @@ class DocenteModuleSeeder extends Seeder
             ],
         ]);
 
->>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
         DB::table('designaciones')->insert([
             [
                 'fecha' => '2024-01-03',

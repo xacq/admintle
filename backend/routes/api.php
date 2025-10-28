@@ -2,17 +2,11 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-<<<<<<< HEAD
-use Illuminate\Support\Facades\Route;
-
-Route::middleware('api')->prefix('api')->group(function () {
-=======
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 
 Route::middleware('api')->group(function () {
->>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
     Route::get('/designaciones', function () {
         return DB::table('designaciones')
             ->select('id', 'fecha', 'empleado', 'puesto', 'departamento', 'estado')
@@ -57,8 +51,6 @@ Route::middleware('api')->group(function () {
             ->orderBy('numero')
             ->get();
     });
-<<<<<<< HEAD
-=======
 
     Route::post('/login', function (Request $request) {
         $validated = $request->validate([
@@ -95,5 +87,4 @@ Route::middleware('api')->group(function () {
             'dashboardRoute' => $user->dashboardRoute,
         ];
     });
->>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
 });

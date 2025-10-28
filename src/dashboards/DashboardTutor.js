@@ -1,94 +1,96 @@
-// src/components/DashboardDirector.js
+// src/components/DashboardTutor.js
 
 import React from 'react';
 import { Container, Row, Col, Card, Table, Badge, Button } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom'; // 👈 agregado para navegación
-import './evaluador.css';
+import { useNavigate } from 'react-router-dom';  // 👈 agregado para navegación
+import '../docente/docente.css';
 
 // --- DATOS ESTÁTICOS DE EJEMPLO ---
-const indicadores = {
-  becasActivas: 38,
-  becasFinalizadas: 12,
-  evaluacionesRegistradas: 85
+const indicadoresPersonales = {
+  becariosAsignados: 5,
+  reportesRevisados: 12,
+  evaluacionesPendientes: 2
 };
 
-const becasEnCursoData = [
+const becariosAsignadosData = [
   {
     codigo: 'PI-UATF-041',
-    becario: 'Ana Guzmán',
-    tutor: 'Lic. Cárdenas',
-    estado: 'Activa',
-    fechaInicio: '2024-03-15'
+    nombre: 'Ana Guzmán',
+    ultimoReporte: 'Avance de Septiembre',
+    estado: 'Pendiente de Revisión',
+    fechaEntrega: '2024-09-15'
   },
   {
     codigo: 'PI-UATF-042',
-    becario: 'Luis Mamani',
-    tutor: 'Ing. Rodríguez',
-    estado: 'En Evaluación',
-    fechaInicio: '2024-04-10'
+    nombre: 'Luis Mamani',
+    ultimoReporte: 'Avance de Septiembre',
+    estado: 'Aprobado',
+    fechaEntrega: '2024-09-14'
   },
   {
     codigo: 'PI-UATF-043',
-    becario: 'José Flores',
-    tutor: 'Lic. Rojas',
-    estado: 'Activa',
-    fechaInicio: '2024-02-20'
+    nombre: 'José Flores',
+    ultimoReporte: 'Avance de Agosto',
+    estado: 'Devuelto',
+    fechaEntrega: '2024-08-31'
   },
   {
     codigo: 'PI-UATF-044',
-    becario: 'María Choque',
-    tutor: 'Dr. Fernández',
-    estado: 'Pendiente de Documentación',
-    fechaInicio: '2024-05-01'
+    nombre: 'María Choque',
+    ultimoReporte: 'Avance de Septiembre',
+    estado: 'Pendiente de Revisión',
+    fechaEntrega: '2024-09-16'
   },
   {
     codigo: 'PI-UATF-045',
-    becario: 'Carlos Vargas',
-    tutor: 'Mg. Soliz',
-    estado: 'Activa',
-    fechaInicio: '2024-03-10'
+    nombre: 'Carlos Vargas',
+    ultimoReporte: 'Informe Final',
+    estado: 'Pendiente de Revisión',
+    fechaEntrega: '2024-09-20'
   }
 ];
 
-const DashboardDirector = () => {
-  const navigate = useNavigate(); // 👈 para redirecciones entre rutas
+const DashboardTutor = () => {
+  const navigate = useNavigate(); // 👈 para navegación entre rutas
 
-  // --- MANEJADORES DE EVENTOS (actualizados) ---
-  const handleVerDetalles = (codigo) => {
-    navigate(`/director/beca/${codigo}`); // 👈 lleva a la vista DetalleBeca.js
+  // --- MANEJADORES DE EVENTOS (MODIFICADOS) ---
+  const handleRevisarReporte = (codigo, nombre) => {
+    // Navega al historial del estudiante seleccionado
+    navigate(`/tutor/estudiante/${codigo}`);
   };
 
   const handleAccesoDirecto = (modulo) => {
     switch (modulo) {
-      case 'Consultar Reportes Institucionales':
-        navigate('/generacionreportes');
+      case 'Revisar Reportes de Avance':
+        navigate('/listaregistros');
         break;
-      case 'Visualizar Evaluaciones de Tutores':
-        navigate('/evaluadordesempeno');
+      case 'Registrar Evaluación de Desempeño':
+        navigate('/docenteconfig');
         break;
-      case 'Revisar Becas Finalizadas':
-        navigate('/archivoshistoricos');
+      case 'Consultar Observaciones Anteriores':
+        navigate('/notificacionesanteriores');
         break;
       default:
         break;
     }
   };
 
+  // Función para asignar color al badge de estado
   const getEstadoBadgeVariant = (estado) => {
     switch (estado) {
-      case 'Activa':
+      case 'Aprobado':
         return 'success';
-      case 'En Evaluación':
+      case 'Pendiente de Revisión':
         return 'warning';
-      case 'Pendiente de Documentación':
-        return 'info';
+      case 'Devuelto':
+        return 'danger';
       default:
         return 'secondary';
     }
   };
 
   return (
-    <div className="dashboard-director-wrapper">
+    <div className="dashboard-tutor-wrapper">
       {/* 1. Encabezado institucional */}
       <header className="dashboard-header text-center py-4 border-bottom">
         <Container>
@@ -103,83 +105,81 @@ const DashboardDirector = () => {
               />
             </Col>
             <Col md={6}>
-              <h1 className="h3 mb-0 fw-bold">
-                Panel de Supervisión del Programa de Becas Auxiliares de Investigación
-              </h1>
+              <h1 className="h3 mb-0 fw-bold">Panel de Seguimiento y Evaluación de Becarios Auxiliares de Investigación</h1>
             </Col>
             <Col md={3} className="text-end">
               <span className="text-muted">Bienvenido,</span><br/>
-              <strong>Director</strong>
+              <strong>Lic. Anny Mercado Algarañaz</strong>
             </Col>
           </Row>
         </Container>
       </header>
 
       <Container className="py-4">
-        {/* 2. Panel de indicadores generales */}
+        {/* 2. Panel de indicadores personales */}
         <Row className="mb-4">
           <Col md={4}>
             <Card className="text-center metric-card">
               <Card.Body>
-                <h2 className="text-primary">{indicadores.becasActivas}</h2>
-                <p className="text-muted mb-0">Becas Activas</p>
+                <h2 className="text-primary">{indicadoresPersonales.becariosAsignados}</h2>
+                <p className="text-muted mb-0">Becarios Asignados</p>
               </Card.Body>
             </Card>
           </Col>
           <Col md={4}>
             <Card className="text-center metric-card">
               <Card.Body>
-                <h2 className="text-success">{indicadores.becasFinalizadas}</h2>
-                <p className="text-muted mb-0">Becas Finalizadas</p>
+                <h2 className="text-success">{indicadoresPersonales.reportesRevisados}</h2>
+                <p className="text-muted mb-0">Reportes Revisados</p>
               </Card.Body>
             </Card>
           </Col>
           <Col md={4}>
             <Card className="text-center metric-card">
               <Card.Body>
-                <h2 className="text-info">{indicadores.evaluacionesRegistradas}</h2>
-                <p className="text-muted mb-0">Evaluaciones Registradas</p>
+                <h2 className="text-danger">{indicadoresPersonales.evaluacionesPendientes}</h2>
+                <p className="text-muted mb-0">Evaluaciones Pendientes</p>
               </Card.Body>
             </Card>
           </Col>
         </Row>
 
         <Row>
-          {/* 3. Listado de becas en curso */}
+          {/* 3. Listado de becarios asignados */}
           <Col lg={8}>
             <Card className="h-100">
-              <Card.Header as="h5" className="fw-bold">Becas en Curso</Card.Header>
+              <Card.Header as="h5" className="fw-bold">Mis Becarios Asignados</Card.Header>
               <Card.Body>
                 <Table responsive hover>
                   <thead>
                     <tr>
-                      <th>Código</th>
-                      <th>Becario</th>
-                      <th>Tutor</th>
+                      <th>Código de beca</th>
+                      <th>Nombre del becario</th>
+                      <th>Último reporte recibido</th>
                       <th>Estado</th>
-                      <th>Fecha de inicio</th>
+                      <th>Fecha de entrega</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {becasEnCursoData.map((beca) => (
-                      <tr key={beca.codigo}>
-                        <td>{beca.codigo}</td>
-                        <td>{beca.becario}</td>
-                        <td>{beca.tutor}</td>
+                    {becariosAsignadosData.map((becario) => (
+                      <tr key={becario.codigo}>
+                        <td>{becario.codigo}</td>
+                        <td>{becario.nombre}</td>
+                        <td>{becario.ultimoReporte}</td>
                         <td>
-                          <Badge bg={getEstadoBadgeVariant(beca.estado)}>
-                            {beca.estado}
+                          <Badge bg={getEstadoBadgeVariant(becario.estado)}>
+                            {becario.estado}
                           </Badge>
                         </td>
-                        <td>{beca.fechaInicio}</td>
+                        <td>{becario.fechaEntrega}</td>
                         <td>
                           <Button 
                             variant="outline-primary" 
                             size="sm"
-                            onClick={() => handleVerDetalles(beca.codigo)}
+                            onClick={() => handleRevisarReporte(becario.codigo, becario.nombre)}
                           >
-                            Ver detalles
+                            Revisar
                           </Button>
                         </td>
                       </tr>
@@ -198,23 +198,23 @@ const DashboardDirector = () => {
                 <Button 
                   variant="primary" 
                   className="mb-3 w-100"
-                  onClick={() => handleAccesoDirecto('Consultar Reportes Institucionales')}
+                  onClick={() => handleAccesoDirecto('Revisar Reportes de Avance')}
                 >
-                  📊 Consultar Reportes Institucionales
+                  📄 Revisar Reportes de Avance
                 </Button>
                 <Button 
                   variant="info" 
                   className="mb-3 w-100"
-                  onClick={() => handleAccesoDirecto('Visualizar Evaluaciones de Tutores')}
+                  onClick={() => handleAccesoDirecto('Registrar Evaluación de Desempeño')}
                 >
-                  📋 Visualizar Evaluaciones de Tutores
+                  📝 Registrar Evaluación de Desempeño
                 </Button>
                 <Button 
                   variant="secondary" 
                   className="w-100"
-                  onClick={() => handleAccesoDirecto('Revisar Becas Finalizadas')}
+                  onClick={() => handleAccesoDirecto('Consultar Observaciones Anteriores')}
                 >
-                  ✅ Revisar Becas Finalizadas
+                  💬 Consultar Observaciones Anteriores
                 </Button>
               </Card.Body>
             </Card>
@@ -235,4 +235,4 @@ const DashboardDirector = () => {
   );
 };
 
-export default DashboardDirector;
+export default DashboardTutor;

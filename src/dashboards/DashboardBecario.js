@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container, Row, Col, Card, Table, Badge, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import './estudiante.css';
+import '../becario/estudiante.css';
 
 // --- DATOS ESTÁTICOS DE EJEMPLO ---
 const infoGeneral = {

@@ -1,49 +1,94 @@
+// src/components/DashboardDirector.js
+
+import React from 'react';
 import { Container, Row, Col, Card, Table, Badge, Button } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import './admin.css';
+import { useNavigate } from 'react-router-dom'; // 👈 agregado para navegación
+import '../director/evaluador.css';
 
 // --- DATOS ESTÁTICOS DE EJEMPLO ---
-const estadisticas = {
-  totalBecas: 38,
-  totalReportes: 124,
-  totalUsuarios: 85
+const indicadores = {
+  becasActivas: 38,
+  becasFinalizadas: 12,
+  evaluacionesRegistradas: 85
 };
 
-const becasActivasData = [
-  { codigo: 'PI-UATF-041', becario: 'Ana Guzmán', tutor: 'Lic. Cárdenas', estado: 'Activa' },
-  { codigo: 'PI-UATF-042', becario: 'Luis Mamani', tutor: 'Ing. Rodríguez', estado: 'Activa' },
-  { codigo: 'PI-UATF-043', becario: 'José Flores', tutor: 'Lic. Rojas', estado: 'En Evaluación' },
-  { codigo: 'PI-UATF-044', becario: 'María Choque', tutor: 'Dr. Fernández', estado: 'Activa' },
-  { codigo: 'PI-UATF-045', becario: 'Carlos Vargas', tutor: 'Mg. Soliz', estado: 'Pendiente de Documentación' }
+const becasEnCursoData = [
+  {
+    codigo: 'PI-UATF-041',
+    becario: 'Ana Guzmán',
+    tutor: 'Lic. Cárdenas',
+    estado: 'Activa',
+    fechaInicio: '2024-03-15'
+  },
+  {
+    codigo: 'PI-UATF-042',
+    becario: 'Luis Mamani',
+    tutor: 'Ing. Rodríguez',
+    estado: 'En Evaluación',
+    fechaInicio: '2024-04-10'
+  },
+  {
+    codigo: 'PI-UATF-043',
+    becario: 'José Flores',
+    tutor: 'Lic. Rojas',
+    estado: 'Activa',
+    fechaInicio: '2024-02-20'
+  },
+  {
+    codigo: 'PI-UATF-044',
+    becario: 'María Choque',
+    tutor: 'Dr. Fernández',
+    estado: 'Pendiente de Documentación',
+    fechaInicio: '2024-05-01'
+  },
+  {
+    codigo: 'PI-UATF-045',
+    becario: 'Carlos Vargas',
+    tutor: 'Mg. Soliz',
+    estado: 'Activa',
+    fechaInicio: '2024-03-10'
+  }
 ];
 
-const DashboardAdmin = () => {
-  const navigate = useNavigate();
+const DashboardDirector = () => {
+  const navigate = useNavigate(); // 👈 para redirecciones entre rutas
 
-  // --- MANEJADORES DE EVENTOS ---
+  // --- MANEJADORES DE EVENTOS (actualizados) ---
   const handleVerDetalles = (codigo) => {
-    // Redirige al formulario o vista de detalles de la beca
-    navigate(`/admin/becas/${codigo}`);
+    navigate(`/director/beca/${codigo}`); // 👈 lleva a la vista DetalleBeca.js
   };
 
   const handleAccesoDirecto = (modulo) => {
     switch (modulo) {
-      case 'Gestión de Becas':
-        navigate('/listabecas');
-        break;
-      case 'Reportes Institucionales':
+      case 'Consultar Reportes Institucionales':
         navigate('/generacionreportes');
         break;
-      case 'Configuración del Sistema':
-        navigate('/panelconfiguracion');
+      case 'Visualizar Evaluaciones de Tutores':
+        navigate('/evaluadordesempeno');
+        break;
+      case 'Revisar Becas Finalizadas':
+        navigate('/archivoshistoricos');
         break;
       default:
         break;
     }
   };
 
+  const getEstadoBadgeVariant = (estado) => {
+    switch (estado) {
+      case 'Activa':
+        return 'success';
+      case 'En Evaluación':
+        return 'warning';
+      case 'Pendiente de Documentación':
+        return 'info';
+      default:
+        return 'secondary';
+    }
+  };
+
   return (
-    <div className="dashboard-admin-wrapper">
+    <div className="dashboard-director-wrapper">
       {/* 1. Encabezado institucional */}
       <header className="dashboard-header text-center py-4 border-bottom">
         <Container>
@@ -58,50 +103,52 @@ const DashboardAdmin = () => {
               />
             </Col>
             <Col md={6}>
-              <h1 className="h3 mb-0 fw-bold">Sistema de Becas Auxiliares de Investigación</h1>
+              <h1 className="h3 mb-0 fw-bold">
+                Panel de Supervisión del Programa de Becas Auxiliares de Investigación
+              </h1>
             </Col>
             <Col md={3} className="text-end">
               <span className="text-muted">Bienvenido,</span><br/>
-              <strong>Administrador</strong>
+              <strong>Director</strong>
             </Col>
           </Row>
         </Container>
       </header>
 
       <Container className="py-4">
-        {/* 2. Panel de control general */}
+        {/* 2. Panel de indicadores generales */}
         <Row className="mb-4">
           <Col md={4}>
             <Card className="text-center metric-card">
               <Card.Body>
-                <h2 className="text-primary">{estadisticas.totalBecas}</h2>
-                <p className="text-muted mb-0">Becas Registradas</p>
+                <h2 className="text-primary">{indicadores.becasActivas}</h2>
+                <p className="text-muted mb-0">Becas Activas</p>
               </Card.Body>
             </Card>
           </Col>
           <Col md={4}>
             <Card className="text-center metric-card">
               <Card.Body>
-                <h2 className="text-success">{estadisticas.totalReportes}</h2>
-                <p className="text-muted mb-0">Reportes Generados</p>
+                <h2 className="text-success">{indicadores.becasFinalizadas}</h2>
+                <p className="text-muted mb-0">Becas Finalizadas</p>
               </Card.Body>
             </Card>
           </Col>
           <Col md={4}>
             <Card className="text-center metric-card">
               <Card.Body>
-                <h2 className="text-info">{estadisticas.totalUsuarios}</h2>
-                <p className="text-muted mb-0">Usuarios Activos</p>
+                <h2 className="text-info">{indicadores.evaluacionesRegistradas}</h2>
+                <p className="text-muted mb-0">Evaluaciones Registradas</p>
               </Card.Body>
             </Card>
           </Col>
         </Row>
 
         <Row>
-          {/* 3. Listado de becas activas */}
+          {/* 3. Listado de becas en curso */}
           <Col lg={8}>
             <Card className="h-100">
-              <Card.Header as="h5" className="fw-bold">Becas Activas</Card.Header>
+              <Card.Header as="h5" className="fw-bold">Becas en Curso</Card.Header>
               <Card.Body>
                 <Table responsive hover>
                   <thead>
@@ -110,32 +157,29 @@ const DashboardAdmin = () => {
                       <th>Becario</th>
                       <th>Tutor</th>
                       <th>Estado</th>
+                      <th>Fecha de inicio</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {becasActivasData.map((beca) => (
+                    {becasEnCursoData.map((beca) => (
                       <tr key={beca.codigo}>
                         <td>{beca.codigo}</td>
                         <td>{beca.becario}</td>
                         <td>{beca.tutor}</td>
                         <td>
-                          <Badge 
-                            bg={
-                              beca.estado === 'Activa' ? 'success' : 
-                              beca.estado === 'En Evaluación' ? 'warning' : 'secondary'
-                            }
-                          >
+                          <Badge bg={getEstadoBadgeVariant(beca.estado)}>
                             {beca.estado}
                           </Badge>
                         </td>
+                        <td>{beca.fechaInicio}</td>
                         <td>
                           <Button 
                             variant="outline-primary" 
                             size="sm"
                             onClick={() => handleVerDetalles(beca.codigo)}
                           >
-                            Ver
+                            Ver detalles
                           </Button>
                         </td>
                       </tr>
@@ -154,23 +198,23 @@ const DashboardAdmin = () => {
                 <Button 
                   variant="primary" 
                   className="mb-3 w-100"
-                  onClick={() => handleAccesoDirecto('Gestión de Becas')}
+                  onClick={() => handleAccesoDirecto('Consultar Reportes Institucionales')}
                 >
-                  📋 Gestión de Becas
+                  📊 Consultar Reportes Institucionales
                 </Button>
                 <Button 
                   variant="info" 
                   className="mb-3 w-100"
-                  onClick={() => handleAccesoDirecto('Reportes Institucionales')}
+                  onClick={() => handleAccesoDirecto('Visualizar Evaluaciones de Tutores')}
                 >
-                  📊 Reportes Institucionales
+                  📋 Visualizar Evaluaciones de Tutores
                 </Button>
                 <Button 
                   variant="secondary" 
                   className="w-100"
-                  onClick={() => handleAccesoDirecto('Configuración del Sistema')}
+                  onClick={() => handleAccesoDirecto('Revisar Becas Finalizadas')}
                 >
-                  ⚙️ Configuración del Sistema
+                  ✅ Revisar Becas Finalizadas
                 </Button>
               </Card.Body>
             </Card>
@@ -184,11 +228,11 @@ const DashboardAdmin = () => {
           Dirección de Ciencia e Innovación Tecnológica – Universidad Autónoma Tomás Frías
         </p>
         <small className="text-muted">
-          Versión 1.0.3 – {new Date().toLocaleDateString('es-BO', { year: 'numeric', month: 'long', day: 'numeric' })}
+          {new Date().toLocaleDateString('es-BO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </small>
       </footer>
     </div>
   );
 };
 
-export default DashboardAdmin;
+export default DashboardDirector;

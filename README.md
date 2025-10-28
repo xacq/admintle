@@ -28,32 +28,20 @@ Este proyecto es una aplicación React creada con Create React App. A partir de 
 
 ## Instalación del backend (Laravel)
 
-<<<<<<< HEAD
-El backend vive en la carpeta `backend/` y utiliza una base de datos SQLite que se almacena en `backend/database/database.sqlite`.
-=======
 El backend vive en la carpeta `backend/` y utiliza PostgreSQL como motor de base de datos. Puedes emplear una instancia local o un contenedor Docker; únicamente asegúrate de contar con un usuario que tenga permisos de creación sobre la base definida en `.env`.
->>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
 
 1. Instalar las dependencias de PHP:
    ```bash
    cd backend
    composer install
    ```
-<<<<<<< HEAD
-2. Crear el archivo de entorno y configurar la URL del frontend (el proxy de Create React App usa `http://localhost:3000`):
-=======
 2. Crear el archivo de entorno y configurar la URL del frontend (el proxy de Create React App usa `http://localhost:3000`). Ajusta las variables de conexión a PostgreSQL según tu entorno:
->>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
    ```bash
    cp .env.example .env
    php artisan key:generate
    ```
    Si necesitas personalizar el origen permitido por CORS edita la variable `FRONTEND_URL` en `.env`.
-<<<<<<< HEAD
-3. Ejecutar las migraciones y sembrar los datos de ejemplo:
-=======
 3. Asegúrate de que la base de datos indicada en `DB_DATABASE` exista (por ejemplo `createdb admintle` en una terminal) y luego ejecuta las migraciones y siembra de datos:
->>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
    ```bash
    php artisan migrate --seed
    ```
@@ -73,27 +61,12 @@ El backend vive en la carpeta `backend/` y utiliza PostgreSQL como motor de base
    ```bash
    npm start
    ```
-<<<<<<< HEAD
-3. Abre el navegador en `http://localhost:3000`. Las tablas consumirán los endpoints expuestos por Laravel:
-=======
 3. Abre el navegador en `http://localhost:3000`. Las tablas y paneles consumirán los endpoints expuestos por Laravel:
->>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
    - `GET /api/designaciones`
    - `GET /api/historial-estudiantes`
    - `GET /api/estudiantes`
    - `GET /api/materias`
    - `GET /api/notificaciones?category=actual|anterior|registro`
-<<<<<<< HEAD
-
-## Arquitectura del backend
-
-- **Framework**: Laravel 12 configurado con SQLite como motor de base de datos para simplificar la ejecución local.
-- **Migraciones**: se definen tablas `designaciones`, `historial_estudiantes`, `estudiantes`, `materias` y `notificaciones` con los campos que ya mostraba el frontend.
-- **Seeder**: `DocenteModuleSeeder` inserta registros de ejemplo para todas las tablas, replicando los datos que antes residían en arreglos del cliente.
-- **Rutas API**: `routes/api.php` agrupa los endpoints bajo el prefijo `/api` y aplica un middleware personalizado de CORS (`App\Http\Middleware\CorsHeaders`) para aceptar peticiones desde el frontend.
-- **CORS**: la cabecera `Access-Control-Allow-Origin` se controla mediante la variable `FRONTEND_URL`, permitiendo adaptar rápidamente el origen en despliegues.
-
-=======
    - `POST /api/login`
 
 ## Arquitectura del backend
@@ -117,7 +90,6 @@ Al ejecutar `php artisan migrate --seed` se generan cuatro cuentas con acceso a 
 
 Después de iniciar sesión, el frontend redirige automáticamente al tablero correspondiente usando la información provista por la API.
 
->>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
 ## Construcción para producción
 
 Para generar una versión optimizada del frontend lista para desplegar:

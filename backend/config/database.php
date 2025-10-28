@@ -16,11 +16,7 @@ return [
     |
     */
 
-<<<<<<< HEAD
-    'default' => env('DB_CONNECTION', 'sqlite'),
-=======
     'default' => env('DB_CONNECTION', 'pgsql'),
->>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
 
     /*
     |--------------------------------------------------------------------------
@@ -98,11 +94,7 @@ return [
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
-<<<<<<< HEAD
-            'search_path' => 'public',
-=======
             'search_path' => env('DB_SCHEMA', 'public'),
->>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
             'sslmode' => 'prefer',
         ],
 
