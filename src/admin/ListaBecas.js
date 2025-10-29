@@ -26,6 +26,10 @@ const ListadoBecas = () => {
   const [saving, setSaving] = useState(false);
   const [investigadores, setInvestigadores] = useState([]);
   const [evaluadores, setEvaluadores] = useState([]);
+  const [assigningBecaId, setAssigningBecaId] = useState(null);
+  const [assignmentTutorId, setAssignmentTutorId] = useState('');
+  const [assignmentError, setAssignmentError] = useState('');
+  const [assignmentSaving, setAssignmentSaving] = useState(false);
 
   const fetchBecas = async () => {
     setLoading(true);
@@ -123,6 +127,20 @@ const ListadoBecas = () => {
     }
   };
 
+  const handleStartAssignTutor = (beca) => {
+    setAssigningBecaId(beca.id);
+    setAssignmentTutorId(beca.tutor?.id ? String(beca.tutor.id) : '');
+    setAssignmentError('');
+  };
+
+  const handleCancelAssignTutor = () => {
+    if (!assignmentSaving) {
+      setAssigningBecaId(null);
+      setAssignmentTutorId('');
+      setAssignmentError('');
+    }
+  };
+
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -208,6 +226,57 @@ const ListadoBecas = () => {
     }
   };
 
+  const handleAssignTutorSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!assigningBecaId) {
+      return;
+    }
+
+    if (!assignmentTutorId) {
+      setAssignmentError('Selecciona un tutor para continuar.');
+      return;
+    }
+
+    setAssignmentSaving(true);
+    setAssignmentError('');
+
+    try {
+      const response = await fetch(`/api/becas/${assigningBecaId}/tutor`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tutorId: Number(assignmentTutorId) }),
+      });
+
+      if (!response.ok) {
+        let message = 'No se pudo asignar el tutor seleccionado.';
+        try {
+          const errorPayload = await response.json();
+          message = buildErrorMessage(errorPayload, message);
+        } catch (parseError) {
+          // Ignoramos el error de parseo y usamos el mensaje por defecto.
+        }
+        throw new Error(message);
+      }
+
+      const responseData = await response.json();
+      const updatedBeca = responseData?.data ?? responseData;
+
+      setBecas((prev) =>
+        prev.map((item) => (item.id === updatedBeca.id ? { ...item, ...updatedBeca } : item))
+      );
+
+      setAssigningBecaId(null);
+      setAssignmentTutorId('');
+    } catch (err) {
+      setAssignmentError(err.message || 'No se pudo asignar el tutor seleccionado.');
+    } finally {
+      setAssignmentSaving(false);
+    }
+  };
+
   const handleDelete = async (beca) => {
     const confirmation = window.confirm(
       `¿Deseas eliminar la beca ${beca.codigo}? Esta acción no se puede deshacer.`
@@ -271,8 +340,9 @@ const ListadoBecas = () => {
             </thead>
             <tbody>
               {sortedBecas.map((beca) => (
-                <tr key={beca.id}>
-                  <td>{beca.codigo}</td>
+                <React.Fragment key={beca.id}>
+                  <tr>
+                    <td>{beca.codigo}</td>
                   <td>{beca.tituloProyecto ?? '—'}</td>
                   <td>{beca.areaInvestigacion ?? '—'}</td>
                   <td>{beca.becario?.nombre ?? 'Sin asignar'}</td>
@@ -287,6 +357,15 @@ const ListadoBecas = () => {
                   <td>{beca.evaluacionFinal ?? '—'}</td>
                   <td className="text-center">
                     <div className="btn-group" role="group">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-primary"
+                        title={beca.tutor ? 'Cambiar tutor' : 'Asignar tutor'}
+                        onClick={() => handleStartAssignTutor(beca)}
+                        disabled={assignmentSaving && assigningBecaId === beca.id}
+                      >
+                        <i className="bi bi-person-badge"></i>
+                      </button>
                       <button
                         type="button"
                         className="btn btn-sm btn-outline-secondary"
@@ -305,7 +384,63 @@ const ListadoBecas = () => {
                       </button>
                     </div>
                   </td>
-                </tr>
+                  </tr>
+                  {assigningBecaId === beca.id && (
+                    <tr key={`${beca.id}-assign`} className="table-light">
+                      <td colSpan="10">
+                      <form className="row g-3 align-items-end" onSubmit={handleAssignTutorSubmit}>
+                        <div className="col-md-5">
+                          <label className="form-label" htmlFor={`tutor-select-${beca.id}`}>
+                            Selecciona un tutor para {beca.becario?.nombre ?? 'el becario'}
+                          </label>
+                          <select
+                            id={`tutor-select-${beca.id}`}
+                            className="form-select"
+                            value={assignmentTutorId}
+                            onChange={(event) => setAssignmentTutorId(event.target.value)}
+                            disabled={assignmentSaving}
+                            required
+                          >
+                            <option value="">Selecciona un tutor…</option>
+                            {evaluadores.map((evaluador) => (
+                              <option key={evaluador.id} value={evaluador.id}>
+                                {evaluador.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-md-3">
+                          <label className="form-label">&nbsp;</label>
+                          <div>
+                            <button
+                              type="submit"
+                              className="btn btn-primary me-2"
+                              disabled={assignmentSaving}
+                            >
+                              {assignmentSaving ? 'Guardando…' : 'Guardar asignación'}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-outline-secondary"
+                              onClick={handleCancelAssignTutor}
+                              disabled={assignmentSaving}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                        <div className="col-md-4">
+                          {assignmentError && (
+                            <div className="alert alert-danger mb-0" role="alert">
+                              {assignmentError}
+                            </div>
+                          )}
+                        </div>
+                      </form>
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
