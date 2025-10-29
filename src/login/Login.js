@@ -43,6 +43,15 @@ function Login() {
       }
 
       const payload = await response.json();
+
+      if (typeof window !== "undefined") {
+        try {
+          window.sessionStorage.setItem("sessionUser", JSON.stringify(payload));
+        } catch (storageError) {
+          console.error("No se pudo guardar la sesión del usuario", storageError);
+        }
+      }
+
       navigate(payload.dashboardRoute, { state: { user: payload } });
     } catch (err) {
       setError(err.message);

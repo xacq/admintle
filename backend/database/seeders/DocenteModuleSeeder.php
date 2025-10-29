@@ -14,6 +14,7 @@ class DocenteModuleSeeder extends Seeder
      */
     public function run(): void
     {
+        DB::table('becas')->delete();
         DB::table('users')->delete();
         DB::table('roles')->delete();
 
@@ -45,6 +46,20 @@ class DocenteModuleSeeder extends Seeder
                 'name' => 'director',
                 'display_name' => 'Director',
                 'dashboard_route' => '/dashboard/director',
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+            [
+                'name' => 'investigador',
+                'display_name' => 'Investigador',
+                'dashboard_route' => '/dashboard/becario',
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+            [
+                'name' => 'evaluador',
+                'display_name' => 'Evaluador',
+                'dashboard_route' => '/dashboard/tutor',
                 'created_at' => $timestamp,
                 'updated_at' => $timestamp,
             ],
@@ -90,6 +105,95 @@ class DocenteModuleSeeder extends Seeder
                 'role_id' => $roleIds['director'],
                 'created_at' => $timestamp,
                 'updated_at' => $timestamp,
+            ],
+            [
+                'name' => 'Ana Guzmán',
+                'email' => 'ana.guzman@example.com',
+                'username' => 'ana.guzman',
+                'password' => Hash::make('password123'),
+                'role_id' => $roleIds['investigador'],
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+            [
+                'name' => 'Luis Mamani',
+                'email' => 'luis.mamani@example.com',
+                'username' => 'luis.mamani',
+                'password' => Hash::make('password123'),
+                'role_id' => $roleIds['investigador'],
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+            [
+                'name' => 'José Flores',
+                'email' => 'jose.flores@example.com',
+                'username' => 'jose.flores',
+                'password' => Hash::make('password123'),
+                'role_id' => $roleIds['investigador'],
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+            [
+                'name' => 'Lic. Anny Mercado Algarañaz',
+                'email' => 'anny.mercado@example.com',
+                'username' => 'anny.mercado',
+                'password' => Hash::make('password123'),
+                'role_id' => $roleIds['evaluador'],
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+            [
+                'name' => 'Dr. Luis Rojas',
+                'email' => 'luis.rojas@example.com',
+                'username' => 'luis.rojas',
+                'password' => Hash::make('password123'),
+                'role_id' => $roleIds['evaluador'],
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+            [
+                'name' => 'MSc. Juan García',
+                'email' => 'juan.garcia@example.com',
+                'username' => 'juan.garcia',
+                'password' => Hash::make('password123'),
+                'role_id' => $roleIds['evaluador'],
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ],
+        ]);
+
+        $userIds = DB::table('users')->pluck('id', 'username');
+
+        DB::table('becas')->insert([
+            [
+                'codigo' => 'PI-UATF-041',
+                'becario_id' => $userIds['ana.guzman'],
+                'tutor_id' => $userIds['anny.mercado'],
+                'fecha_inicio' => '2024-02-15',
+                'fecha_fin' => '2024-11-30',
+                'estado' => 'Activa',
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'codigo' => 'PI-UATF-042',
+                'becario_id' => $userIds['luis.mamani'],
+                'tutor_id' => $userIds['luis.rojas'],
+                'fecha_inicio' => '2024-03-10',
+                'fecha_fin' => '2024-12-20',
+                'estado' => 'En evaluación',
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'codigo' => 'PI-UATF-043',
+                'becario_id' => $userIds['jose.flores'],
+                'tutor_id' => $userIds['juan.garcia'],
+                'fecha_inicio' => '2023-09-01',
+                'fecha_fin' => '2024-06-30',
+                'estado' => 'Finalizada',
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
             ],
         ]);
 

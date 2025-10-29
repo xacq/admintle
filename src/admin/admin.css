@@ -19,6 +19,38 @@
   cursor: pointer;
 }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(33, 37, 41, 0.55);
+  padding: 1rem;
+}
+
+.modal-dialog-centered {
+  width: 100%;
+  max-width: 640px;
+}
+
+.modal-content {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  overflow: hidden;
+}
+
+.modal-header,
+.modal-footer {
+  background-color: #f8f9fa;
+}
+
+.modal-title {
+  margin: 0;
+}
+
 /* Para los iconos de Bootstrap, añade el CDN en index.html si no lo tienes */
 @import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css");
 
