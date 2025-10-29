@@ -11,6 +11,9 @@ const emptyForm = {
   fechaInicio: '',
   fechaFin: '',
   estado: ESTADO_OPTIONS[0],
+  tituloProyecto: '',
+  areaInvestigacion: '',
+  evaluacionFinal: '',
 };
 
 const ListadoBecas = () => {
@@ -106,6 +109,9 @@ const ListadoBecas = () => {
       fechaInicio: beca.fechaInicio ?? '',
       fechaFin: beca.fechaFin ?? '',
       estado: beca.estado ?? ESTADO_OPTIONS[0],
+      tituloProyecto: beca.tituloProyecto ?? '',
+      areaInvestigacion: beca.areaInvestigacion ?? '',
+      evaluacionFinal: beca.evaluacionFinal ?? '',
     });
     setFormError('');
     setModalOpen(true);
@@ -155,6 +161,9 @@ const ListadoBecas = () => {
       fechaInicio: formData.fechaInicio,
       fechaFin: formData.fechaFin || null,
       estado: formData.estado,
+      tituloProyecto: formData.tituloProyecto.trim(),
+      areaInvestigacion: formData.areaInvestigacion.trim(),
+      evaluacionFinal: formData.evaluacionFinal.trim(),
     };
 
     const isEdit = Boolean(formData.id);
@@ -247,11 +256,14 @@ const ListadoBecas = () => {
             <thead className="table-light">
               <tr>
                 <th scope="col">Código</th>
+                <th scope="col">Título del proyecto</th>
+                <th scope="col">Área de investigación</th>
                 <th scope="col">Becario</th>
                 <th scope="col">Tutor</th>
                 <th scope="col">Fecha inicio</th>
                 <th scope="col">Fecha fin</th>
                 <th scope="col">Estado</th>
+                <th scope="col">Evaluación final</th>
                 <th scope="col" className="text-center">
                   Acciones
                 </th>
@@ -261,6 +273,8 @@ const ListadoBecas = () => {
               {sortedBecas.map((beca) => (
                 <tr key={beca.id}>
                   <td>{beca.codigo}</td>
+                  <td>{beca.tituloProyecto ?? '—'}</td>
+                  <td>{beca.areaInvestigacion ?? '—'}</td>
                   <td>{beca.becario?.nombre ?? 'Sin asignar'}</td>
                   <td>{beca.tutor?.nombre ?? 'Sin asignar'}</td>
                   <td>{beca.fechaInicio ?? '—'}</td>
@@ -270,6 +284,7 @@ const ListadoBecas = () => {
                       {beca.estado}
                     </span>
                   </td>
+                  <td>{beca.evaluacionFinal ?? '—'}</td>
                   <td className="text-center">
                     <div className="btn-group" role="group">
                       <button
@@ -326,6 +341,36 @@ const ListadoBecas = () => {
                       type="text"
                       className="form-control"
                       value={formData.codigo}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label" htmlFor="tituloProyecto">
+                      Título del proyecto
+                    </label>
+                    <input
+                      id="tituloProyecto"
+                      name="tituloProyecto"
+                      type="text"
+                      className="form-control"
+                      value={formData.tituloProyecto}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label" htmlFor="areaInvestigacion">
+                      Área de investigación
+                    </label>
+                    <input
+                      id="areaInvestigacion"
+                      name="areaInvestigacion"
+                      type="text"
+                      className="form-control"
+                      value={formData.areaInvestigacion}
                       onChange={handleInputChange}
                       required
                     />
@@ -421,6 +466,20 @@ const ListadoBecas = () => {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label" htmlFor="evaluacionFinal">
+                      Evaluación final
+                    </label>
+                    <textarea
+                      id="evaluacionFinal"
+                      name="evaluacionFinal"
+                      className="form-control"
+                      value={formData.evaluacionFinal}
+                      onChange={handleInputChange}
+                      rows={3}
+                    />
                   </div>
                 </div>
 
