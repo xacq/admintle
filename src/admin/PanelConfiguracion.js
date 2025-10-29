@@ -1,44 +1,23 @@
 // src/components/PanelConfiguracion.js
 
-import React, { useState } from 'react';
-import { Container, Card, Row, Col, Form, Button, Table, Nav, Tab, Badge, Alert, ListGroup } from 'react-bootstrap';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Container,
+  Card,
+  Row,
+  Col,
+  Form,
+  Button,
+  Table,
+  Nav,
+  Tab,
+  Badge,
+  Alert,
+  ListGroup,
+  Modal,
+  Spinner,
+} from 'react-bootstrap';
 import './admin.css';
-
-// --- DATOS ESTÁTICOS DE EJEMPLO ---
-const usuariosData = [
-  {
-    id: 1,
-    nombre: 'Juan Pérez Mamani',
-    correo: 'juan.perez@uatf.edu.bo',
-    rol: 'Investigador',
-    estado: 'Activo',
-    fechaCreacion: '2024-01-15'
-  },
-  {
-    id: 2,
-    nombre: 'María García López',
-    correo: 'maria.garcia@uatf.edu.bo',
-    rol: 'Tutor',
-    estado: 'Activo',
-    fechaCreacion: '2023-08-22'
-  },
-  {
-    id: 3,
-    nombre: 'Carlos Rojas Fernández',
-    correo: 'carlos.rojas@uatf.edu.bo',
-    rol: 'Director',
-    estado: 'Activo',
-    fechaCreacion: '2023-03-10'
-  },
-  {
-    id: 4,
-    nombre: 'Ana Choque Quispe',
-    correo: 'ana.choque@uatf.edu.bo',
-    rol: 'Investigador',
-    estado: 'Inactivo',
-    fechaCreacion: '2024-02-05'
-  }
-];
 
 const rolesData = [
   { id: 1, nombre: 'Administrador', descripcion: 'Acceso completo al sistema' },
@@ -57,7 +36,22 @@ const permisosData = [
 
 const PanelConfiguracion = () => {
   const [activeTab, setActiveTab] = useState('usuarios');
-  const [usuarios, setUsuarios] = useState(usuariosData);
+  const [usuarios, setUsuarios] = useState([]);
+  const [usuariosLoading, setUsuariosLoading] = useState(false);
+  const [usuariosError, setUsuariosError] = useState(null);
+  const [roles, setRoles] = useState([]);
+  const [showUsuarioModal, setShowUsuarioModal] = useState(false);
+  const [usuarioForm, setUsuarioForm] = useState({
+    name: '',
+    email: '',
+    username: '',
+    password: '',
+    roleId: '',
+  });
+  const [formErrors, setFormErrors] = useState({});
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [usuarioAccionId, setUsuarioAccionId] = useState(null);
   const [parametros, setParametros] = useState({
     nombreInstitucional: 'Dirección de Ciencia e Innovación Tecnológica – UATF',
     anioGestion: '2025',
@@ -72,13 +66,67 @@ const PanelConfiguracion = () => {
     setActiveTab(tab);
   };
 
-  const handleCambiarEstadoUsuario = (id) => {
-    setUsuarios(usuarios.map(usuario => 
-      usuario.id === id 
-        ? { ...usuario, estado: usuario.estado === 'Activo' ? 'Inactivo' : 'Activo' }
-        : usuario
-    ));
-    alert('Estado de usuario actualizado (simulación)');
+  const cargarUsuarios = async () => {
+    setUsuariosLoading(true);
+    setUsuariosError(null);
+
+    try {
+      const response = await fetch('/api/users');
+      if (!response.ok) {
+        throw new Error('No se pudo cargar la lista de usuarios');
+      }
+
+      const data = await response.json();
+      setUsuarios(Array.isArray(data?.data) ? data.data : []);
+    } catch (error) {
+      console.error(error);
+      setUsuariosError(error.message);
+    } finally {
+      setUsuariosLoading(false);
+    }
+  };
+
+  const cargarRoles = async () => {
+    try {
+      const response = await fetch('/api/roles');
+      if (!response.ok) {
+        throw new Error('No se pudo cargar la lista de roles');
+      }
+
+      const data = await response.json();
+      setRoles(Array.isArray(data?.data) ? data.data : []);
+    } catch (error) {
+      console.error(error);
+      setFeedback({ type: 'danger', message: error.message });
+    }
+  };
+
+  useEffect(() => {
+    cargarUsuarios();
+    cargarRoles();
+  }, []);
+
+  const handleCambiarEstadoUsuario = async (id) => {
+    setUsuarioAccionId(id);
+    setFeedback(null);
+
+    try {
+      const response = await fetch(`/api/users/${id}/toggle`, { method: 'PATCH' });
+      if (!response.ok) {
+        throw new Error('No se pudo actualizar el estado del usuario');
+      }
+
+      const data = await response.json();
+      setUsuarios((prevUsuarios) =>
+        prevUsuarios.map((usuario) => (usuario.id === id ? data.data : usuario))
+      );
+      setFeedback({ type: 'success', message: 'Estado del usuario actualizado correctamente.' });
+    } catch (error) {
+      console.error(error);
+      setFeedback({ type: 'danger', message: error.message });
+    } finally {
+      setUsuarioAccionId(null);
+    }
   };
 
   const handleResetPassword = (id) => {
@@ -97,6 +145,115 @@ const PanelConfiguracion = () => {
   const handleRespaldo = (accion) => {
     alert(`Realizando acción de respaldo: ${accion} (simulación)`);
   };
+
+  const handleAbrirModalUsuario = () => {
+    setUsuarioForm({ name: '', email: '', username: '', password: '', roleId: '' });
+    setFormErrors({});
+    setFeedback(null);
+    setShowUsuarioModal(true);
+  };
+
+  const handleCerrarModalUsuario = () => {
+    if (!formSubmitting) {
+      setShowUsuarioModal(false);
+    }
+  };
+
+  const handleChangeUsuarioForm = (field, value) => {
+    setUsuarioForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const validarFormularioUsuario = () => {
+    const errores = {};
+
+    if (!usuarioForm.name.trim()) {
+      errores.name = 'El nombre es obligatorio.';
+    }
+
+    if (!usuarioForm.email.trim()) {
+      errores.email = 'El correo es obligatorio.';
+    }
+
+    if (!usuarioForm.username.trim()) {
+      errores.username = 'El nombre de usuario es obligatorio.';
+    }
+
+    if (!usuarioForm.password.trim()) {
+      errores.password = 'La contraseña es obligatoria.';
+    } else if (usuarioForm.password.length < 8) {
+      errores.password = 'La contraseña debe tener al menos 8 caracteres.';
+    }
+
+    if (!usuarioForm.roleId) {
+      errores.roleId = 'Debe seleccionar un rol.';
+    }
+
+    setFormErrors(errores);
+
+    return Object.keys(errores).length === 0;
+  };
+
+  const handleSubmitUsuario = async (event) => {
+    event.preventDefault();
+
+    if (!validarFormularioUsuario()) {
+      return;
+    }
+
+    setFormSubmitting(true);
+    setFeedback(null);
+
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: usuarioForm.name.trim(),
+          email: usuarioForm.email.trim(),
+          username: usuarioForm.username.trim(),
+          password: usuarioForm.password,
+          role_id: Number(usuarioForm.roleId),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        const firstError = errorBody?.errors
+          ? Object.values(errorBody.errors).flat()[0]
+          : null;
+        const message = firstError || errorBody?.message || 'No se pudo crear el usuario.';
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+      const nuevoUsuario = data.data;
+
+      setUsuarios((prevUsuarios) =>
+        [...prevUsuarios, nuevoUsuario].sort((a, b) => a.name.localeCompare(b.name))
+      );
+
+      setFeedback({ type: 'success', message: 'Usuario creado correctamente.' });
+      setShowUsuarioModal(false);
+    } catch (error) {
+      console.error(error);
+      setFeedback({ type: 'danger', message: error.message });
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
+  const usuariosFormateados = useMemo(
+    () =>
+      usuarios.map((usuario) => ({
+        ...usuario,
+        displayRole: usuario?.role?.displayName || 'Sin rol',
+        estado: usuario?.isActive ? 'Activo' : 'Inactivo',
+        fechaCreacion: usuario?.createdAt
+          ? new Date(usuario.createdAt).toLocaleDateString('es-BO')
+          : '—',
+      })),
+    [usuarios]
+  );
 
   return (
     <Container fluid className="panel-configuracion-wrapper">
@@ -157,56 +314,83 @@ const PanelConfiguracion = () => {
             <Card>
               <Card.Header as="h5" className="fw-bold d-flex justify-content-between align-items-center">
                 <span>Gestión de Usuarios</span>
-                <Button variant="primary" size="sm">Nuevo usuario</Button>
+                <Button variant="primary" size="sm" onClick={handleAbrirModalUsuario}>
+                  Nuevo usuario
+                </Button>
               </Card.Header>
               <Card.Body>
-                <Table responsive striped hover>
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Nombre completo</th>
-                      <th>Correo institucional</th>
-                      <th>Rol asignado</th>
-                      <th>Estado</th>
-                      <th>Fecha de creación</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {usuarios.map(usuario => (
-                      <tr key={usuario.id}>
-                        <td>{usuario.id}</td>
-                        <td>{usuario.nombre}</td>
-                        <td>{usuario.correo}</td>
-                        <td>{usuario.rol}</td>
-                        <td>
-                          <Badge bg={usuario.estado === 'Activo' ? 'success' : 'secondary'}>
-                            {usuario.estado}
-                          </Badge>
-                        </td>
-                        <td>{usuario.fechaCreacion}</td>
-                        <td>
-                          <Button variant="outline-primary" size="sm" className="me-1">Editar</Button>
-                          <Button 
-                            variant={usuario.estado === 'Activo' ? 'outline-warning' : 'outline-success'} 
-                            size="sm" 
-                            className="me-1"
-                            onClick={() => handleCambiarEstadoUsuario(usuario.id)}
-                          >
-                            {usuario.estado === 'Activo' ? 'Desactivar' : 'Activar'}
-                          </Button>
-                          <Button 
-                            variant="outline-secondary" 
-                            size="sm"
-                            onClick={() => handleResetPassword(usuario.id)}
-                          >
-                            Resetear contraseña
-                          </Button>
-                        </td>
+                {feedback && (
+                  <Alert variant={feedback.type} onClose={() => setFeedback(null)} dismissible>
+                    {feedback.message}
+                  </Alert>
+                )}
+
+                {usuariosLoading ? (
+                  <div className="text-center py-4">
+                    <Spinner animation="border" role="status" className="me-2" />
+                    <span>Cargando usuarios...</span>
+                  </div>
+                ) : usuariosError ? (
+                  <Alert variant="danger">{usuariosError}</Alert>
+                ) : usuariosFormateados.length === 0 ? (
+                  <Alert variant="info" className="mb-0">
+                    Aún no hay usuarios registrados en el sistema.
+                  </Alert>
+                ) : (
+                  <Table responsive striped hover>
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Nombre completo</th>
+                        <th>Correo institucional</th>
+                        <th>Rol asignado</th>
+                        <th>Estado</th>
+                        <th>Fecha de creación</th>
+                        <th>Acciones</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </Table>
+                    </thead>
+                    <tbody>
+                      {usuariosFormateados.map((usuario) => (
+                        <tr key={usuario.id}>
+                          <td>{usuario.id}</td>
+                          <td>{usuario.name}</td>
+                          <td>{usuario.email}</td>
+                          <td>{usuario.displayRole}</td>
+                          <td>
+                            <Badge bg={usuario.estado === 'Activo' ? 'success' : 'secondary'}>
+                              {usuario.estado}
+                            </Badge>
+                          </td>
+                          <td>{usuario.fechaCreacion}</td>
+                          <td>
+                            <Button variant="outline-primary" size="sm" className="me-1" disabled>
+                              Editar
+                            </Button>
+                            <Button
+                              variant={usuario.estado === 'Activo' ? 'outline-warning' : 'outline-success'}
+                              size="sm"
+                              className="me-1"
+                              onClick={() => handleCambiarEstadoUsuario(usuario.id)}
+                              disabled={usuarioAccionId === usuario.id}
+                            >
+                              {usuarioAccionId === usuario.id ? (
+                                <Spinner animation="border" size="sm" role="status" className="me-1" />
+                              ) : null}
+                              {usuario.estado === 'Activo' ? 'Desactivar' : 'Activar'}
+                            </Button>
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              onClick={() => handleResetPassword(usuario.id)}
+                            >
+                              Resetear contraseña
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                )}
               </Card.Body>
             </Card>
           )}
@@ -436,6 +620,86 @@ const PanelConfiguracion = () => {
           )}
         </Col>
       </Row>
+
+      <Modal show={showUsuarioModal} onHide={handleCerrarModalUsuario} centered>
+        <Form onSubmit={handleSubmitUsuario}>
+          <Modal.Header closeButton={!formSubmitting}>
+            <Modal.Title>Nuevo usuario</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form.Group className="mb-3" controlId="nuevoUsuarioNombre">
+              <Form.Label>Nombre completo</Form.Label>
+              <Form.Control
+                type="text"
+                value={usuarioForm.name}
+                onChange={(event) => handleChangeUsuarioForm('name', event.target.value)}
+                isInvalid={Boolean(formErrors.name)}
+              />
+              <Form.Control.Feedback type="invalid">{formErrors.name}</Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="nuevoUsuarioCorreo">
+              <Form.Label>Correo institucional</Form.Label>
+              <Form.Control
+                type="email"
+                value={usuarioForm.email}
+                onChange={(event) => handleChangeUsuarioForm('email', event.target.value)}
+                isInvalid={Boolean(formErrors.email)}
+              />
+              <Form.Control.Feedback type="invalid">{formErrors.email}</Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="nuevoUsuarioUsername">
+              <Form.Label>Nombre de usuario</Form.Label>
+              <Form.Control
+                type="text"
+                value={usuarioForm.username}
+                onChange={(event) => handleChangeUsuarioForm('username', event.target.value)}
+                isInvalid={Boolean(formErrors.username)}
+              />
+              <Form.Control.Feedback type="invalid">{formErrors.username}</Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="nuevoUsuarioPassword">
+              <Form.Label>Contraseña temporal</Form.Label>
+              <Form.Control
+                type="password"
+                value={usuarioForm.password}
+                onChange={(event) => handleChangeUsuarioForm('password', event.target.value)}
+                isInvalid={Boolean(formErrors.password)}
+                placeholder="Mínimo 8 caracteres"
+              />
+              <Form.Control.Feedback type="invalid">{formErrors.password}</Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group className="mb-0" controlId="nuevoUsuarioRol">
+              <Form.Label>Rol asignado</Form.Label>
+              <Form.Select
+                value={usuarioForm.roleId}
+                onChange={(event) => handleChangeUsuarioForm('roleId', event.target.value)}
+                isInvalid={Boolean(formErrors.roleId)}
+              >
+                <option value="">Seleccione un rol</option>
+                {roles.map((rol) => (
+                  <option key={rol.id} value={rol.id}>
+                    {rol.displayName}
+                  </option>
+                ))}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">{formErrors.roleId}</Form.Control.Feedback>
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleCerrarModalUsuario} disabled={formSubmitting}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="primary" disabled={formSubmitting}>
+              {formSubmitting ? <Spinner animation="border" size="sm" role="status" className="me-2" /> : null}
+              Guardar usuario
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
 
       {/* Pie institucional */}
       <footer className="text-center py-3 mt-5 border-top">
