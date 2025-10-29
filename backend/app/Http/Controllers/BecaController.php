@@ -76,6 +76,19 @@ class BecaController extends Controller
         return new BecaResource($beca);
     }
 
+    public function assignTutor(Request $request, Beca $beca)
+    {
+        $data = $this->validateTutorAssignment($request);
+
+        $beca->update([
+            'tutor_id' => $data['tutorId'],
+        ]);
+
+        $beca->load(['becario', 'tutor']);
+
+        return new BecaResource($beca);
+    }
+
     /**
      * Remove the specified resource from storage.
      */
@@ -130,6 +143,28 @@ class BecaController extends Controller
             'tutorId' => 'tutor',
             'fechaInicio' => 'fecha de inicio',
             'fechaFin' => 'fecha de fin',
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function validateTutorAssignment(Request $request): array
+    {
+        $evaluadorRoleId = Role::where('name', 'evaluador')->value('id');
+
+        return $request->validate([
+            'tutorId' => [
+                'required',
+                'integer',
+                Rule::exists('users', 'id')->where(function ($query) use ($evaluadorRoleId) {
+                    if ($evaluadorRoleId) {
+                        $query->where('role_id', $evaluadorRoleId);
+                    }
+                }),
+            ],
+        ], [], [
+            'tutorId' => 'tutor',
         ]);
     }
 }

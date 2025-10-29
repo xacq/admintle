@@ -10,6 +10,7 @@ use Illuminate\Validation\ValidationException;
 
 Route::middleware('api')->group(function () {
     Route::apiResource('becas', BecaController::class)->except(['show']);
+    Route::patch('/becas/{beca}/tutor', [BecaController::class, 'assignTutor']);
 
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
