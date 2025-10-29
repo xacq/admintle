@@ -1,48 +1,55 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Table, Badge, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import useSessionUser from '../hooks/useSessionUser';
 import '../becario/estudiante.css';
-
-// --- DATOS ESTÁTICOS DE EJEMPLO ---
-const infoGeneral = {
-  nombreTutor: 'Lic. Anny Mercado Algarañaz',
-  tituloProyecto: 'Análisis de Algoritmos de Optimización para Big Data',
-  estadoBeca: 'Activa'
-};
-
-const indicadoresPersonales = {
-  reportesEnviados: 3,
-  reportesPendientes: 1,
-  calificacionPromedio: 8.7
-};
-
-const reportesEnviadosData = [
-  {
-    numero: 1,
-    fechaEnvio: '2024-07-15',
-    estado: 'Aprobado',
-    observaciones: 'Buen avance inicial. Sugerir ampliar la sección de metodología.'
-  },
-  {
-    numero: 2,
-    fechaEnvio: '2024-08-15',
-    estado: 'Devuelto',
-    observaciones: 'Faltan los gráficos de rendimiento. Por favor, adjuntarlos.'
-  },
-  {
-    numero: 3,
-    fechaEnvio: '2024-09-15',
-    estado: 'Pendiente de Revisión',
-    observaciones: 'Enviado para revisión del tutor.'
-  }
-];
 
 const DashboardBecario = () => {
   const navigate = useNavigate();
+  const user = useSessionUser();
+  const [beca, setBeca] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // --- MANEJADORES DE NAVEGACIÓN ---
-  const handleVerDetalles = (numeroReporte) => {
-    navigate(`/becario/reportes/${numeroReporte}`);
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    const loadBeca = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const response = await fetch(`/api/becas?becario_id=${user.id}`);
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const data = Array.isArray(payload?.data) ? payload.data : payload;
+        setBeca(Array.isArray(data) ? data[0] ?? null : null);
+      } catch (err) {
+        setError(err.message || 'No se pudo obtener la información de tu beca.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBeca();
+  }, [user?.id]);
+
+  const getEstadoBadgeVariant = (estado) => {
+    switch (estado) {
+      case 'Activa':
+        return 'success';
+      case 'En evaluación':
+        return 'warning';
+      case 'Finalizada':
+        return 'secondary';
+      default:
+        return 'primary';
+    }
   };
 
   const handleAccesoDirecto = (modulo) => {
@@ -61,22 +68,8 @@ const DashboardBecario = () => {
     }
   };
 
-  const getEstadoBadgeVariant = (estado) => {
-    switch (estado) {
-      case 'Aprobado':
-        return 'success';
-      case 'Devuelto':
-        return 'danger';
-      case 'Pendiente de Revisión':
-        return 'warning';
-      default:
-        return 'secondary';
-    }
-  };
-
   return (
     <div className="dashboard-becario-wrapper">
-      {/* 1. Encabezado institucional */}
       <header className="dashboard-header text-center py-4 border-bottom">
         <Container>
           <Row className="align-items-center">
@@ -93,134 +86,150 @@ const DashboardBecario = () => {
               <h1 className="h3 mb-0 fw-bold">Panel del Becario Auxiliar de Investigación</h1>
             </Col>
             <Col md={3} className="text-end">
-              <span className="text-muted">Bienvenido,</span><br/>
-              <strong>Juan Pérez Mamani</strong>
+              <span className="text-muted">Bienvenido,</span>
+              <br />
+              <strong>{user?.name ?? 'Becario'}</strong>
             </Col>
           </Row>
         </Container>
       </header>
 
       <Container className="py-4">
-        {/* 2. Panel de información general */}
         <Card className="mb-4">
-          <Card.Header as="h5" className="fw-bold">Información de mi Beca</Card.Header>
+          <Card.Header as="h5" className="fw-bold">
+            Información de mi beca
+          </Card.Header>
           <Card.Body>
-            <Row className="g-3">
-              <Col md={4}>
-                <p className="mb-1"><strong>Nombre del tutor asignado:</strong></p>
-                <p>{infoGeneral.nombreTutor}</p>
-              </Col>
-              <Col md={5}>
-                <p className="mb-1"><strong>Código o título del proyecto:</strong></p>
-                <p>{infoGeneral.tituloProyecto}</p>
-              </Col>
-              <Col md={3}>
-                <p className="mb-1"><strong>Estado actual de la beca:</strong></p>
-                <p>
-                  <Badge bg="success">
-                    {infoGeneral.estadoBeca}
-                  </Badge>
-                </p>
-              </Col>
-            </Row>
+            {error && (
+              <div className="alert alert-danger" role="alert">
+                {error}
+              </div>
+            )}
+
+            {loading ? (
+              <p className="mb-0">Cargando información…</p>
+            ) : !beca ? (
+              <p className="mb-0">
+                Aún no tienes una beca registrada. Contacta a tu tutor para más detalles.
+              </p>
+            ) : (
+              <Row className="g-3">
+                <Col md={4}>
+                  <p className="mb-1">
+                    <strong>Código o título del proyecto:</strong>
+                  </p>
+                  <p className="mb-0">{beca.codigo}</p>
+                </Col>
+                <Col md={4}>
+                  <p className="mb-1">
+                    <strong>Tutor asignado:</strong>
+                  </p>
+                  <p className="mb-0">{beca.tutor?.nombre ?? 'Sin asignar'}</p>
+                </Col>
+                <Col md={4}>
+                  <p className="mb-1">
+                    <strong>Estado actual:</strong>
+                  </p>
+                  <Badge bg={getEstadoBadgeVariant(beca.estado)}>{beca.estado}</Badge>
+                </Col>
+              </Row>
+            )}
           </Card.Body>
         </Card>
 
-        {/* 3. Panel de avance personal */}
         <Row className="mb-4">
-          <Col md={4}>
+          <Col md={6}>
             <Card className="text-center metric-card">
               <Card.Body>
-                <h2 className="text-primary">{indicadoresPersonales.reportesEnviados}</h2>
-                <p className="text-muted mb-0">Reportes Enviados</p>
+                <h5 className="text-muted">Fecha de inicio</h5>
+                <h2 className="text-primary">{beca?.fechaInicio ?? '—'}</h2>
               </Card.Body>
             </Card>
           </Col>
-          <Col md={4}>
+          <Col md={6}>
             <Card className="text-center metric-card">
               <Card.Body>
-                <h2 className="text-warning">{indicadoresPersonales.reportesPendientes}</h2>
-                <p className="text-muted mb-0">Reportes Pendientes</p>
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col md={4}>
-            <Card className="text-center metric-card">
-              <Card.Body>
-                <h2 className="text-success">{indicadoresPersonales.calificacionPromedio}</h2>
-                <p className="text-muted mb-0">Calificación Promedio</p>
+                <h5 className="text-muted">Fecha de finalización</h5>
+                <h2 className="text-success">{beca?.fechaFin ?? '—'}</h2>
               </Card.Body>
             </Card>
           </Col>
         </Row>
 
         <Row>
-          {/* 4. Listado de reportes enviados */}
           <Col lg={8}>
             <Card className="h-100">
-              <Card.Header as="h5" className="fw-bold">Mis Reportes Enviados</Card.Header>
+              <Card.Header as="h5" className="fw-bold">
+                Resumen de mi proyecto
+              </Card.Header>
               <Card.Body>
                 <Table responsive hover>
                   <thead>
                     <tr>
-                      <th>N.º de reporte</th>
-                      <th>Fecha de envío</th>
+                      <th>Código</th>
+                      <th>Tutor</th>
                       <th>Estado</th>
-                      <th>Observaciones del tutor</th>
-                      <th>Acciones</th>
+                      <th>Inicio</th>
+                      <th>Fin</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {reportesEnviadosData.map((reporte) => (
-                      <tr key={reporte.numero}>
-                        <td>{reporte.numero}</td>
-                        <td>{reporte.fechaEnvio}</td>
-                        <td>
-                          <Badge bg={getEstadoBadgeVariant(reporte.estado)}>
-                            {reporte.estado}
-                          </Badge>
-                        </td>
-                        <td>{reporte.observaciones}</td>
-                        <td>
-                          <Button 
-                            variant="outline-primary" 
-                            size="sm"
-                            onClick={() => handleVerDetalles(reporte.numero)}
-                          >
-                            Ver detalles
-                          </Button>
+                    {loading ? (
+                      <tr>
+                        <td colSpan="5" className="text-center py-4">
+                          Cargando datos…
                         </td>
                       </tr>
-                    ))}
+                    ) : !beca ? (
+                      <tr>
+                        <td colSpan="5" className="text-center py-4">
+                          Sin registros disponibles.
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr>
+                        <td>{beca.codigo}</td>
+                        <td>{beca.tutor?.nombre ?? 'Sin asignar'}</td>
+                        <td>
+                          <Badge bg={getEstadoBadgeVariant(beca.estado)}>{beca.estado}</Badge>
+                        </td>
+                        <td>{beca.fechaInicio ?? '—'}</td>
+                        <td>{beca.fechaFin ?? '—'}</td>
+                      </tr>
+                    )}
                   </tbody>
                 </Table>
               </Card.Body>
             </Card>
           </Col>
 
-          {/* 5. Accesos directos */}
           <Col lg={4}>
             <Card className="h-100">
-              <Card.Header as="h5" className="fw-bold">Accesos Directos</Card.Header>
+              <Card.Header as="h5" className="fw-bold">
+                Accesos Directos
+              </Card.Header>
               <Card.Body className="d-flex flex-column justify-content-around">
-                <Button 
-                  variant="primary" 
+                <Button
+                  variant="primary"
                   className="mb-3 w-100"
                   onClick={() => handleAccesoDirecto('Subir Nuevo Reporte de Avance')}
+                  disabled={!beca}
                 >
                   📤 Subir Nuevo Reporte de Avance
                 </Button>
-                <Button 
-                  variant="info" 
+                <Button
+                  variant="info"
                   className="mb-3 w-100"
                   onClick={() => handleAccesoDirecto('Revisar Observaciones del Tutor')}
+                  disabled={!beca}
                 >
-                  💬 Revisar Observaciones del Tutor
+                  🗒️ Revisar Observaciones del Tutor
                 </Button>
-                <Button 
-                  variant="secondary" 
+                <Button
+                  variant="secondary"
                   className="w-100"
                   onClick={() => handleAccesoDirecto('Ver Calificaciones Finales')}
+                  disabled={!beca}
                 >
                   📊 Ver Calificaciones Finales
                 </Button>
@@ -230,13 +239,17 @@ const DashboardBecario = () => {
         </Row>
       </Container>
 
-      {/* 6. Pie de página */}
       <footer className="dashboard-footer text-center py-3 mt-4 border-top">
         <p className="mb-0">
           Dirección de Ciencia e Innovación Tecnológica – Universidad Autónoma Tomás Frías
         </p>
         <small className="text-muted">
-          {new Date().toLocaleDateString('es-BO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          Versión 1.0.3 –{' '}
+          {new Date().toLocaleDateString('es-BO', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}
         </small>
       </footer>
     </div>

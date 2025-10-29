@@ -1,113 +1,442 @@
-// src/components/ListadoBecas.js
-
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './admin.css';
 
-const ListadoBecas = () => {
-  // 1. Datos estáticos (arreglo temporal)
-  const [becas] = useState([
-    {
-      id: 1,
-      titulo: 'Desarrollo de un Sistema de Alerta Temprana',
-      investigador: 'Mayra Chumacero Vargas',
-      tutor: 'Lic. Anny Mercado Algañaz',
-      fechaInicio: '2024-02-15',
-      fechaFin: '2024-11-30',
-      estado: 'Activa'
-    },
-    {
-      id: 2,
-      titulo: 'Análisis de Algoritmos de Optimización',
-      investigador: 'Carlos Pérez Mamani',
-      tutor: 'Dr. Luis Rojas',
-      fechaInicio: '2023-09-01',
-      fechaFin: '2024-06-30',
-      estado: 'Finalizada'
-    },
-    {
-      id: 3,
-      titulo: 'Aplicación de IoT en la Agricultura',
-      investigador: 'Lucía Quispe Flores',
-      tutor: 'MSc. Juan García',
-      fechaInicio: '2024-03-10',
-      fechaFin: '2024-12-20',
-      estado: 'En Evaluación'
-    },
-    {
-      id: 4,
-      titulo: 'Modelado de Procesos de Negocio con UML',
-      investigador: 'Roberto Choque',
-      tutor: 'Lic. Anny Mercado Algañaz',
-      fechaInicio: '2024-01-20',
-      fechaFin: '2024-10-15',
-      estado: 'Activa'
-    }
-  ]);
+const ESTADO_OPTIONS = ['Activa', 'En evaluación', 'Finalizada'];
 
-  // Función para dar estilo al estado (badge)
+const emptyForm = {
+  id: null,
+  codigo: '',
+  becarioId: '',
+  tutorId: '',
+  fechaInicio: '',
+  fechaFin: '',
+  estado: ESTADO_OPTIONS[0],
+};
+
+const ListadoBecas = () => {
+  const [becas, setBecas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [formData, setFormData] = useState(emptyForm);
+  const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [investigadores, setInvestigadores] = useState([]);
+  const [evaluadores, setEvaluadores] = useState([]);
+
+  const fetchBecas = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/becas');
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}`);
+      }
+
+      const payload = await response.json();
+      const data = Array.isArray(payload?.data) ? payload.data : payload;
+      setBecas(data);
+    } catch (err) {
+      setError(err.message || 'No se pudo cargar el listado de becas.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchOptions = async () => {
+    try {
+      const [investigadoresResponse, evaluadoresResponse] = await Promise.all([
+        fetch('/api/roles/investigador/usuarios'),
+        fetch('/api/roles/evaluador/usuarios'),
+      ]);
+
+      if (!investigadoresResponse.ok || !evaluadoresResponse.ok) {
+        throw new Error('No se pudieron cargar las listas de usuarios.');
+      }
+
+      const investigadoresData = await investigadoresResponse.json();
+      const evaluadoresData = await evaluadoresResponse.json();
+
+      setInvestigadores(Array.isArray(investigadoresData) ? investigadoresData : []);
+      setEvaluadores(Array.isArray(evaluadoresData) ? evaluadoresData : []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchOptions();
+    fetchBecas();
+  }, []);
+
+  const sortedBecas = useMemo(() => {
+    return [...becas].sort((a, b) => {
+      const codeA = a?.codigo ?? '';
+      const codeB = b?.codigo ?? '';
+      return codeA.localeCompare(codeB, 'es');
+    });
+  }, [becas]);
+
   const getEstadoBadge = (estado) => {
     switch (estado) {
       case 'Activa':
         return 'bg-success';
       case 'Finalizada':
         return 'bg-secondary';
-      case 'En Evaluación':
+      case 'En evaluación':
         return 'bg-warning text-dark';
       default:
         return 'bg-primary';
     }
   };
 
+  const openCreateModal = () => {
+    setFormData(emptyForm);
+    setFormError('');
+    setModalOpen(true);
+  };
+
+  const openEditModal = (beca) => {
+    setFormData({
+      id: beca.id,
+      codigo: beca.codigo ?? '',
+      becarioId: beca.becario?.id ? String(beca.becario.id) : '',
+      tutorId: beca.tutor?.id ? String(beca.tutor.id) : '',
+      fechaInicio: beca.fechaInicio ?? '',
+      fechaFin: beca.fechaFin ?? '',
+      estado: beca.estado ?? ESTADO_OPTIONS[0],
+    });
+    setFormError('');
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    if (!saving) {
+      setModalOpen(false);
+    }
+  };
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const buildErrorMessage = (payload, fallback) => {
+    if (!payload) {
+      return fallback;
+    }
+
+    if (payload.message) {
+      return payload.message;
+    }
+
+    if (payload.errors) {
+      const messages = Object.values(payload.errors)
+        .flat()
+        .filter(Boolean);
+      if (messages.length > 0) {
+        return messages.join(' ');
+      }
+    }
+
+    return fallback;
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setFormError('');
+    setSaving(true);
+
+    const payload = {
+      codigo: formData.codigo.trim(),
+      becarioId: formData.becarioId ? Number(formData.becarioId) : null,
+      tutorId: formData.tutorId ? Number(formData.tutorId) : null,
+      fechaInicio: formData.fechaInicio,
+      fechaFin: formData.fechaFin || null,
+      estado: formData.estado,
+    };
+
+    const isEdit = Boolean(formData.id);
+    const endpoint = isEdit ? `/api/becas/${formData.id}` : '/api/becas';
+    const method = isEdit ? 'PUT' : 'POST';
+
+    try {
+      const response = await fetch(endpoint, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        let message = 'No se pudo guardar la beca.';
+        try {
+          const errorPayload = await response.json();
+          message = buildErrorMessage(errorPayload, message);
+        } catch (parseError) {
+          // Ignoramos el error de parseo y usamos el mensaje por defecto.
+        }
+        throw new Error(message);
+      }
+
+      const responseData = await response.json();
+      const savedBeca = responseData?.data ?? responseData;
+
+      setBecas((prev) => {
+        if (isEdit) {
+          return prev.map((item) => (item.id === savedBeca.id ? savedBeca : item));
+        }
+        return [savedBeca, ...prev];
+      });
+
+      setModalOpen(false);
+    } catch (err) {
+      setFormError(err.message || 'No se pudo guardar la beca.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (beca) => {
+    const confirmation = window.confirm(
+      `¿Deseas eliminar la beca ${beca.codigo}? Esta acción no se puede deshacer.`
+    );
+
+    if (!confirmation) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/becas/${beca.id}`, { method: 'DELETE' });
+      if (!response.ok) {
+        throw new Error('No se pudo eliminar la beca.');
+      }
+
+      setBecas((prev) => prev.filter((item) => item.id !== beca.id));
+    } catch (err) {
+      alert(err.message || 'No se pudo eliminar la beca.');
+    }
+  };
+
   return (
     <div className="listado-becas-container">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="h4">Listado de Becas de Investigación</h2>
-        <button className="btn btn-primary">
+        <h2 className="h4 mb-0">Gestión de Becas de Investigación</h2>
+        <button type="button" className="btn btn-primary" onClick={openCreateModal}>
           <i className="bi bi-plus-circle"></i> Nueva Beca
         </button>
       </div>
 
-      <div className="table-responsive">
-        <table className="table table-hover align-middle">
-          <thead className="table-light">
-            <tr>
-              <th scope="col">Título de Beca</th>
-              <th scope="col">Investigador</th>
-              <th scope="col">Tutor</th>
-              <th scope="col">Fecha Inicio</th>
-              <th scope="col">Fecha Fin</th>
-              <th scope="col">Estado</th>
-              <th scope="col" className="text-center">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {becas.map((beca) => (
-              <tr key={beca.id}>
-                <td>{beca.titulo}</td>
-                <td>{beca.investigador}</td>
-                <td>{beca.tutor}</td>
-                <td>{beca.fechaInicio}</td>
-                <td>{beca.fechaFin}</td>
-                <td>
-                  <span className={`badge ${getEstadoBadge(beca.estado)}`}>
-                    {beca.estado}
-                  </span>
-                </td>
-                <td className="text-center">
-                  <div className="btn-group" role="group">
-                    <button className="btn btn-sm btn-outline-primary" title="Ver Detalles">
-                      <i className="bi bi-eye"></i>
-                    </button>
-                    <button className="btn btn-sm btn-outline-secondary" title="Editar">
-                      <i className="bi bi-pencil"></i>
-                    </button>
-                  </div>
-                </td>
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="text-center py-5">Cargando becas...</div>
+      ) : sortedBecas.length === 0 ? (
+        <div className="alert alert-info" role="alert">
+          No hay becas registradas todavía. Crea la primera para comenzar.
+        </div>
+      ) : (
+        <div className="table-responsive">
+          <table className="table table-hover align-middle">
+            <thead className="table-light">
+              <tr>
+                <th scope="col">Código</th>
+                <th scope="col">Becario</th>
+                <th scope="col">Tutor</th>
+                <th scope="col">Fecha inicio</th>
+                <th scope="col">Fecha fin</th>
+                <th scope="col">Estado</th>
+                <th scope="col" className="text-center">
+                  Acciones
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {sortedBecas.map((beca) => (
+                <tr key={beca.id}>
+                  <td>{beca.codigo}</td>
+                  <td>{beca.becario?.nombre ?? 'Sin asignar'}</td>
+                  <td>{beca.tutor?.nombre ?? 'Sin asignar'}</td>
+                  <td>{beca.fechaInicio ?? '—'}</td>
+                  <td>{beca.fechaFin ?? '—'}</td>
+                  <td>
+                    <span className={`badge ${getEstadoBadge(beca.estado)}`}>
+                      {beca.estado}
+                    </span>
+                  </td>
+                  <td className="text-center">
+                    <div className="btn-group" role="group">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-secondary"
+                        title="Editar beca"
+                        onClick={() => openEditModal(beca)}
+                      >
+                        <i className="bi bi-pencil"></i>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-danger"
+                        title="Eliminar beca"
+                        onClick={() => handleDelete(beca)}
+                      >
+                        <i className="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {modalOpen && (
+        <div className="modal-overlay" role="dialog" aria-modal="true">
+          <div className="modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  {formData.id ? 'Editar beca de investigación' : 'Nueva beca de investigación'}
+                </h5>
+                <button type="button" className="btn-close" aria-label="Cerrar" onClick={closeModal} />
+              </div>
+
+              <form onSubmit={handleSubmit}>
+                <div className="modal-body">
+                  {formError && (
+                    <div className="alert alert-danger" role="alert">
+                      {formError}
+                    </div>
+                  )}
+
+                  <div className="mb-3">
+                    <label className="form-label" htmlFor="codigo">
+                      Código de beca
+                    </label>
+                    <input
+                      id="codigo"
+                      name="codigo"
+                      type="text"
+                      className="form-control"
+                      value={formData.codigo}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label" htmlFor="becarioId">
+                      Becario (Investigador)
+                    </label>
+                    <select
+                      id="becarioId"
+                      name="becarioId"
+                      className="form-select"
+                      value={formData.becarioId}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Selecciona un investigador…</option>
+                      {investigadores.map((investigador) => (
+                        <option key={investigador.id} value={investigador.id}>
+                          {investigador.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label" htmlFor="tutorId">
+                      Tutor (Evaluador)
+                    </label>
+                    <select
+                      id="tutorId"
+                      name="tutorId"
+                      className="form-select"
+                      value={formData.tutorId}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Selecciona un tutor…</option>
+                      {evaluadores.map((evaluador) => (
+                        <option key={evaluador.id} value={evaluador.id}>
+                          {evaluador.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className="form-label" htmlFor="fechaInicio">
+                        Fecha de inicio
+                      </label>
+                      <input
+                        id="fechaInicio"
+                        name="fechaInicio"
+                        type="date"
+                        className="form-control"
+                        value={formData.fechaInicio}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label" htmlFor="fechaFin">
+                        Fecha de finalización
+                      </label>
+                      <input
+                        id="fechaFin"
+                        name="fechaFin"
+                        type="date"
+                        className="form-control"
+                        value={formData.fechaFin}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-3">
+                    <label className="form-label" htmlFor="estado">
+                      Estado de la beca
+                    </label>
+                    <select
+                      id="estado"
+                      name="estado"
+                      className="form-select"
+                      value={formData.estado}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      {ESTADO_OPTIONS.map((estado) => (
+                        <option key={estado} value={estado}>
+                          {estado}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-outline-secondary" onClick={closeModal}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn btn-primary" disabled={saving}>
+                    {saving ? 'Guardando…' : 'Guardar'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

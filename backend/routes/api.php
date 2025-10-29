@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BecaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -7,6 +8,17 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 
 Route::middleware('api')->group(function () {
+    Route::apiResource('becas', BecaController::class)->except(['show']);
+
+    Route::get('/roles/{role}/usuarios', function (string $role) {
+        return DB::table('users')
+            ->join('roles', 'users.role_id', '=', 'roles.id')
+            ->select('users.id', 'users.name')
+            ->where('roles.name', $role)
+            ->orderBy('users.name')
+            ->get();
+    });
+
     Route::get('/designaciones', function () {
         return DB::table('designaciones')
             ->select('id', 'fecha', 'empleado', 'puesto', 'departamento', 'estado')
