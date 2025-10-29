@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BecaController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -9,6 +10,11 @@ use Illuminate\Validation\ValidationException;
 
 Route::middleware('api')->group(function () {
     Route::apiResource('becas', BecaController::class)->except(['show']);
+
+    Route::get('/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::patch('/users/{user}/toggle', [UserController::class, 'toggle']);
+    Route::get('/roles', [UserController::class, 'roles']);
 
     Route::get('/roles/{role}/usuarios', function (string $role) {
         return DB::table('users')
