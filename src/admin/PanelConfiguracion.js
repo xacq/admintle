@@ -141,13 +141,6 @@ const PanelConfiguracion = () => {
               </ListGroup.Item>
               <ListGroup.Item 
                 action 
-                active={activeTab === 'mantenimiento'} 
-                onClick={() => handleTabSelect('mantenimiento')}
-              >
-                🔧 Mantenimiento del sistema
-              </ListGroup.Item>
-              <ListGroup.Item 
-                action 
                 active={activeTab === 'respaldo'} 
                 onClick={() => handleTabSelect('respaldo')}
               >
@@ -391,65 +384,6 @@ const PanelConfiguracion = () => {
                     <Button variant="primary" type="submit">Actualizar parámetros</Button>
                   </div>
                 </Form>
-              </Card.Body>
-            </Card>
-          )}
-
-          {/* 6. Bloque 4: Mantenimiento del sistema */}
-          {activeTab === 'mantenimiento' && (
-            <Card>
-              <Card.Header as="h5" className="fw-bold">Mantenimiento del Sistema</Card.Header>
-              <Card.Body>
-                <Alert variant="info">
-                  Este bloque solo se muestra a usuarios con rol de Administrador principal.
-                  Las siguientes acciones pueden afectar el rendimiento del sistema mientras se ejecutan.
-                </Alert>
-                <Row className="g-3">
-                  <Col md={6}>
-                    <Card className="h-100">
-                      <Card.Body>
-                        <Card.Title>Limpieza de logs del sistema</Card.Title>
-                        <Card.Text>Elimina registros antiguos del sistema para optimizar el rendimiento.</Card.Text>
-                        <Button variant="primary" onClick={() => handleMantenimiento('limpieza-logs')}>
-                          Ejecutar limpieza
-                        </Button>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                  <Col md={6}>
-                    <Card className="h-100">
-                      <Card.Body>
-                        <Card.Title>Reindexar base de datos</Card.Title>
-                        <Card.Text>Reconstruye los índices de la base de datos para mejorar las consultas.</Card.Text>
-                        <Button variant="primary" onClick={() => handleMantenimiento('reindexar-bd')}>
-                          Reindexar ahora
-                        </Button>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                  <Col md={6}>
-                    <Card className="h-100">
-                      <Card.Body>
-                        <Card.Title>Verificar integridad de vínculos</Card.Title>
-                        <Card.Text>Comprueba la integridad de las relaciones entre los datos del sistema.</Card.Text>
-                        <Button variant="primary" onClick={() => handleMantenimiento('verificar-integridad')}>
-                          Verificar ahora
-                        </Button>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                  <Col md={6}>
-                    <Card className="h-100">
-                      <Card.Body>
-                        <Card.Title>Actualizar caché de reportes</Card.Title>
-                        <Card.Text>Actualiza la caché para reflejar los cambios más recientes en los reportes.</Card.Text>
-                        <Button variant="primary" onClick={() => handleMantenimiento('actualizar-cache')}>
-                          Actualizar caché
-                        </Button>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                </Row>
               </Card.Body>
             </Card>
           )}

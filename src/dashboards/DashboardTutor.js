@@ -253,20 +253,6 @@ const DashboardTutor = () => {
           </Col>
         </Row>
       </Container>
-
-      <footer className="dashboard-footer text-center py-3 mt-4 border-top">
-        <p className="mb-0">
-          Dirección de Ciencia e Innovación Tecnológica – Universidad Autónoma Tomás Frías
-        </p>
-        <small className="text-muted">
-          Versión 1.0.3 –{' '}
-          {new Date().toLocaleDateString('es-BO', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}
-        </small>
-      </footer>
     </div>
   );
 };
