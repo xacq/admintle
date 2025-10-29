@@ -32,6 +32,7 @@ import ReportesAvance from './becario/ReportesAvance';
 import SubirReporte from "./becario/SubirReporte";
 import Observaciones from "./becario/Observaciones";
 import Calificaciones from "./becario/Calificaciones";
+import RevisarReportes from "./tutor/RevisarReportes";
 
 
 function App() {
@@ -70,6 +71,7 @@ function App() {
         <Route path="/observaciones" element={<Observaciones />} />
         <Route path="/calificaciones" element={<Calificaciones />} />
         <Route path="/listabecas" element={<ListaBecas />} />
+        <Route path="/revisarreportes" element={<RevisarReportes/>} />
       </Routes>
     </Router>
   );
