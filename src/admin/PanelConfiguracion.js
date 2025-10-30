@@ -53,13 +53,20 @@ const PanelConfiguracion = () => {
   const [feedback, setFeedback] = useState(null);
   const [usuarioAccionId, setUsuarioAccionId] = useState(null);
   const [parametros, setParametros] = useState({
-    nombreInstitucional: 'Dirección de Ciencia e Innovación Tecnológica – UATF',
-    anioGestion: '2025',
-    fechaInicioConvocatoria: '2025-01-15',
-    fechaFinConvocatoria: '2025-02-28',
-    rutaAlmacenamiento: '/srv/dycit/documentos',
-    logoInstitucional: '/assets/logo_uatf.png'
+    academicYear: '',
+    managementStartDate: '',
+    managementEndDate: '',
+    reportDeadline: '',
+    maxReportsPerScholar: 0,
+    systemStatus: 'activo',
+    researchLines: [],
   });
+  const [parametrosIniciales, setParametrosIniciales] = useState(null);
+  const [lineasInvestigacion, setLineasInvestigacion] = useState('');
+  const [parametrosLoading, setParametrosLoading] = useState(true);
+  const [parametrosError, setParametrosError] = useState('');
+  const [parametrosSaving, setParametrosSaving] = useState(false);
+  const [parametrosFeedback, setParametrosFeedback] = useState(null);
 
   // --- MANEJADORES DE EVENTOS ---
   const handleTabSelect = (tab) => {
@@ -101,9 +108,50 @@ const PanelConfiguracion = () => {
     }
   };
 
+  const cargarParametros = async () => {
+    setParametrosLoading(true);
+    setParametrosError('');
+
+    try {
+      const response = await fetch('/api/system-parameters');
+      if (!response.ok) {
+        throw new Error('No se pudo cargar los parámetros del sistema');
+      }
+
+      const payload = await response.json();
+      const data = payload?.data ?? {};
+
+      const parsedParametros = {
+        academicYear: data.academicYear ?? '',
+        managementStartDate: data.managementStartDate ?? '',
+        managementEndDate: data.managementEndDate ?? '',
+        reportDeadline: data.reportDeadline ?? '',
+        maxReportsPerScholar: data.maxReportsPerScholar ?? 0,
+        systemStatus: data.systemStatus ?? 'activo',
+        researchLines: Array.isArray(data.researchLines) ? data.researchLines : [],
+      };
+
+      setParametros({
+        ...parsedParametros,
+        researchLines: [...parsedParametros.researchLines],
+      });
+      setParametrosIniciales({
+        ...parsedParametros,
+        researchLines: [...parsedParametros.researchLines],
+      });
+      setLineasInvestigacion(parsedParametros.researchLines.join('\n'));
+    } catch (error) {
+      console.error(error);
+      setParametrosError(error.message);
+    } finally {
+      setParametrosLoading(false);
+    }
+  };
+
   useEffect(() => {
     cargarUsuarios();
     cargarRoles();
+    cargarParametros();
   }, []);
 
   const handleCambiarEstadoUsuario = async (id) => {
@@ -133,9 +181,82 @@ const PanelConfiguracion = () => {
     alert(`Restableciendo contraseña para usuario ID: ${id} (simulación)`);
   };
 
-  const handleActualizarParametros = (e) => {
-    e.preventDefault();
-    alert('Parámetros institucionales actualizados (simulación)');
+  const handleActualizarParametros = async (event) => {
+    event.preventDefault();
+
+    setParametrosFeedback(null);
+    setParametrosSaving(true);
+
+    const maxReports = Number.parseInt(parametros.maxReportsPerScholar, 10);
+
+    const payload = {
+      academic_year: parametros.academicYear,
+      management_start_date: parametros.managementStartDate,
+      management_end_date: parametros.managementEndDate,
+      report_deadline: parametros.reportDeadline,
+      max_reports_per_scholar: Number.isNaN(maxReports) ? 0 : maxReports,
+      system_status: parametros.systemStatus,
+      research_lines: lineasInvestigacion
+        .split('\n')
+        .map((linea) => linea.trim())
+        .filter((linea) => linea.length > 0),
+    };
+
+    try {
+      const response = await fetch('/api/system-parameters', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const firstError = data?.errors ? Object.values(data.errors).flat()[0] : null;
+        throw new Error(firstError || data?.message || 'No se pudo actualizar la configuración.');
+      }
+
+      const researchLines = Array.isArray(data.data?.researchLines)
+        ? data.data.researchLines
+        : payload.research_lines;
+
+      const parametrosActualizados = {
+        academicYear: data.data?.academicYear ?? payload.academic_year,
+        managementStartDate: data.data?.managementStartDate ?? payload.management_start_date,
+        managementEndDate: data.data?.managementEndDate ?? payload.management_end_date,
+        reportDeadline: data.data?.reportDeadline ?? payload.report_deadline,
+        maxReportsPerScholar: data.data?.maxReportsPerScholar ?? payload.max_reports_per_scholar,
+        systemStatus: data.data?.systemStatus ?? payload.system_status,
+        researchLines,
+      };
+
+      setParametros({
+        ...parametrosActualizados,
+        researchLines: [...parametrosActualizados.researchLines],
+      });
+      setParametrosIniciales({
+        ...parametrosActualizados,
+        researchLines: [...parametrosActualizados.researchLines],
+      });
+      setLineasInvestigacion(researchLines.join('\n'));
+      setParametrosFeedback({ type: 'success', message: data?.message || 'Parámetros institucionales actualizados correctamente.' });
+    } catch (error) {
+      console.error(error);
+      setParametrosFeedback({ type: 'danger', message: error.message });
+    } finally {
+      setParametrosSaving(false);
+    }
+  };
+
+  const handleRestaurarParametros = () => {
+    if (parametrosIniciales) {
+      setParametros({
+        ...parametrosIniciales,
+        researchLines: [...(parametrosIniciales.researchLines ?? [])],
+      });
+      setLineasInvestigacion((parametrosIniciales.researchLines ?? []).join('\n'));
+      setParametrosFeedback(null);
+    }
   };
 
   const handleMantenimiento = (accion) => {
@@ -253,6 +374,15 @@ const PanelConfiguracion = () => {
           : '—',
       })),
     [usuarios]
+  );
+
+  const lineasInvestigacionList = useMemo(
+    () =>
+      lineasInvestigacion
+        .split('\n')
+        .map((linea) => linea.trim())
+        .filter((linea) => linea.length > 0),
+    [lineasInvestigacion]
   );
 
   return (
@@ -493,74 +623,158 @@ const PanelConfiguracion = () => {
             <Card>
               <Card.Header as="h5" className="fw-bold">Parámetros Institucionales</Card.Header>
               <Card.Body>
-                <Form onSubmit={handleActualizarParametros}>
-                  <Row className="g-3">
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Nombre institucional</Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={parametros.nombreInstitucional}
-                          onChange={(e) => setParametros({...parametros, nombreInstitucional: e.target.value})}
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Año de gestión actual</Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={parametros.anioGestion}
-                          onChange={(e) => setParametros({...parametros, anioGestion: e.target.value})}
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Fecha de inicio de convocatoria</Form.Label>
-                        <Form.Control
-                          type="date"
-                          value={parametros.fechaInicioConvocatoria}
-                          onChange={(e) => setParametros({...parametros, fechaInicioConvocatoria: e.target.value})}
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Fecha de fin de convocatoria</Form.Label>
-                        <Form.Control
-                          type="date"
-                          value={parametros.fechaFinConvocatoria}
-                          onChange={(e) => setParametros({...parametros, fechaFinConvocatoria: e.target.value})}
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={12}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Ruta de almacenamiento</Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={parametros.rutaAlmacenamiento}
-                          onChange={(e) => setParametros({...parametros, rutaAlmacenamiento: e.target.value})}
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={12}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Logo institucional</Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={parametros.logoInstitucional}
-                          onChange={(e) => setParametros({...parametros, logoInstitucional: e.target.value})}
-                        />
-                      </Form.Group>
-                    </Col>
-                  </Row>
-                  <div className="d-flex justify-content-between">
-                    <Button variant="outline-secondary">Restaurar valores por defecto</Button>
-                    <Button variant="primary" type="submit">Actualizar parámetros</Button>
+                {parametrosFeedback && (
+                  <Alert
+                    variant={parametrosFeedback.type}
+                    onClose={() => setParametrosFeedback(null)}
+                    dismissible
+                  >
+                    {parametrosFeedback.message}
+                  </Alert>
+                )}
+
+                {parametrosLoading ? (
+                  <div className="text-center py-4">
+                    <Spinner animation="border" role="status" className="me-2" />
+                    <span>Cargando parámetros institucionales…</span>
                   </div>
-                </Form>
+                ) : parametrosError ? (
+                  <Alert variant="danger" className="mb-0">
+                    {parametrosError}
+                  </Alert>
+                ) : (
+                  <Form onSubmit={handleActualizarParametros}>
+                    <Row className="g-3">
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Gestión académica vigente</Form.Label>
+                          <Form.Control
+                            type="text"
+                            value={parametros.academicYear}
+                            onChange={(event) =>
+                              setParametros({ ...parametros, academicYear: event.target.value })
+                            }
+                            placeholder="Ej. 2025"
+                          />
+                        </Form.Group>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Estado general del sistema</Form.Label>
+                          <Form.Select
+                            value={parametros.systemStatus}
+                            onChange={(event) =>
+                              setParametros({ ...parametros, systemStatus: event.target.value })
+                            }
+                          >
+                            <option value="activo">Activo</option>
+                            <option value="cerrado">Cerrado</option>
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Fecha de inicio de la gestión</Form.Label>
+                          <Form.Control
+                            type="date"
+                            value={parametros.managementStartDate}
+                            onChange={(event) =>
+                              setParametros({ ...parametros, managementStartDate: event.target.value })
+                            }
+                          />
+                        </Form.Group>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Fecha de cierre de la gestión</Form.Label>
+                          <Form.Control
+                            type="date"
+                            value={parametros.managementEndDate}
+                            onChange={(event) =>
+                              setParametros({ ...parametros, managementEndDate: event.target.value })
+                            }
+                          />
+                        </Form.Group>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Fecha límite para recepción de reportes</Form.Label>
+                          <Form.Control
+                            type="date"
+                            value={parametros.reportDeadline}
+                            onChange={(event) =>
+                              setParametros({ ...parametros, reportDeadline: event.target.value })
+                            }
+                          />
+                        </Form.Group>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Número máximo de reportes por becario</Form.Label>
+                          <Form.Control
+                            type="number"
+                            min="0"
+                            value={parametros.maxReportsPerScholar}
+                            onChange={(event) =>
+                              setParametros({ ...parametros, maxReportsPerScholar: event.target.value })
+                            }
+                          />
+                        </Form.Group>
+                      </Col>
+                      <Col md={12}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Líneas de investigación habilitadas</Form.Label>
+                          <Form.Control
+                            as="textarea"
+                            rows={4}
+                            value={lineasInvestigacion}
+                            onChange={(event) => setLineasInvestigacion(event.target.value)}
+                            placeholder={
+                              'Ingrese una línea por fila. Ej. Tecnología educativa\nEnergías renovables'
+                            }
+                          />
+                          <Form.Text className="text-muted">
+                            Se utilizarán para clasificar convocatorias y reportes asociados a las becas.
+                          </Form.Text>
+                        </Form.Group>
+                      </Col>
+                      <Col md={12}>
+                        <div className="bg-light rounded border p-3">
+                          <h6 className="mb-2">Vista previa de líneas registradas</h6>
+                          {lineasInvestigacionList.length > 0 ? (
+                            <ul className="mb-0 ps-3">
+                              {lineasInvestigacionList.map((linea, index) => (
+                                <li key={`${linea}-${index}`}>{linea}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="mb-0 text-muted">No hay líneas de investigación registradas.</p>
+                          )}
+                        </div>
+                      </Col>
+                    </Row>
+                    <div className="d-flex justify-content-between align-items-center mt-3">
+                      <Button
+                        type="button"
+                        variant="outline-secondary"
+                        onClick={handleRestaurarParametros}
+                        disabled={!parametrosIniciales || parametrosSaving}
+                      >
+                        Restaurar valores originales
+                      </Button>
+                      <Button variant="primary" type="submit" disabled={parametrosSaving}>
+                        {parametrosSaving ? (
+                          <>
+                            <Spinner animation="border" role="status" size="sm" className="me-2" />
+                            Guardando…
+                          </>
+                        ) : (
+                          'Guardar cambios'
+                        )}
+                      </Button>
+                    </div>
+                  </Form>
+                )}
               </Card.Body>
             </Card>
           )}

@@ -4,6 +4,7 @@ use App\Http\Controllers\BecaController;
 use App\Http\Controllers\EvaluacionController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\ReporteInstitucionalController;
+use App\Http\Controllers\SystemParameterController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,9 @@ Route::middleware('api')->group(function () {
         ->name('reportes.download');
     Route::get('/reportes-institucionales/resumen', [ReporteInstitucionalController::class, 'summary']);
     Route::apiResource('evaluaciones', EvaluacionController::class)->only(['index', 'store', 'update']);
+
+    Route::get('/system-parameters', [SystemParameterController::class, 'show']);
+    Route::put('/system-parameters', [SystemParameterController::class, 'update']);
 
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
