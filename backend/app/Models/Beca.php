@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Beca extends Model
 {
@@ -48,5 +49,10 @@ class Beca extends Model
     public function reportes(): HasMany
     {
         return $this->hasMany(Reporte::class);
+    }
+
+    public function evaluacionFinal(): HasOne
+    {
+        return $this->hasOne(Evaluacion::class);
     }
 }

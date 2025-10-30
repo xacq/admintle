@@ -15,7 +15,9 @@ class BecaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Beca::with(['becario', 'tutor'])->orderByDesc('created_at');
+        $query = Beca::with(['becario', 'tutor', 'evaluacionFinal'])
+            ->withAvg('reportes', 'calificacion')
+            ->orderByDesc('created_at');
 
         if ($request->filled('tutor_id')) {
             $query->where('tutor_id', $request->integer('tutor_id'));
@@ -48,7 +50,8 @@ class BecaController extends Controller
             'estado' => $data['estado'],
         ]);
 
-        $beca->load(['becario', 'tutor']);
+        $beca->load(['becario', 'tutor', 'evaluacionFinal']);
+        $beca->loadAvg('reportes', 'calificacion');
 
         return (new BecaResource($beca))
             ->response()
@@ -71,7 +74,8 @@ class BecaController extends Controller
             'estado' => $data['estado'],
         ]);
 
-        $beca->load(['becario', 'tutor']);
+        $beca->load(['becario', 'tutor', 'evaluacionFinal']);
+        $beca->loadAvg('reportes', 'calificacion');
 
         return new BecaResource($beca);
     }
@@ -84,7 +88,8 @@ class BecaController extends Controller
             'tutor_id' => $data['tutorId'],
         ]);
 
-        $beca->load(['becario', 'tutor']);
+        $beca->load(['becario', 'tutor', 'evaluacionFinal']);
+        $beca->loadAvg('reportes', 'calificacion');
 
         return new BecaResource($beca);
     }
