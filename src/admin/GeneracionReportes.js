@@ -1,357 +1,282 @@
-// src/components/GeneracionReportes.js
-
-import React, { useState } from 'react';
-import { Container, Card, Row, Col, Form, Button, Table, Badge } from 'react-bootstrap';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Container, Card, Row, Col, Table, Badge, Button, Spinner, Alert } from 'react-bootstrap';
 import './admin.css';
 
+const formatNumber = (value) =>
+  typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString('es-BO') : '—';
+
+const formatAverage = (value) =>
+  typeof value === 'number' && Number.isFinite(value)
+    ? value.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : 'Sin registros';
+
+const formatDateTime = (value) => {
+  if (!value) {
+    return '—';
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? '—'
+    : `${date.toLocaleDateString('es-BO')} ${date.toLocaleTimeString('es-BO', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })}`;
+};
+
+const estadoBadgeVariant = {
+  Pendiente: 'warning',
+  Aprobado: 'success',
+  Devuelto: 'danger',
+  Observado: 'info',
+};
+
 const GeneracionReportes = () => {
-  // --- DATOS ESTÁTICOS DE EJEMPLO ---
-  const historialReportes = [
-    {
-      id: 1,
-      fecha: '10/09/2025',
-      tipo: 'Individual',
-      generadoPor: 'Admin',
-      periodo: '01/03–30/06/2025',
-    },
-    {
-      id: 2,
-      fecha: '05/09/2025',
-      tipo: 'Consolidado',
-      generadoPor: 'Director',
-      periodo: '2025-1',
-    },
-    {
-      id: 3,
-      fecha: '28/08/2025',
-      tipo: 'Mensual',
-      generadoPor: 'Admin',
-      periodo: 'Agosto 2025',
-    }
-  ];
+  const [resumen, setResumen] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Estado para los filtros del reporte
-  const [filtros, setFiltros] = useState({
-    tipoReporte: 'individual',
-    fechaDesde: '',
-    fechaHasta: '',
-    becario: '',
-  });
+  const loadResumen = async () => {
+    setLoading(true);
+    setError('');
 
-  // Estado para controlar si se muestra la vista previa del reporte
-  const [mostrarVistaPrevia, setMostrarVistaPrevia] = useState(false);
-
-  // Estado para el reporte generado
-  const [reporteGenerado, setReporteGenerado] = useState(null);
-
-  // Función para manejar cambios en los filtros
-  const handleFiltroChange = (e) => {
-    const { name, value } = e.target;
-    setFiltros({
-      ...filtros,
-      [name]: value
-    });
-  };
-
-  // Función para generar el reporte
-  const handleGenerarReporte = (e) => {
-    e.preventDefault();
-    setMostrarVistaPrevia(true);
-    
-    // Simulación de datos del reporte según el tipo seleccionado
-    const reporteSimulado = {
-      tipo: filtros.tipoReporte,
-      periodo: `${filtros.fechaDesde} - ${filtros.fechaHasta}`,
-      datos: {
-        nombreBecario: filtros.tipoReporte === 'individual' ? 'Juan Pérez Mamani' : 'Grupo de becarios',
-        estadoReportes: 'En revisión',
-        calificaciones: 8.5,
-        observaciones: 'Buen progreso general',
-        cumplimientoCronograma: 75,
-        indicadoresGlobales: {
-          porcentajeAprobacion: 85,
-          proyectosActivos: 38,
-          proyectosFinalizados: 12,
-          proyectosDevueltos: 3
-        }
+    try {
+      const response = await fetch('/api/reportes-institucionales/resumen');
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}`);
       }
-    };
-    
-    setReporteGenerado(reporteSimulado);
+
+      const payload = await response.json();
+      setResumen(payload);
+    } catch (err) {
+      setError(err.message || 'No se pudo recuperar la información institucional.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Función para descargar reporte en PDF
-  const handleDescargarPDF = () => {
-    alert('Descargando reporte en PDF (simulación)');
-  };
+  useEffect(() => {
+    loadResumen();
+  }, []);
 
-  // Función para exportar reporte a Excel
-  const handleExportarExcel = () => {
-    alert('Exportando reporte a Excel (simulación)');
-  };
+  const tarjetasResumen = useMemo(() => {
+    if (!resumen) {
+      return [];
+    }
 
-  // Función para enviar reporte por correo
-  const handleEnviarCorreo = () => {
-    alert('Enviando reporte por correo institucional (simulación)');
-  };
+    return [
+      {
+        titulo: 'Becas activas',
+        valor: formatNumber(resumen.becas?.activas ?? 0),
+        descripcion: 'Programas en ejecución con becarios asignados.',
+      },
+      {
+        titulo: 'Becas finalizadas',
+        valor: formatNumber(resumen.becas?.finalizadas ?? 0),
+        descripcion: 'Procesos concluidos y archivados.',
+      },
+      {
+        titulo: 'En evaluación',
+        valor: formatNumber(resumen.becas?.enEvaluacion ?? 0),
+        descripcion: 'Becas en etapa de revisión de resultados.',
+      },
+      {
+        titulo: 'Promedio general',
+        valor: formatAverage(resumen.evaluaciones?.promedioGeneral),
+        descripcion: 'Calificación final promedio otorgada por los tutores.',
+      },
+    ];
+  }, [resumen]);
 
-  // Función para descargar reporte del historial
-  const handleDescargarReporteHistorial = (id) => {
-    alert(`Descargando reporte ID: ${id} (simulación)`);
-  };
-
-  // Función para regresar al panel principal
-  const handleRegresarPanel = () => {
-    setMostrarVistaPrevia(false);
-    setReporteGenerado(null);
-  };
+  const topTutores = resumen?.tutores?.top ?? [];
+  const reportesRecientes = resumen?.reportes?.recientes ?? [];
+  const reportesPorEstado = resumen?.reportes?.porEstado ?? {};
+  const evaluacionesPorEstado = resumen?.evaluaciones?.porEstado ?? {};
 
   return (
     <div className="generacion-reportes-wrapper">
-      {/* 1. Encabezado general */}
-      <div className="text-center mb-4">
-        <h1 className="h2 fw-bold">Módulo de Reportes Institucionales – DyCIT</h1>
-        <p className="lead text-muted">Generación de reportes individuales y globales del programa de becas auxiliares de investigación</p>
-        <p className="mb-0">
-          <strong>Usuario actual:</strong> Administrador del Sistema
-        </p>
-        <p className="text-muted small">
-          Este módulo está orientado a los roles de Administrador y Director, quienes requieren consolidar información para auditorías o rendición de cuentas institucionales
-        </p>
-      </div>
+      <Container className="py-4">
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+          <div>
+            <h1 className="h3 fw-bold mb-1">Reportes Institucionales del Programa de Becas</h1>
+            <p className="text-muted mb-0">
+              Visualización consolidada para directores y coordinadores DyCIT.
+            </p>
+          </div>
+          <div className="d-flex gap-2">
+            <Button variant="outline-primary" size="sm" onClick={loadResumen} disabled={loading}>
+              🔄 Actualizar datos
+            </Button>
+            <Button variant="outline-secondary" size="sm" disabled>
+              📄 Exportar PDF
+            </Button>
+            <Button variant="outline-secondary" size="sm" disabled>
+              📊 Exportar Excel
+            </Button>
+          </div>
+        </div>
 
-      {/* 2. Panel de filtros y búsqueda */}
-      <Card className="mb-4">
-        <Card.Header as="h5" className="fw-bold">
-          Filtros de Reporte
-        </Card.Header>
-        <Card.Body>
-          <Form onSubmit={handleGenerarReporte}>
-            <Row>
-              <Col md={6} className="mb-3">
-                <Form.Label>Selector de tipo de reporte</Form.Label>
-                <Form.Select
-                  name="tipoReporte"
-                  value={filtros.tipoReporte}
-                  onChange={handleFiltroChange}
-                >
-                  <option value="individual">Individual por becario</option>
-                  <option value="mensual">Mensual / bimestral</option>
-                  <option value="consolidado">Consolidado por gestión</option>
-                </Form.Select>
-              </Col>
-              
-              <Col md={6} className="mb-3">
-                <Form.Label>Campo de búsqueda de becario o tutor</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="becario"
-                  value={filtros.becario}
-                  onChange={handleFiltroChange}
-                  placeholder="Ingrese nombre del becario o tutor..."
-                />
-              </Col>
-              
-              <Col md={6} className="mb-3">
-                <Form.Label>Fecha desde</Form.Label>
-                <Form.Control
-                  type="date"
-                  name="fechaDesde"
-                  value={filtros.fechaDesde}
-                  onChange={handleFiltroChange}
-                />
-              </Col>
-              
-              <Col md={6} className="mb-3">
-                <Form.Label>Fecha hasta</Form.Label>
-                <Form.Control
-                  type="date"
-                  name="fechaHasta"
-                  value={filtros.fechaHasta}
-                  onChange={handleFiltroChange}
-                />
-              </Col>
-            </Row>
-            
-            <div className="d-flex justify-content-end">
-              <Button variant="primary" type="submit">
-                Generar Reporte
-              </Button>
-            </div>
-          </Form>
-        </Card.Body>
-      </Card>
+        {error && <Alert variant="danger">{error}</Alert>}
 
-      {/* 3. Vista previa del reporte (se muestra después de generar) */}
-      {mostrarVistaPrevia && reporteGenerado && (
-        <Card className="mb-4">
-          <Card.Header as="h5" className="fw-bold d-flex justify-content-between align-items-center">
-            <span>Vista Previa del Reporte</span>
-            <div>
-              <Button variant="outline-secondary" size="sm" onClick={handleRegresarPanel} className="me-2">
-                Regresar al panel principal
-              </Button>
-            </div>
-          </Card.Header>
-          <Card.Body>
-            {/* Encabezado institucional del reporte */}
-            <div className="text-center mb-4">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Coat_of_arms_of_Bolivia.svg/120px-Coat_of_arms_of_Bolivia.svg.png"
-                width="80"
-                height="80"
-                className="d-inline-block align-top me-2"
-                alt="Logo UATF"
-              />
-              <h4 className="mt-2">Universidad Autónoma Tomás Frías</h4>
-              <h5>Dirección de Ciencia e Innovación Tecnológica</h5>
-              <p className="mb-0">Reporte {reporteGenerado.tipo} - Período: {reporteGenerado.periodo}</p>
-              <p className="text-muted small">Fecha: {new Date().toLocaleDateString()}</p>
-            </div>
-            
-            {/* Cuerpo del reporte */}
-            <Row className="mb-4">
-              <Col md={6} className="mb-3">
-                <h6>Nombre del becario o grupo</h6>
-                <p>{reporteGenerado.datos.nombreBecario}</p>
-              </Col>
-              
-              <Col md={6} className="mb-3">
-                <h6>Estado de los reportes de avance</h6>
-                <p>
-                  <Badge bg="warning">{reporteGenerado.datos.estadoReportes}</Badge>
-                </p>
-              </Col>
-              
-              <Col md={6} className="mb-3">
-                <h6>Calificaciones y observaciones del tutor</h6>
-                <p>Calificación: {reporteGenerado.datos.calificaciones}/10</p>
-                <p>Observaciones: {reporteGenerado.datos.observaciones}</p>
-              </Col>
-              
-              <Col md={6} className="mb-3">
-                <h6>Cumplimiento del cronograma</h6>
-                <div className="d-flex align-items-center">
-                  <div className="progress flex-grow-1 me-2">
-                    <div 
-                      className="progress-bar" 
-                      role="progressbar" 
-                      style={{ width: `${reporteGenerado.datos.cumplimientoCronograma}%` }}
-                      aria-valuenow={reporteGenerado.datos.cumplimientoCronograma} 
-                      aria-valuemin="0" 
-                      aria-valuemax="100"
-                    >
-                      {reporteGenerado.datos.cumplimientoCronograma}%
-                    </div>
-                  </div>
-                </div>
-              </Col>
-            </Row>
-            
-            {/* Indicadores globales */}
-            <h5 className="mb-3">Indicadores Globales</h5>
-            <Row className="mb-4">
-              <Col md={3} className="mb-3 text-center">
-                <div className="indicador-card">
-                  <h4 className="text-success">{reporteGenerado.datos.indicadoresGlobales.porcentajeAprobacion}%</h4>
-                  <p className="small mb-0">Porcentaje de aprobación</p>
-                </div>
-              </Col>
-              
-              <Col md={3} className="mb-3 text-center">
-                <div className="indicador-card">
-                  <h4 className="text-primary">{reporteGenerado.datos.indicadoresGlobales.proyectosActivos}</h4>
-                  <p className="small mb-0">Proyectos activos</p>
-                </div>
-              </Col>
-              
-              <Col md={3} className="mb-3 text-center">
-                <div className="indicador-card">
-                  <h4 className="text-info">{reporteGenerado.datos.indicadoresGlobales.proyectosFinalizados}</h4>
-                  <p className="small mb-0">Proyectos finalizados</p>
-                </div>
-              </Col>
-              
-              <Col md={3} className="mb-3 text-center">
-                <div className="indicador-card">
-                  <h4 className="text-danger">{reporteGenerado.datos.indicadoresGlobales.proyectosDevueltos}</h4>
-                  <p className="small mb-0">Proyectos devueltos</p>
-                </div>
-              </Col>
-            </Row>
-            
-            {/* Pie de página institucional del reporte */}
-            <div className="text-center mt-4 pt-3 border-top">
-              <p className="mb-0">Dirección de Ciencia e Innovación Tecnológica – Universidad Autónoma Tomás Frías</p>
-              <p className="text-muted small">Reporte generado el {new Date().toLocaleDateString()}</p>
-            </div>
-            
-            {/* 4. Acciones disponibles */}
-            <div className="d-flex justify-content-end mt-4">
-              <Button variant="success" onClick={handleDescargarPDF} className="me-2">
-                📄 Descargar PDF
-              </Button>
-              <Button variant="info" onClick={handleExportarExcel} className="me-2">
-                📊 Exportar a Excel
-              </Button>
-              <Button variant="outline-primary" onClick={handleEnviarCorreo}>
-                📧 Enviar por correo
-              </Button>
-            </div>
-          </Card.Body>
-        </Card>
-      )}
-
-      {/* 5. Historial de reportes generados (ahora ocupa todo el ancho) */}
-      <Card className="mb-4">
-        <Card.Header as="h5" className="fw-bold">
-          Historial de Reportes Generados
-        </Card.Header>
-        <Card.Body>
-          <Table responsive striped hover>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Tipo de Reporte</th>
-                <th>Generado por</th>
-                <th>Período</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {historialReportes.map((reporte) => (
-                <tr key={reporte.id}>
-                  <td>{reporte.fecha}</td>
-                  <td>{reporte.tipo}</td>
-                  <td>{reporte.generadoPor}</td>
-                  <td>{reporte.periodo}</td>
-                  <td>
-                    <Button 
-                      variant="outline-primary" 
-                      size="sm"
-                      onClick={() => handleDescargarReporteHistorial(reporte.id)}
-                    >
-                      📄
-                    </Button>
-                  </td>
-                </tr>
+        {loading ? (
+          <div className="d-flex justify-content-center py-5">
+            <Spinner animation="border" role="status" variant="primary">
+              <span className="visually-hidden">Cargando...</span>
+            </Spinner>
+          </div>
+        ) : (
+          <>
+            <Row className="g-4 mb-4">
+              {tarjetasResumen.map((tarjeta) => (
+                <Col key={tarjeta.titulo} xs={12} md={6} xl={3}>
+                  <Card className="h-100 shadow-sm">
+                    <Card.Body>
+                      <Card.Title className="text-uppercase text-muted fs-6 fw-semibold">
+                        {tarjeta.titulo}
+                      </Card.Title>
+                      <h2 className="display-6 fw-bold mb-2">{tarjeta.valor}</h2>
+                      <Card.Text className="text-muted small mb-0">{tarjeta.descripcion}</Card.Text>
+                    </Card.Body>
+                  </Card>
+                </Col>
               ))}
-            </tbody>
-          </Table>
-        </Card.Body>
-      </Card>
+            </Row>
 
-      {/* 7. Pie institucional */}
-      <footer className="text-center py-3 mt-5 border-top">
-        <p className="mb-1">Dirección de Ciencia e Innovación Tecnológica – Universidad Autónoma Tomás Frías</p>
-        <p className="mb-0 small text-muted">
-          {new Date().toLocaleDateString()} - v1.0.3 – 2025 | 
-          <a href="#help" className="text-decoration-none ms-1">Manual de Reportes</a> | 
-          <a href="#guide" className="text-decoration-none ms-1">Guía de interpretación de indicadores</a>
-        </p>
-      </footer>
+            <Row className="g-4">
+              <Col lg={6}>
+                <Card className="h-100 shadow-sm">
+                  <Card.Header as="h5" className="fw-semibold">Tutores con más becas asignadas</Card.Header>
+                  <Card.Body>
+                    {topTutores.length === 0 ? (
+                      <p className="text-muted mb-0">No hay tutores registrados en el sistema.</p>
+                    ) : (
+                      <Table responsive hover size="sm" className="align-middle mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th className="text-center">#</th>
+                            <th>Nombre</th>
+                            <th className="text-end">Becas asignadas</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {topTutores.map((tutor) => (
+                            <tr key={tutor.id}>
+                              <td className="text-center fw-semibold">{tutor.posicion}</td>
+                              <td>{tutor.nombre}</td>
+                              <td className="text-end">{formatNumber(tutor.becasAsignadas)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    )}
+                  </Card.Body>
+                </Card>
+              </Col>
+
+              <Col lg={6}>
+                <Card className="h-100 shadow-sm">
+                  <Card.Header as="h5" className="fw-semibold">Estado global de evaluaciones finales</Card.Header>
+                  <Card.Body>
+                    {Object.keys(evaluacionesPorEstado).length === 0 ? (
+                      <p className="text-muted mb-0">No existen evaluaciones registradas todavía.</p>
+                    ) : (
+                      <Table responsive size="sm" className="align-middle mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th>Estado</th>
+                            <th className="text-end">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {Object.entries(evaluacionesPorEstado).map(([estado, total]) => (
+                            <tr key={estado}>
+                              <td>{estado}</td>
+                              <td className="text-end">{formatNumber(total)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    )}
+                  </Card.Body>
+                </Card>
+              </Col>
+            </Row>
+
+            <Row className="g-4 mt-1">
+              <Col lg={6}>
+                <Card className="h-100 shadow-sm">
+                  <Card.Header as="h5" className="fw-semibold">Actividad reciente de reportes</Card.Header>
+                  <Card.Body>
+                    {reportesRecientes.length === 0 ? (
+                      <p className="text-muted mb-0">No se registran envíos recientes de reportes.</p>
+                    ) : (
+                      <Table responsive hover size="sm" className="align-middle mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th>Título</th>
+                            <th>Estado</th>
+                            <th>Fecha de envío</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {reportesRecientes.map((reporte) => (
+                            <tr key={reporte.id}>
+                              <td>
+                                <div className="fw-semibold">{reporte.titulo}</div>
+                                <div className="text-muted small">
+                                  {reporte.becario || 'Becario no asignado'}
+                                  {reporte.tutor ? ` · Tutor: ${reporte.tutor}` : ''}
+                                </div>
+                              </td>
+                              <td>
+                                <Badge bg={estadoBadgeVariant[reporte.estado] ?? 'secondary'}>
+                                  {reporte.estado}
+                                </Badge>
+                              </td>
+                              <td>{formatDateTime(reporte.fechaEnvio)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    )}
+                  </Card.Body>
+                </Card>
+              </Col>
+
+              <Col lg={6}>
+                <Card className="h-100 shadow-sm">
+                  <Card.Header as="h5" className="fw-semibold">Reportes por estado</Card.Header>
+                  <Card.Body>
+                    {Object.keys(reportesPorEstado).length === 0 ? (
+                      <p className="text-muted mb-0">No existen reportes registrados.</p>
+                    ) : (
+                      <Table responsive size="sm" className="align-middle mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th>Estado</th>
+                            <th className="text-end">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {Object.entries(reportesPorEstado).map(([estado, total]) => (
+                            <tr key={estado}>
+                              <td>{estado}</td>
+                              <td className="text-end">{formatNumber(total)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    )}
+                  </Card.Body>
+                </Card>
+              </Col>
+            </Row>
+          </>
+        )}
+      </Container>
     </div>
   );
 };
 
 export default GeneracionReportes;
+
