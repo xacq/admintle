@@ -1130,6 +1130,56 @@ header img{
   margin-bottom: 0.25rem;
 }
 
+/* src/components/EvaluacionFinal.css */
+
+.evaluacion-final-wrapper {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Encabezado */
+.evaluacion-final-header {
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.evaluacion-final-header h1 {
+  color: #343a40;
+}
+
+/* Tarjeta principal */
+.card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.card-header {
+  background-color: #ffffff;
+  border-bottom: 2px solid #e9ecef;
+  font-weight: 600;
+}
+
+/* Estilo de la tabla */
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Footer */
+.evaluacion-final-footer {
+  background-color: #ffffff;
+  margin-top: auto;
+  color: #6c757d;
+}
+
+.evaluacion-final-footer p {
+  margin-bottom: 0.25rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .controls-bar {

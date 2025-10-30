@@ -33,6 +33,7 @@ import SubirReporte from "./becario/SubirReporte";
 import Observaciones from "./becario/Observaciones";
 import Calificaciones from "./becario/Calificaciones";
 import RevisarReportes from "./tutor/RevisarReportes";
+import EvaluacionFinal from "./tutor/EvaluacionFinal";
 
 
 function App() {
@@ -62,6 +63,7 @@ function App() {
         <Route path="/centrosoporte" element={<CentroSoporte />} />
         <Route path="/formbeca" element={<FormBeca />} />
         <Route path="/generacionreportes" element={<GeneracionReportes />} />
+        <Route path="/evaluacionfinal" element={<EvaluacionFinal />} />
 
         <Route path="/evaluadordesempeno" element={<EvaluadorDesempeno />} />
         <Route path="/panelauditoria" element={<PanelAuditoria />} />
