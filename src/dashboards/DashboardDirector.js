@@ -4,6 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import useSessionUser from '../hooks/useSessionUser';
 import '../director/evaluador.css';
 
+const estadoEvaluacionVariant = {
+  Aprobado: 'success',
+  Reprobado: 'danger',
+  Concluido: 'info',
+  Pendiente: 'secondary',
+};
+
 const DashboardDirector = () => {
   const navigate = useNavigate();
   const user = useSessionUser();
@@ -87,6 +94,43 @@ const DashboardDirector = () => {
     };
   }, [reportes]);
 
+  const evaluacionesFinales = useMemo(() => {
+    const evaluadas = becas.filter((beca) => beca.evaluacionFinal);
+    const total = evaluadas.length;
+    const aprobadas = evaluadas.filter((beca) => beca.evaluacionFinal.estadoFinal === 'Aprobado').length;
+    const reprobadas = evaluadas.filter((beca) => beca.evaluacionFinal.estadoFinal === 'Reprobado').length;
+    const concluidas = evaluadas.filter((beca) => beca.evaluacionFinal.estadoFinal === 'Concluido').length;
+    const promedio = total
+      ? (
+          evaluadas.reduce(
+            (sum, beca) => sum + (Number(beca.evaluacionFinal?.calificacionFinal) || 0),
+            0,
+          ) / total
+        ).toFixed(2)
+      : '—';
+
+    const registrosOrdenados = [...evaluadas].sort((a, b) => {
+      const fechaA = new Date(
+        a.evaluacionFinal?.fechaActualizacion || a.evaluacionFinal?.fechaRegistro || 0,
+      );
+      const fechaB = new Date(
+        b.evaluacionFinal?.fechaActualizacion || b.evaluacionFinal?.fechaRegistro || 0,
+      );
+
+      return fechaB - fechaA;
+    });
+
+    return {
+      total,
+      aprobadas,
+      reprobadas,
+      concluidas,
+      promedio,
+      pendientes: becas.length - total,
+      registros: registrosOrdenados.slice(0, 5),
+    };
+  }, [becas]);
+
   const reportesRecientes = useMemo(() => reportes.slice(0, 5), [reportes]);
 
   const getEstadoBadgeVariant = (estado) => {
@@ -100,6 +144,34 @@ const DashboardDirector = () => {
       default:
         return 'primary';
     }
+  };
+
+  const getEvaluacionBadgeVariant = (estado) => estadoEvaluacionVariant[estado] ?? 'secondary';
+
+  const formatEvaluacionCalificacion = (beca) => {
+    const valor = beca.evaluacionFinal?.calificacionFinal;
+
+    if (valor === null || valor === undefined) {
+      return 'Sin calificación';
+    }
+
+    const numero = Number(valor);
+    if (!Number.isFinite(numero)) {
+      return 'Sin calificación';
+    }
+
+    return `${numero.toFixed(2)} / 10`;
+  };
+
+  const formatEvaluacionFecha = (beca) => {
+    const raw = beca.evaluacionFinal?.fechaActualizacion || beca.evaluacionFinal?.fechaRegistro;
+
+    if (!raw) {
+      return '—';
+    }
+
+    const fecha = new Date(raw);
+    return Number.isNaN(fecha.getTime()) ? '—' : fecha.toLocaleDateString('es-BO');
   };
 
   const handleVerDetalles = (codigo) => {
@@ -208,6 +280,41 @@ const DashboardDirector = () => {
               <Card.Body>
                 <h6 className="text-muted mb-1">Devueltos</h6>
                 <h3 className="text-danger mb-0">{resumenReportes.devueltos}</h3>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+
+        <Row className="mb-4 g-3">
+          <Col md={3}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h6 className="text-muted mb-1">Evaluaciones registradas</h6>
+                <h3 className="text-primary mb-0">{evaluacionesFinales.total}</h3>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={3}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h6 className="text-muted mb-1">Aprobadas</h6>
+                <h3 className="text-success mb-0">{evaluacionesFinales.aprobadas}</h3>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={3}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h6 className="text-muted mb-1">Reprobadas</h6>
+                <h3 className="text-danger mb-0">{evaluacionesFinales.reprobadas}</h3>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={3}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h6 className="text-muted mb-1">Promedio final</h6>
+                <h3 className="text-info mb-0">{evaluacionesFinales.promedio}</h3>
               </Card.Body>
             </Card>
           </Col>
@@ -414,6 +521,96 @@ const DashboardDirector = () => {
                 </Card.Body>
               </Card>
             </div>
+          </Col>
+        </Row>
+
+        <Row className="mt-4">
+          <Col lg={8} className="mb-4 mb-lg-0">
+            <Card className="h-100">
+              <Card.Header as="h5" className="fw-bold">
+                Evaluaciones finales registradas
+              </Card.Header>
+              <Card.Body>
+                {loading ? (
+                  <div className="d-flex align-items-center justify-content-center py-4">
+                    <Spinner animation="border" role="status" className="me-2" />
+                    <span>Cargando evaluaciones…</span>
+                  </div>
+                ) : evaluacionesFinales.total === 0 ? (
+                  <p className="mb-0">Aún no se registraron evaluaciones finales.</p>
+                ) : (
+                  <Table responsive hover>
+                    <thead>
+                      <tr>
+                        <th>Código de beca</th>
+                        <th>Becario</th>
+                        <th>Calificación final</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {evaluacionesFinales.registros.map((beca) => (
+                        <tr key={`evaluacion-${beca.id}`}>
+                          <td>{beca.codigo}</td>
+                          <td>{beca.becario?.nombre ?? '—'}</td>
+                          <td>{formatEvaluacionCalificacion(beca)}</td>
+                          <td>
+                            <Badge bg={getEvaluacionBadgeVariant(beca.evaluacionFinal?.estadoFinal)}>
+                              {beca.evaluacionFinal?.estadoFinal ?? 'Pendiente'}
+                            </Badge>
+                          </td>
+                          <td>{formatEvaluacionFecha(beca)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+
+          <Col lg={4}>
+            <Card className="h-100">
+              <Card.Header as="h5" className="fw-bold">
+                Resumen de estados finales
+              </Card.Header>
+              <Card.Body>
+                {loading ? (
+                  <div className="d-flex align-items-center justify-content-center py-3">
+                    <Spinner animation="border" role="status" className="me-2" />
+                    <span>Compilando evaluaciones…</span>
+                  </div>
+                ) : (
+                  <ul className="list-unstyled mb-0">
+                    <li className="d-flex justify-content-between mb-2">
+                      <span>Registradas</span>
+                      <strong>{evaluacionesFinales.total}</strong>
+                    </li>
+                    <li className="d-flex justify-content-between mb-2">
+                      <span>Aprobadas</span>
+                      <strong>{evaluacionesFinales.aprobadas}</strong>
+                    </li>
+                    <li className="d-flex justify-content-between mb-2">
+                      <span>Reprobadas</span>
+                      <strong>{evaluacionesFinales.reprobadas}</strong>
+                    </li>
+                    <li className="d-flex justify-content-between mb-2">
+                      <span>Concluidas</span>
+                      <strong>{evaluacionesFinales.concluidas}</strong>
+                    </li>
+                    <li className="d-flex justify-content-between mb-2">
+                      <span>Pendientes</span>
+                      <strong>{evaluacionesFinales.pendientes}</strong>
+                    </li>
+                    <li className="d-flex justify-content-between">
+                      <span>Promedio general</span>
+                      <strong>{evaluacionesFinales.promedio}</strong>
+                    </li>
+                  </ul>
+                )}
+              </Card.Body>
+            </Card>
           </Col>
         </Row>
       </Container>
