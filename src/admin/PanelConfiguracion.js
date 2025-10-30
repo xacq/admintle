@@ -296,13 +296,6 @@ const PanelConfiguracion = () => {
               >
                 🏛️ Parámetros institucionales
               </ListGroup.Item>
-              <ListGroup.Item 
-                action 
-                active={activeTab === 'respaldo'} 
-                onClick={() => handleTabSelect('respaldo')}
-              >
-                💾 Respaldo y restauración
-              </ListGroup.Item>
             </ListGroup>
           </Card>
         </Col>
@@ -568,53 +561,6 @@ const PanelConfiguracion = () => {
                     <Button variant="primary" type="submit">Actualizar parámetros</Button>
                   </div>
                 </Form>
-              </Card.Body>
-            </Card>
-          )}
-
-          {/* 7. Bloque 5: Respaldo y restauración */}
-          {activeTab === 'respaldo' && (
-            <Card>
-              <Card.Header as="h5" className="fw-bold">Respaldo y Restauración</Card.Header>
-              <Card.Body>
-                <Alert variant="info">
-                  Este punto cumple el apartado "Seguridad y Respaldo de Información" mencionado en los alcances del documento.
-                </Alert>
-                <Row className="g-3 mb-4">
-                  <Col md={6}>
-                    <Card>
-                      <Card.Body>
-                        <Card.Title>Información del último respaldo</Card.Title>
-                        <p><strong>Fecha:</strong> 15/09/2025 03:00:00</p>
-                        <p><strong>Ubicación:</strong> Servidor local (/backup/dycit/)</p>
-                        <p><strong>Tamaño:</strong> 245.7 MB</p>
-                        <p><strong>Estado:</strong> <Badge bg="success">Completado</Badge></p>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                  <Col md={6}>
-                    <Card>
-                      <Card.Body>
-                        <Card.Title>Configuración de respaldos automáticos</Card.Title>
-                        <p><strong>Frecuencia:</strong> Diario a las 03:00 AM</p>
-                        <p><strong>Retención:</strong> 30 días</p>
-                        <p><strong>Destino:</strong> Servidor local y nube</p>
-                        <Button variant="outline-primary">Configurar</Button>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                </Row>
-                <div className="d-flex justify-content-around">
-                  <Button variant="success" onClick={() => handleRespaldo('generar-respaldo')}>
-                        Generar respaldo completo
-                  </Button>
-                  <Button variant="warning" onClick={() => handleRespaldo('restaurar-copia')}>
-                        Restaurar desde copia
-                  </Button>
-                  <Button variant="info" onClick={() => handleRespaldo('descargar-respaldo')}>
-                        Descargar respaldo actual
-                  </Button>
-                </div>
               </Card.Body>
             </Card>
           )}
