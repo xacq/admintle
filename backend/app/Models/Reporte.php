@@ -5,35 +5,42 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Beca extends Model
+class Reporte extends Model
 {
     use HasFactory;
 
     /**
-     * The attributes that are mass assignable.
-     *
      * @var list<string>
      */
     protected $fillable = [
-        'codigo',
+        'beca_id',
         'becario_id',
         'tutor_id',
-        'fecha_inicio',
-        'fecha_fin',
+        'titulo',
+        'descripcion',
+        'fecha_envio',
+        'archivo',
+        'archivo_nombre',
         'estado',
+        'observaciones',
+        'calificacion',
+        'fecha_revision',
     ];
 
     /**
-     * The attributes that should be cast.
-     *
      * @var array<string, string>
      */
     protected $casts = [
-        'fecha_inicio' => 'date',
-        'fecha_fin' => 'date',
+        'fecha_envio' => 'datetime',
+        'fecha_revision' => 'datetime',
+        'calificacion' => 'integer',
     ];
+
+    public function beca(): BelongsTo
+    {
+        return $this->belongsTo(Beca::class);
+    }
 
     public function becario(): BelongsTo
     {
@@ -43,10 +50,5 @@ class Beca extends Model
     public function tutor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'tutor_id');
-    }
-
-    public function reportes(): HasMany
-    {
-        return $this->hasMany(Reporte::class);
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BecaController;
+use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +12,9 @@ use Illuminate\Validation\ValidationException;
 Route::middleware('api')->group(function () {
     Route::apiResource('becas', BecaController::class)->except(['show']);
     Route::patch('/becas/{beca}/tutor', [BecaController::class, 'assignTutor']);
+    Route::apiResource('reportes', ReporteController::class);
+    Route::get('/reportes/{reporte}/archivo', [ReporteController::class, 'download'])
+        ->name('reportes.download');
 
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);

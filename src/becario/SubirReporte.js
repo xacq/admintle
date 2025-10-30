@@ -1,166 +1,279 @@
-// src/components/SubirReporte.js
-
-import React, { useState } from 'react';
-import { Container, Card, Form, Button, Alert } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom'; // Para la redirección
+import React, { useEffect, useMemo, useState } from 'react';
+import { Container, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import useSessionUser from '../hooks/useSessionUser';
 import './estudiante.css';
+
+const initialForm = {
+  titulo: '',
+  descripcion: '',
+  archivo: null,
+};
 
 const SubirReporte = () => {
   const navigate = useNavigate();
-  
-  // Estado para el formulario
-  const [formData, setFormData] = useState({
-    periodo: '',
-    resumen: '',
-    archivo: null
-  });
+  const user = useSessionUser();
+  const [beca, setBeca] = useState(null);
+  const [loadingBeca, setLoadingBeca] = useState(true);
+  const [formData, setFormData] = useState(initialForm);
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  // Estado para controlar el mensaje de éxito
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  // --- MANEJADORES DE EVENTOS ---
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
+  const fechaEnvio = useMemo(() => {
+    return new Date().toLocaleDateString('es-BO', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
     });
-  };
+  }, []);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validación simple de tamaño y tipo
-      if (file.size > 10 * 1024 * 1024) {
-        alert('El archivo no debe superar los 10 MB.');
-        return;
-      }
-      if (file.type !== 'application/pdf') {
-        alert('Solo se permiten archivos en formato PDF.');
-        return;
-      }
-      setFormData({
-        ...formData,
-        archivo: file
-      });
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Validación simple
-    if (!formData.periodo || !formData.resumen || !formData.archivo) {
-      alert('Por favor, complete todos los campos del formulario.');
+  useEffect(() => {
+    if (!user?.id) {
       return;
     }
 
-    // Simulación de envío exitoso
-    console.log('Datos del reporte a enviar:', formData);
-    setShowSuccess(true);
+    const fetchBeca = async () => {
+      setLoadingBeca(true);
+      setError('');
 
-    // Redirigir al dashboard después de un breve retraso
-    setTimeout(() => {
-      navigate('/becario');
-    }, 3000);
+      try {
+        const response = await fetch(`/api/becas?becario_id=${user.id}`);
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const data = Array.isArray(payload?.data) ? payload.data : payload;
+        setBeca(Array.isArray(data) ? data[0] ?? null : null);
+      } catch (err) {
+        setError(err.message || 'No se pudo recuperar la información de tu beca.');
+      } finally {
+        setLoadingBeca(false);
+      }
+    };
+
+    fetchBeca();
+  }, [user?.id]);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError('El archivo no debe superar los 10 MB.');
+      return;
+    }
+
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    if (!['pdf', 'doc', 'docx'].includes(extension ?? '')) {
+      setError('Solo se permiten archivos en formato PDF o DOCX.');
+      return;
+    }
+
+    setError('');
+    setFormData((prev) => ({ ...prev, archivo: file }));
+  };
+
+  const resetForm = () => {
+    setFormData(initialForm);
+    const input = document.getElementById('archivo-reporte');
+    if (input) {
+      input.value = '';
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!beca) {
+      setError('Necesitas una beca activa para registrar reportes.');
+      return;
+    }
+
+    if (!formData.titulo || !formData.archivo) {
+      setError('Por favor completa el título y selecciona un archivo.');
+      return;
+    }
+
+    if (!user?.id) {
+      setError('Tu sesión ha expirado. Inicia sesión nuevamente.');
+      return;
+    }
+
+    const payload = new FormData();
+    payload.append('titulo', formData.titulo);
+    payload.append('descripcion', formData.descripcion);
+    payload.append('archivo', formData.archivo);
+    payload.append('becaId', beca.id);
+    payload.append('becarioId', user.id);
+
+    setSubmitting(true);
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      const response = await fetch('/api/reportes', {
+        method: 'POST',
+        body: payload,
+      });
+
+      const responseBody = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = responseBody?.message
+          || (responseBody?.errors && Object.values(responseBody.errors).flat().join(' '))
+          || 'No se pudo registrar el reporte.';
+        throw new Error(message);
+      }
+
+      setSuccessMessage('✅ Reporte enviado correctamente. Quedará pendiente de revisión por el tutor.');
+      resetForm();
+
+      setTimeout(() => {
+        navigate('/reportesavance', { replace: true });
+      }, 2000);
+    } catch (err) {
+      setError(err.message || 'No se pudo registrar el reporte.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
-    navigate('/becario');
+    navigate('/dashboard/becario');
   };
 
   return (
     <div className="subir-reporte-wrapper">
-      {/* 1. Encabezado */}
       <header className="subir-reporte-header text-center py-4 border-bottom">
         <Container>
           <h1 className="h2 fw-bold">📤 Subir Nuevo Reporte de Avance</h1>
-          <p className="text-muted">Complete los siguientes campos para registrar su informe mensual o trimestral de avance.</p>
+          <p className="text-muted">
+            Complete los siguientes campos para registrar su informe parcial. El tutor recibirá una notificación automática.
+          </p>
         </Container>
       </header>
 
       <Container className="py-4 d-flex justify-content-center">
-        {/* 2. Cuerpo principal del formulario */}
-        <Card className="form-card" style={{ width: '600px' }}>
+        <Card className="form-card" style={{ width: '640px' }}>
           <Card.Body>
-            {showSuccess && (
-              <Alert variant="success" className="mb-4">
-                ✅ Reporte enviado correctamente. Quedará pendiente de revisión por el tutor.
+            {error && (
+              <Alert variant="danger" className="mb-4">
+                {error}
               </Alert>
             )}
-            
-            <Form onSubmit={handleSubmit}>
-              {/* Bloque 1: Periodo del Reporte */}
-              <Form.Group className="mb-4">
-                <Form.Label>Periodo o Fecha del Reporte</Form.Label>
-                <Form.Select 
-                  name="periodo" 
-                  value={formData.periodo} 
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Seleccione un periodo...</option>
-                  <option value="Primer Trimestre 2025">Primer Trimestre 2025</option>
-                  <option value="Segundo Trimestre 2025">Segundo Trimestre 2025</option>
-                  <option value="Tercer Trimestre 2025">Tercer Trimestre 2025</option>
-                  <option value="Cuarto Trimestre 2025">Cuarto Trimestre 2025</option>
-                </Form.Select>
-                <Form.Text className="text-muted">
-                  Seleccione el mes o periodo correspondiente al informe.
-                </Form.Text>
-              </Form.Group>
 
-              {/* Bloque 2: Resumen del Contenido */}
-              <Form.Group className="mb-4">
-                <Form.Label>Resumen del Reporte (breve descripción del avance)</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={4}
-                  name="resumen"
-                  value={formData.resumen}
-                  onChange={handleChange}
-                  placeholder="Ejemplo: Se completó la fase de análisis de datos y se inició la implementación del modelo…"
-                  required
-                />
-              </Form.Group>
+            {successMessage && (
+              <Alert variant="success" className="mb-4">
+                {successMessage}
+              </Alert>
+            )}
 
-              {/* Bloque 3: Archivo PDF del Informe */}
-              <Form.Group className="mb-4">
-                <Form.Label>Archivo del Reporte (formato PDF, máximo 10 MB)</Form.Label>
-                <Form.Control
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileChange}
-                  required
-                />
-                {formData.archivo && (
-                  <div className="mt-2">
-                    <span>📄 {formData.archivo.name}</span>
-                  </div>
-                )}
-              </Form.Group>
-
-              {/* 4. Botones inferiores */}
-              <div className="d-flex justify-content-center">
-                <Button variant="primary" type="submit" className="me-3 px-4">
-                  📤 Subir Reporte
-                </Button>
-                <Button variant="secondary" onClick={handleCancel} className="px-4">
-                  ↩️ Cancelar
-                </Button>
+            {loadingBeca ? (
+              <div className="d-flex align-items-center justify-content-center py-5">
+                <Spinner animation="border" role="status" className="me-2" />
+                <span>Cargando información de tu beca…</span>
               </div>
-            </Form>
+            ) : !beca ? (
+              <Alert variant="warning">
+                No tienes una beca activa registrada. Comunícate con el tutor para habilitar el envío de reportes.
+              </Alert>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <p className="mb-1 text-muted">Beca seleccionada</p>
+                  <h5 className="mb-0">{beca.codigo}</h5>
+                  <small className="text-muted">
+                    Tutor responsable: {beca.tutor?.nombre ?? 'Sin asignar'}
+                  </small>
+                </div>
+
+                <Form onSubmit={handleSubmit}>
+                  <Form.Group className="mb-4">
+                    <Form.Label>Título del reporte</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="titulo"
+                      value={formData.titulo}
+                      onChange={handleChange}
+                      placeholder="Ejemplo: Avance del segundo trimestre"
+                      required
+                      disabled={submitting}
+                    />
+                  </Form.Group>
+
+                  <Form.Group className="mb-4">
+                    <Form.Label>Descripción breve del avance</Form.Label>
+                    <Form.Control
+                      as="textarea"
+                      rows={4}
+                      name="descripcion"
+                      value={formData.descripcion}
+                      onChange={handleChange}
+                      placeholder="Describe las actividades realizadas, resultados preliminares o dificultades encontradas."
+                      disabled={submitting}
+                    />
+                    <Form.Text className="text-muted">
+                      Fecha de envío automática: {fechaEnvio}
+                    </Form.Text>
+                  </Form.Group>
+
+                  <Form.Group className="mb-4">
+                    <Form.Label>Archivo adjunto (PDF o DOCX, máximo 10 MB)</Form.Label>
+                    <Form.Control
+                      id="archivo-reporte"
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleFileChange}
+                      disabled={submitting}
+                      required
+                    />
+                    {formData.archivo && (
+                      <div className="mt-2">
+                        <span>📎 {formData.archivo.name}</span>
+                      </div>
+                    )}
+                  </Form.Group>
+
+                  <div className="d-flex justify-content-center">
+                    <Button
+                      variant="primary"
+                      type="submit"
+                      className="me-3 px-4"
+                      disabled={submitting}
+                    >
+                      {submitting ? 'Enviando…' : '📤 Subir Reporte'}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={handleCancel}
+                      className="px-4"
+                      disabled={submitting}
+                    >
+                      ↩️ Cancelar
+                    </Button>
+                  </div>
+                </Form>
+              </>
+            )}
           </Card.Body>
         </Card>
       </Container>
 
-      {/* 5. Pie de página institucional */}
       <footer className="subir-reporte-footer text-center py-3 mt-4 border-top">
         <p className="mb-0">
           Dirección de Ciencia e Innovación Tecnología – Universidad Autónoma Tomás Frías
         </p>
         <small className="text-muted">
-          Versión 1.0.3 – {new Date().toLocaleDateString('es-BO', { year: 'numeric', month: 'long', day: 'numeric' })}
+          Versión 1.0.3 – {fechaEnvio}
         </small>
       </footer>
     </div>
