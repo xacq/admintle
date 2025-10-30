@@ -1,94 +1,67 @@
 // src/components/ArchivoHistorico.js
 
-import React, { useState, useMemo } from 'react';
-import { Container, Card, Row, Col, Form, Button, Table, Badge, Modal, Alert, ListGroup } from 'react-bootstrap';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Container,
+  Card,
+  Row,
+  Col,
+  Form,
+  Button,
+  Table,
+  Badge,
+  Modal,
+  Alert,
+  ListGroup,
+  Spinner,
+} from 'react-bootstrap';
+import useSessionUser from '../hooks/useSessionUser';
 import './admin.css';
 
-// --- DATOS ESTÁTICOS DE EJEMPLO ---
-const proyectosData = [
-  {
-    id: 1,
-    anio: '2023',
-    codigo: 'PI-UATF-037',
-    becario: 'Ana Guzmán',
-    tutor: 'Lic. Cárdenas',
-    calificacionFinal: 9.2,
-    estado: 'Aprobado',
-    titulo: 'Análisis de algoritmos de optimización para redes de distribución',
-    resumen: 'Investigación sobre algoritmos genéticos aplicados a la optimización de rutas de distribución en redes logísticas urbanas.',
-    fechaInicio: '2023-03-15',
-    fechaFin: '2023-11-30',
-    evaluacionFinal: 'Excelente trabajo de investigación. El enfoque metodológico es sólido y los resultados presentados son relevantes para el área. Se recomienda publicación.',
-    archivos: ['informe_final.pdf', 'anexos_estadisticos.pdf', 'presentacion_defensa.pptx']
-  },
-  {
-    id: 2,
-    anio: '2022',
-    codigo: 'PI-UATF-028',
-    becario: 'Luis Mamani',
-    tutor: 'Ing. Rodríguez',
-    calificacionFinal: 8.5,
-    estado: 'Aprobado',
-    titulo: 'Desarrollo de sistema de monitoreo de calidad del agua',
-    resumen: 'Diseño e implementación de un sistema IoT para monitoreo en tiempo real de parámetros de calidad del agua en cuerpos hídricos.',
-    fechaInicio: '2022-04-10',
-    fechaFin: '2022-12-15',
-    evaluacionFinal: 'Buen trabajo práctico con resultados aplicables. Se sugiere profundizar en el análisis de datos para futuras investigaciones.',
-    archivos: ['informe_final.pdf', 'manual_usuario.pdf', 'codigo_fuente.zip']
-  },
-  {
-    id: 3,
-    anio: '2022',
-    codigo: 'PI-UATF-019',
-    becario: 'José Flores',
-    tutor: 'Lic. Rojas',
-    calificacionFinal: null,
-    estado: 'Sin evaluación',
-    titulo: 'Estudio de impacto ambiental de minería artesanal',
-    resumen: 'Análisis de los efectos de la minería artesanal en ecosistemas acuáticos de la región sur del país.',
-    fechaInicio: '2022-02-20',
-    fechaFin: '2022-10-30',
-    evaluacionFinal: 'El proyecto fue concluido pero no se presentó el informe final para evaluación.',
-    archivos: ['borrador_informe.pdf']
-  },
-  {
-    id: 4,
-    anio: '2021',
-    codigo: 'PI-UATF-012',
-    becario: 'María Choque',
-    tutor: 'Dr. Fernández',
-    calificacionFinal: 7.8,
-    estado: 'Observado',
-    titulo: 'Aplicación de blockchain en la trazabilidad de productos agrícolas',
-    resumen: 'Propuesta de sistema basado en blockchain para garantizar la trazabilidad y autenticidad de productos agrícolas orgánicos.',
-    fechaInicio: '2021-05-15',
-    fechaFin: '2022-01-20',
-    evaluacionFinal: 'Trabajo innovador con enfoque tecnológico actual. Se requieren ajustes en la implementación del prototipo para mayor escalabilidad.',
-    archivos: ['informe_final.pdf', 'diagramas_arquitectura.pdf']
-  },
-  {
-    id: 5,
-    anio: '2021',
-    codigo: 'PI-UATF-008',
-    becario: 'Carlos Vargas',
-    tutor: 'Mg. Soliz',
-    calificacionFinal: 9.5,
-    estado: 'Aprobado',
-    titulo: 'Modelo predictivo de enfermedades en cultivos de quinua',
-    resumen: 'Desarrollo de modelo de machine learning para predecir la aparición de enfermedades en cultivos de quinua basado en variables climáticas y de suelo.',
-    fechaInicio: '2021-03-10',
-    fechaFin: '2021-11-25',
-    evaluacionFinal: 'Investigación sobresaliente con resultados de alto impacto para el sector agrícola. Recomendado para publicación en revista indexada.',
-    archivos: ['informe_final.pdf', 'dataset.csv', 'modelo_predictivo.py']
-  }
-];
+const DEFAULT_OBSERVACIONES = 'Sin observaciones registradas.';
+
+const normalizarProyecto = (beca) => {
+  const fechaFin = beca.fechaFin ?? null;
+  const fechaCierre = beca.fechaCierre ?? null;
+  const fechaReferencia = fechaCierre ?? fechaFin ?? beca.fechaInicio ?? null;
+  const anio = fechaReferencia ? new Date(fechaReferencia).getFullYear().toString() : 'Sin gestión';
+  const evaluacion = beca.evaluacionFinal ?? null;
+
+  return {
+    id: beca.id,
+    anio,
+    codigo: beca.codigo ?? '—',
+    becario: beca.becario?.nombre ?? 'Sin asignar',
+    tutor: beca.tutor?.nombre ?? 'Sin asignar',
+    calificacionFinal:
+      evaluacion?.calificacionFinal !== null && evaluacion?.calificacionFinal !== undefined
+        ? Number(evaluacion.calificacionFinal)
+        : null,
+    estado: evaluacion?.estadoFinal ?? 'Sin evaluación',
+    titulo: beca.tituloProyecto ?? 'Proyecto sin título registrado',
+    resumen: evaluacion?.observacionesFinales ?? DEFAULT_OBSERVACIONES,
+    fechaInicio: beca.fechaInicio ?? '—',
+    fechaFin: beca.fechaFin ?? '—',
+    fechaCierre,
+    evaluacionFinal: evaluacion?.observacionesFinales ?? DEFAULT_OBSERVACIONES,
+    evaluacionDetalle: evaluacion,
+    areaInvestigacion: beca.areaInvestigacion ?? 'Sin área declarada',
+    cerradaPor: beca.cerradaPor?.nombre ?? null,
+    archivos: [],
+  };
+};
 
 const ArchivoHistorico = () => {
-  const [proyectos, setProyectos] = useState(proyectosData);
+  const sessionUser = useSessionUser();
+  const isAdmin = sessionUser?.role === 'administrador';
+  const isDirector = sessionUser?.role === 'director';
+  const canAdminister = isAdmin;
+  const canTriggerBackup = isAdmin || isDirector;
+
+  const [proyectos, setProyectos] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showStats, setShowStats] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(true); // Simular rol de administrador
   const [filters, setFilters] = useState({
     becario: '',
     codigo: '',
@@ -96,6 +69,43 @@ const ArchivoHistorico = () => {
     tutor: '',
     estado: 'todos'
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [backupFeedback, setBackupFeedback] = useState('');
+
+  const formatFecha = (value) => {
+    if (!value) {
+      return '—';
+    }
+
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('es-BO');
+  };
+
+  useEffect(() => {
+    const loadProyectos = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const response = await fetch('/api/becas?estado=Archivada&include_archived=1');
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const data = Array.isArray(payload?.data) ? payload.data : payload;
+        const normalizados = Array.isArray(data) ? data.map(normalizarProyecto) : [];
+        setProyectos(normalizados);
+      } catch (err) {
+        setError(err.message || 'No se pudo recuperar el archivo histórico de becas.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProyectos();
+  }, []);
 
   // --- LÓGICA DE FILTRADO ---
   const filteredProjects = useMemo(() => {
@@ -131,6 +141,10 @@ const ArchivoHistorico = () => {
   };
 
   const handleDownloadPDF = () => {
+    if (!selectedProject) {
+      return;
+    }
+
     alert(`Generando PDF completo del proyecto: ${selectedProject.codigo} (simulación)`);
   };
 
@@ -146,7 +160,12 @@ const ArchivoHistorico = () => {
   };
 
   const handleBackup = () => {
-    alert('Iniciando respaldo completo del módulo histórico (simulación)');
+    if (!canTriggerBackup) {
+      setBackupFeedback('No tienes permisos para ejecutar el respaldo del archivo histórico.');
+      return;
+    }
+
+    setBackupFeedback('Respaldo completo del archivo histórico iniciado (simulación).');
   };
 
   // --- FUNCIONES AUXILIARES ---
@@ -154,6 +173,10 @@ const ArchivoHistorico = () => {
     switch (estado) {
       case 'Aprobado':
         return 'success';
+      case 'Reprobado':
+        return 'danger';
+      case 'Concluido':
+        return 'info';
       case 'Observado':
         return 'warning';
       case 'Sin evaluación':
@@ -175,33 +198,29 @@ const ArchivoHistorico = () => {
       'Otras': 0
     };
 
-    proyectos.forEach(proyecto => {
-      // Total por año
-      totalPorAnio[proyecto.anio] = (totalPorAnio[proyecto.anio] || 0) + 1;
-      
-      // Suma de calificaciones
-      if (proyecto.calificacionFinal) {
-        sumaCalificaciones.total += proyecto.calificacionFinal;
-        sumaCalificaciones.count++;
+    proyectos.forEach((proyecto) => {
+      const anioClave = proyecto.anio || 'Sin gestión';
+      totalPorAnio[anioClave] = (totalPorAnio[anioClave] || 0) + 1;
+
+      if (proyecto.calificacionFinal !== null && proyecto.calificacionFinal !== undefined) {
+        sumaCalificaciones.total += Number(proyecto.calificacionFinal);
+        sumaCalificaciones.count += 1;
       }
-      
-      // Tutores activos
-      tutoresActivos[proyecto.tutor] = (tutoresActivos[proyecto.tutor] || 0) + 1;
-      
-      // Áreas de investigación (simplificado)
-      if (proyecto.titulo.toLowerCase().includes('algoritmo') || 
-          proyecto.titulo.toLowerCase().includes('sistema') || 
-          proyecto.titulo.toLowerCase().includes('blockchain')) {
-        areasInvestigacion['Tecnología']++;
-      } else if (proyecto.titulo.toLowerCase().includes('agua') || 
-                 proyecto.titulo.toLowerCase().includes('ambiental') || 
-                 proyecto.titulo.toLowerCase().includes('minería')) {
-        areasInvestigacion['Medio Ambiente']++;
-      } else if (proyecto.titulo.toLowerCase().includes('quinua') || 
-                 proyecto.titulo.toLowerCase().includes('agrícola')) {
-        areasInvestigacion['Agricultura']++;
+
+      if (proyecto.tutor && proyecto.tutor !== 'Sin asignar') {
+        tutoresActivos[proyecto.tutor] = (tutoresActivos[proyecto.tutor] || 0) + 1;
+      }
+
+      const areaReferencia = (proyecto.areaInvestigacion || proyecto.titulo || '').toLowerCase();
+
+      if (areaReferencia.includes('algoritmo') || areaReferencia.includes('sistema') || areaReferencia.includes('blockchain')) {
+        areasInvestigacion['Tecnología'] += 1;
+      } else if (areaReferencia.includes('agua') || areaReferencia.includes('ambiental') || areaReferencia.includes('minería')) {
+        areasInvestigacion['Medio Ambiente'] += 1;
+      } else if (areaReferencia.includes('quinua') || areaReferencia.includes('agrícola')) {
+        areasInvestigacion['Agricultura'] += 1;
       } else {
-        areasInvestigacion['Otras']++;
+        areasInvestigacion['Otras'] += 1;
       }
     });
 
@@ -226,8 +245,12 @@ const ArchivoHistorico = () => {
         </p>
       </div>
 
+      {error && (
+        <Alert variant="danger">{error}</Alert>
+      )}
+
       <Row>
-        <Col lg={isAdmin ? 9 : 12}>
+        <Col lg={canAdminister ? 9 : 12}>
           {/* 2. Panel de filtros de búsqueda avanzada */}
           <Card className="mb-4">
             <Card.Header as="h5" className="fw-bold">Filtros de Búsqueda Avanzada</Card.Header>
@@ -277,7 +300,9 @@ const ArchivoHistorico = () => {
                   <Form.Select name="estado" value={filters.estado} onChange={handleFilterChange}>
                     <option value="todos">Todos los estados</option>
                     <option value="Aprobado">Aprobado</option>
+                    <option value="Concluido">Concluido</option>
                     <option value="Observado">Observado</option>
+                    <option value="Reprobado">Reprobado</option>
                     <option value="Sin evaluación">Sin evaluación</option>
                   </Form.Select>
                 </Col>
@@ -296,7 +321,7 @@ const ArchivoHistorico = () => {
                 <Button variant="outline-info" size="sm" onClick={() => setShowStats(!showStats)} className="me-2">
                   {showStats ? 'Ocultar' : 'Mostrar'} estadísticas
                 </Button>
-                {isAdmin && (
+                {canAdminister && (
                   <Button variant="outline-warning" size="sm" onClick={handleBackup}>
                     Respaldar módulo histórico
                   </Button>
@@ -311,24 +336,35 @@ const ArchivoHistorico = () => {
                     <th>Código del Proyecto</th>
                     <th>Becario</th>
                     <th>Tutor</th>
+                    <th>Fecha de cierre</th>
                     <th>Calificación Final</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProjects.length > 0 ? (
-                    filteredProjects.map(proyecto => (
+                  {loading ? (
+                    <tr>
+                      <td colSpan="8" className="text-center py-4">
+                        <Spinner animation="border" role="status" size="sm" className="me-2" />
+                        Cargando archivo histórico…
+                      </td>
+                    </tr>
+                  ) : filteredProjects.length > 0 ? (
+                    filteredProjects.map((proyecto) => (
                       <tr key={proyecto.id}>
                         <td>{proyecto.anio}</td>
                         <td>{proyecto.codigo}</td>
                         <td>{proyecto.becario}</td>
                         <td>{proyecto.tutor}</td>
-                        <td>{proyecto.calificacionFinal || '—'}</td>
+                        <td>{formatFecha(proyecto.fechaCierre)}</td>
+                        <td>{proyecto.calificacionFinal ?? '—'}</td>
                         <td>
                           <Badge bg={getEstadoBadge(proyecto.estado)}>
                             {proyecto.estado === 'Aprobado' && '✅ '}
                             {proyecto.estado === 'Observado' && '⚠️ '}
+                            {proyecto.estado === 'Reprobado' && '❌ '}
+                            {proyecto.estado === 'Concluido' && 'ℹ️ '}
                             {proyecto.estado === 'Sin evaluación' && '❌ '}
                             {proyecto.estado}
                           </Badge>
@@ -337,19 +373,19 @@ const ArchivoHistorico = () => {
                           <Button variant="outline-primary" size="sm" onClick={() => handleViewProject(proyecto)}>
                             🔍 Ver
                           </Button>
-                          {isAdmin && (
+                          {canAdminister && (
                             <>
-                              <Button 
-                                variant="outline-danger" 
-                                size="sm" 
+                              <Button
+                                variant="outline-danger"
+                                size="sm"
                                 className="ms-1"
                                 onClick={() => handleDeleteProject(proyecto.id)}
                               >
                                 🗑️
                               </Button>
-                              <Button 
-                                variant="outline-secondary" 
-                                size="sm" 
+                              <Button
+                                variant="outline-secondary"
+                                size="sm"
                                 className="ms-1"
                                 onClick={() => handleToggleVisibility(proyecto.id)}
                               >
@@ -362,7 +398,11 @@ const ArchivoHistorico = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="7" className="text-center py-3">No se encontraron proyectos con los filtros seleccionados.</td>
+                      <td colSpan="8" className="text-center py-3">
+                        {error
+                          ? 'No se pudo mostrar la información histórica.'
+                          : 'No se encontraron proyectos con los filtros seleccionados.'}
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -371,7 +411,7 @@ const ArchivoHistorico = () => {
           </Card>
         </Col>
 
-        {isAdmin && (
+        {canAdminister && (
           <Col lg={3}>
             {/* 6. Acciones administrativas (solo rol administrador) */}
             <Card className="mb-4">
@@ -380,6 +420,11 @@ const ArchivoHistorico = () => {
                 <Alert variant="info">
                   Estas acciones solo están disponibles para usuarios con rol de administrador.
                 </Alert>
+                {backupFeedback && (
+                  <Alert variant="success" className="mt-3">
+                    {backupFeedback}
+                  </Alert>
+                )}
                 <div className="d-grid gap-2">
                   <Button variant="outline-danger" size="sm">
                     Eliminar registros seleccionados
@@ -461,6 +506,30 @@ const ArchivoHistorico = () => {
                   <h6>Período</h6>
                   <p>{selectedProject.fechaInicio} - {selectedProject.fechaFin}</p>
                 </Col>
+                <Col md={6}>
+                  <h6>Estado final</h6>
+                  <Badge bg={getEstadoBadge(selectedProject.estado)}>
+                    {selectedProject.estado}
+                  </Badge>
+                </Col>
+                <Col md={6}>
+                  <h6>Calificación final</h6>
+                  {selectedProject.calificacionFinal !== null && selectedProject.calificacionFinal !== undefined ? (
+                    <Badge bg="info" className="p-2">
+                      {Number(selectedProject.calificacionFinal).toFixed(2)}/10
+                    </Badge>
+                  ) : (
+                    <p className="mb-0">Sin calificación registrada</p>
+                  )}
+                </Col>
+                <Col md={6}>
+                  <h6>Fecha de cierre</h6>
+                  <p>{formatFecha(selectedProject.fechaCierre)}</p>
+                </Col>
+                <Col md={6}>
+                  <h6>Autorizado por</h6>
+                  <p>{selectedProject.cerradaPor ?? '—'}</p>
+                </Col>
                 <Col md={12}>
                   <h6>Resumen del trabajo realizado</h6>
                   <p>{selectedProject.resumen}</p>
@@ -468,24 +537,22 @@ const ArchivoHistorico = () => {
                 <Col md={12}>
                   <h6>Evaluación final</h6>
                   <p>{selectedProject.evaluacionFinal}</p>
-                  {selectedProject.calificacionFinal && (
-                    <div className="mb-3">
-                      <strong>Calificación final: </strong>
-                      <Badge bg="info" className="p-2">{selectedProject.calificacionFinal}/10</Badge>
-                    </div>
-                  )}
                 </Col>
                 <Col md={12}>
                   <h6>Archivos asociados</h6>
                   <ListGroup>
-                    {selectedProject.archivos.map((archivo, index) => (
-                      <ListGroup.Item key={index} className="d-flex justify-content-between align-items-center">
-                        {archivo}
-                        <Button variant="outline-primary" size="sm" onClick={() => handleDownloadFile(archivo)}>
-                          Descargar
-                        </Button>
-                      </ListGroup.Item>
-                    ))}
+                    {selectedProject.archivos.length > 0 ? (
+                      selectedProject.archivos.map((archivo, index) => (
+                        <ListGroup.Item key={index} className="d-flex justify-content-between align-items-center">
+                          {archivo}
+                          <Button variant="outline-primary" size="sm" onClick={() => handleDownloadFile(archivo)}>
+                            Descargar
+                          </Button>
+                        </ListGroup.Item>
+                      ))
+                    ) : (
+                      <ListGroup.Item>Sin archivos registrados para este proyecto.</ListGroup.Item>
+                    )}
                   </ListGroup>
                 </Col>
               </Row>

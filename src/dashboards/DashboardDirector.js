@@ -26,7 +26,7 @@ const DashboardDirector = () => {
     setError('');
 
     try {
-      const response = await fetch('/api/becas');
+      const response = await fetch('/api/becas?include_archived=1');
       if (!response.ok) {
         throw new Error(`Error ${response.status}`);
       }
@@ -73,11 +73,13 @@ const DashboardDirector = () => {
     const activas = becas.filter((beca) => beca.estado === 'Activa').length;
     const finalizadas = becas.filter((beca) => beca.estado === 'Finalizada').length;
     const evaluacion = becas.filter((beca) => beca.estado === 'En evaluación').length;
+    const archivadas = becas.filter((beca) => beca.estado === 'Archivada').length;
 
     return {
       activas,
       finalizadas,
       evaluacion,
+      archivadas,
     };
   }, [becas]);
 
@@ -141,6 +143,8 @@ const DashboardDirector = () => {
         return 'warning';
       case 'Finalizada':
         return 'secondary';
+      case 'Archivada':
+        return 'dark';
       default:
         return 'primary';
     }
@@ -223,8 +227,8 @@ const DashboardDirector = () => {
       </header>
 
       <Container className="py-4">
-        <Row className="mb-4">
-          <Col md={4}>
+        <Row className="g-3 mb-4">
+          <Col xs={12} sm={6} xl={3}>
             <Card className="text-center metric-card">
               <Card.Body>
                 <h2 className="text-primary">{becas.length}</h2>
@@ -232,7 +236,7 @@ const DashboardDirector = () => {
               </Card.Body>
             </Card>
           </Col>
-          <Col md={4}>
+          <Col xs={12} sm={6} xl={3}>
             <Card className="text-center metric-card">
               <Card.Body>
                 <h2 className="text-success">{indicadores.activas}</h2>
@@ -240,7 +244,7 @@ const DashboardDirector = () => {
               </Card.Body>
             </Card>
           </Col>
-          <Col md={4}>
+          <Col xs={12} sm={6} xl={3}>
             <Card className="text-center metric-card">
               <Card.Body>
                 <h2 className="text-secondary">{indicadores.finalizadas}</h2>
@@ -248,7 +252,27 @@ const DashboardDirector = () => {
               </Card.Body>
             </Card>
           </Col>
+          <Col xs={12} sm={6} xl={3}>
+            <Card className="text-center metric-card">
+              <Card.Body>
+                <h2 className="text-dark">{indicadores.archivadas}</h2>
+                <p className="text-muted mb-0">En archivo histórico</p>
+              </Card.Body>
+            </Card>
+          </Col>
         </Row>
+
+        {indicadores.finalizadas > 0 && (
+          <Row className="mb-4">
+            <Col>
+              <Alert variant="info" className="mb-0">
+                {indicadores.finalizadas === 1
+                  ? 'Existe 1 beca finalizada esperando confirmación de archivo.'
+                  : `Existen ${indicadores.finalizadas} becas finalizadas esperando confirmación de archivo.`}
+              </Alert>
+            </Col>
+          </Row>
+        )}
 
         <Row className="mb-4 g-3">
           <Col md={3}>
@@ -414,7 +438,7 @@ const DashboardDirector = () => {
                     className="w-100"
                     onClick={() => handleAccesoDirecto('Revisar Becas Finalizadas')}
                   >
-                    📁 Revisar Becas Finalizadas
+                    📁 Revisar Archivo Histórico
                   </Button>
                 </Card.Body>
               </Card>
@@ -517,6 +541,10 @@ const DashboardDirector = () => {
                   <p className="mb-0 d-flex justify-content-between">
                     <span>Finalizadas</span>
                     <strong>{indicadores.finalizadas}</strong>
+                  </p>
+                  <p className="mb-0 d-flex justify-content-between">
+                    <span>Archivadas</span>
+                    <strong>{indicadores.archivadas}</strong>
                   </p>
                 </Card.Body>
               </Card>

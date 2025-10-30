@@ -136,6 +136,10 @@ class EvaluacionController extends Controller
 
     protected function syncBecaEstado(Beca $beca, string $estadoFinal): void
     {
+        if ($beca->estado === 'Archivada') {
+            return;
+        }
+
         if (in_array($estadoFinal, ['Aprobado', 'Reprobado', 'Concluido'], true)) {
             if ($beca->estado !== 'Finalizada') {
                 $beca->update(['estado' => 'Finalizada']);

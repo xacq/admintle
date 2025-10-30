@@ -23,6 +23,8 @@ class Beca extends Model
         'tutor_id',
         'fecha_inicio',
         'fecha_fin',
+        'fecha_cierre',
+        'cerrada_por',
         'estado',
     ];
 
@@ -34,6 +36,7 @@ class Beca extends Model
     protected $casts = [
         'fecha_inicio' => 'date',
         'fecha_fin' => 'date',
+        'fecha_cierre' => 'datetime',
     ];
 
     public function becario(): BelongsTo
@@ -44,6 +47,11 @@ class Beca extends Model
     public function tutor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'tutor_id');
+    }
+
+    public function cerradaPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cerrada_por');
     }
 
     public function reportes(): HasMany

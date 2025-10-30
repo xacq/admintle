@@ -74,6 +74,7 @@ class ReporteInstitucionalController extends Controller
                 'activas' => (int) ($becasPorEstado['Activa'] ?? 0),
                 'finalizadas' => (int) ($becasPorEstado['Finalizada'] ?? 0),
                 'enEvaluacion' => (int) ($becasPorEstado['En evaluación'] ?? 0),
+                'archivadas' => (int) ($becasPorEstado['Archivada'] ?? 0),
             ],
             'evaluaciones' => [
                 'promedioGeneral' => $promedioCalificaciones ? round($promedioCalificaciones, 2) : null,
