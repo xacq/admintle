@@ -28,6 +28,7 @@ const estadoBecaVariant = {
   Activa: 'success',
   'En evaluación': 'warning',
   Finalizada: 'secondary',
+  Archivada: 'dark',
 };
 
 const defaultFormData = {

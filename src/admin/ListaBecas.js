@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import useSessionUser from '../hooks/useSessionUser';
 import './admin.css';
 
+const ARCHIVED_STATE = 'Archivada';
 const ESTADO_OPTIONS = ['Activa', 'En evaluación', 'Finalizada'];
 
 const emptyForm = {
@@ -30,13 +32,17 @@ const ListadoBecas = () => {
   const [assignmentTutorId, setAssignmentTutorId] = useState('');
   const [assignmentError, setAssignmentError] = useState('');
   const [assignmentSaving, setAssignmentSaving] = useState(false);
+  const [archivingBecaId, setArchivingBecaId] = useState(null);
+  const [archiveFeedback, setArchiveFeedback] = useState({ type: '', message: '' });
+
+  const sessionUser = useSessionUser();
 
   const fetchBecas = async () => {
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch('/api/becas');
+      const response = await fetch('/api/becas?include_archived=1');
       if (!response.ok) {
         throw new Error(`Error ${response.status}`);
       }
@@ -44,6 +50,7 @@ const ListadoBecas = () => {
       const payload = await response.json();
       const data = Array.isArray(payload?.data) ? payload.data : payload;
       setBecas(data);
+      setArchiveFeedback({ type: '', message: '' });
     } catch (err) {
       setError(err.message || 'No se pudo cargar el listado de becas.');
     } finally {
@@ -93,9 +100,20 @@ const ListadoBecas = () => {
         return 'bg-secondary';
       case 'En evaluación':
         return 'bg-warning text-dark';
+      case ARCHIVED_STATE:
+        return 'bg-dark';
       default:
         return 'bg-primary';
     }
+  };
+
+  const formatDate = (value) => {
+    if (!value) {
+      return '—';
+    }
+
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('es-BO');
   };
 
   const openCreateModal = () => {
@@ -128,6 +146,10 @@ const ListadoBecas = () => {
   };
 
   const handleStartAssignTutor = (beca) => {
+    if (beca.estado === ARCHIVED_STATE) {
+      return;
+    }
+
     setAssigningBecaId(beca.id);
     setAssignmentTutorId(beca.tutor?.id ? String(beca.tutor.id) : '');
     setAssignmentError('');
@@ -226,6 +248,64 @@ const ListadoBecas = () => {
     }
   };
 
+  const handleArchive = async (beca) => {
+    if (!beca?.id) {
+      return;
+    }
+
+    setArchiveFeedback({ type: '', message: '' });
+    setArchivingBecaId(beca.id);
+
+    const payload = sessionUser?.id ? { cerradaPorId: sessionUser.id } : {};
+
+    try {
+      const response = await fetch(`/api/becas/${beca.id}/archivar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      let responseBody = null;
+
+      if (!response.ok) {
+        try {
+          responseBody = await response.json();
+        } catch (parseError) {
+          // noop
+        }
+
+        const message = buildErrorMessage(responseBody, 'No se pudo archivar la beca seleccionada.');
+        throw new Error(message);
+      }
+
+      responseBody = await response.json();
+      const archivedBeca = responseBody?.data ?? responseBody;
+
+      setBecas((prev) =>
+        prev.map((item) => (item.id === archivedBeca.id ? { ...item, ...archivedBeca } : item))
+      );
+
+      if (assigningBecaId === beca.id) {
+        setAssigningBecaId(null);
+        setAssignmentTutorId('');
+      }
+
+      setArchiveFeedback({
+        type: 'success',
+        message: `La beca ${beca.codigo} se archivó correctamente.`,
+      });
+    } catch (err) {
+      setArchiveFeedback({
+        type: 'danger',
+        message: err.message || 'No se pudo archivar la beca seleccionada.',
+      });
+    } finally {
+      setArchivingBecaId(null);
+    }
+  };
+
   const handleAssignTutorSubmit = async (event) => {
     event.preventDefault();
 
@@ -278,6 +358,14 @@ const ListadoBecas = () => {
   };
 
   const handleDelete = async (beca) => {
+    if (beca.estado === ARCHIVED_STATE) {
+      setArchiveFeedback({
+        type: 'warning',
+        message: 'Las becas archivadas son de solo lectura y no se pueden eliminar.',
+      });
+      return;
+    }
+
     const confirmation = window.confirm(
       `¿Deseas eliminar la beca ${beca.codigo}? Esta acción no se puede deshacer.`
     );
@@ -313,6 +401,15 @@ const ListadoBecas = () => {
         </div>
       )}
 
+      {archiveFeedback.message && (
+        <div
+          className={`alert alert-${archiveFeedback.type || 'info'}`}
+          role="alert"
+        >
+          {archiveFeedback.message}
+        </div>
+      )}
+
       {loading ? (
         <div className="text-center py-5">Cargando becas...</div>
       ) : sortedBecas.length === 0 ? (
@@ -331,6 +428,7 @@ const ListadoBecas = () => {
                 <th scope="col">Tutor</th>
                 <th scope="col">Fecha inicio</th>
                 <th scope="col">Fecha fin</th>
+                <th scope="col">Fecha cierre</th>
                 <th scope="col">Estado</th>
                 <th scope="col">Evaluación final</th>
                 <th scope="col" className="text-center">
@@ -339,55 +437,85 @@ const ListadoBecas = () => {
               </tr>
             </thead>
             <tbody>
-              {sortedBecas.map((beca) => (
-                <React.Fragment key={beca.id}>
-                  <tr>
-                    <td>{beca.codigo}</td>
-                  <td>{beca.tituloProyecto ?? '—'}</td>
-                  <td>{beca.areaInvestigacion ?? '—'}</td>
-                  <td>{beca.becario?.nombre ?? 'Sin asignar'}</td>
-                  <td>{beca.tutor?.nombre ?? 'Sin asignar'}</td>
-                  <td>{beca.fechaInicio ?? '—'}</td>
-                  <td>{beca.fechaFin ?? '—'}</td>
-                  <td>
-                    <span className={`badge ${getEstadoBadge(beca.estado)}`}>
-                      {beca.estado}
-                    </span>
-                  </td>
-                  <td>{beca.evaluacionFinal ?? '—'}</td>
-                  <td className="text-center">
-                    <div className="btn-group" role="group">
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline-primary"
-                        title={beca.tutor ? 'Cambiar tutor' : 'Asignar tutor'}
-                        onClick={() => handleStartAssignTutor(beca)}
-                        disabled={assignmentSaving && assigningBecaId === beca.id}
-                      >
-                        <i className="bi bi-person-badge"></i>
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline-secondary"
-                        title="Editar beca"
-                        onClick={() => openEditModal(beca)}
-                      >
-                        <i className="bi bi-pencil"></i>
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline-danger"
-                        title="Eliminar beca"
-                        onClick={() => handleDelete(beca)}
-                      >
-                        <i className="bi bi-trash"></i>
-                      </button>
-                    </div>
-                  </td>
-                  </tr>
-                  {assigningBecaId === beca.id && (
-                    <tr key={`${beca.id}-assign`} className="table-light">
-                      <td colSpan="10">
+              {sortedBecas.map((beca) => {
+                const isArchived = beca.estado === ARCHIVED_STATE;
+                const canArchive = beca.estado === 'Finalizada';
+
+                return (
+                  <React.Fragment key={beca.id}>
+                    <tr>
+                      <td>{beca.codigo}</td>
+                      <td>{beca.tituloProyecto ?? '—'}</td>
+                      <td>{beca.areaInvestigacion ?? '—'}</td>
+                      <td>{beca.becario?.nombre ?? 'Sin asignar'}</td>
+                      <td>{beca.tutor?.nombre ?? 'Sin asignar'}</td>
+                      <td>{beca.fechaInicio ?? '—'}</td>
+                      <td>{beca.fechaFin ?? '—'}</td>
+                      <td>{formatDate(beca.fechaCierre)}</td>
+                      <td>
+                        <span className={`badge ${getEstadoBadge(beca.estado)}`}>
+                          {beca.estado}
+                        </span>
+                      </td>
+                      <td>
+                        {beca.evaluacionFinal?.estadoFinal
+                          ? `${beca.evaluacionFinal.estadoFinal}`
+                          : beca.evaluacionFinal ?? '—'}
+                      </td>
+                      <td className="text-center">
+                        <div className="btn-group" role="group">
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-primary"
+                            title={beca.tutor ? 'Cambiar tutor' : 'Asignar tutor'}
+                            onClick={() => handleStartAssignTutor(beca)}
+                            disabled={
+                              isArchived || (assignmentSaving && assigningBecaId === beca.id)
+                            }
+                          >
+                            <i className="bi bi-person-badge"></i>
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-secondary"
+                            title={isArchived ? 'Beca archivada' : 'Editar beca'}
+                            onClick={() => openEditModal(beca)}
+                            disabled={isArchived}
+                          >
+                            <i className="bi bi-pencil"></i>
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-success"
+                            title={
+                              beca.estado === 'Finalizada'
+                                ? 'Cerrar beca y mover al archivo histórico'
+                                : 'Disponible cuando la beca esté finalizada'
+                            }
+                            onClick={() => handleArchive(beca)}
+                            disabled={!canArchive || archivingBecaId === beca.id}
+                          >
+                            {archivingBecaId === beca.id ? (
+                              <span className="spinner-border spinner-border-sm" role="status" />
+                            ) : (
+                              <i className="bi bi-archive"></i>
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-danger"
+                            title={isArchived ? 'Beca archivada' : 'Eliminar beca'}
+                            onClick={() => handleDelete(beca)}
+                            disabled={isArchived}
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {assigningBecaId === beca.id && (
+                      <tr key={`${beca.id}-assign`} className="table-light">
+                        <td colSpan="11">
                       <form className="row g-3 align-items-end" onSubmit={handleAssignTutorSubmit}>
                         <div className="col-md-5">
                           <label className="form-label" htmlFor={`tutor-select-${beca.id}`}>
@@ -440,8 +568,9 @@ const ListadoBecas = () => {
                     </td>
                   </tr>
                 )}
-                </React.Fragment>
-              ))}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -594,13 +723,22 @@ const ListadoBecas = () => {
                       value={formData.estado}
                       onChange={handleInputChange}
                       required
+                      disabled={formData.estado === ARCHIVED_STATE}
                     >
-                      {ESTADO_OPTIONS.map((estado) => (
+                      {(formData.estado === ARCHIVED_STATE
+                        ? [ARCHIVED_STATE]
+                        : ESTADO_OPTIONS
+                      ).map((estado) => (
                         <option key={estado} value={estado}>
                           {estado}
                         </option>
                       ))}
                     </select>
+                    {formData.estado === ARCHIVED_STATE && (
+                      <small className="form-text text-muted">
+                        Las becas archivadas son de solo lectura.
+                      </small>
+                    )}
                   </div>
 
                   <div className="mb-3">

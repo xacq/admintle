@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Container, Row, Col, Card, Table, Badge, Button } from 'react-bootstrap';
+import { Container, Row, Col, Card, Table, Badge, Button, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import useSessionUser from '../hooks/useSessionUser';
 import '../admin/admin.css';
@@ -16,7 +16,7 @@ const DashboardAdmin = () => {
     setError('');
 
     try {
-      const response = await fetch('/api/becas');
+      const response = await fetch('/api/becas?include_archived=1');
       if (!response.ok) {
         throw new Error(`Error ${response.status}`);
       }
@@ -40,12 +40,14 @@ const DashboardAdmin = () => {
     const activas = becas.filter((beca) => beca.estado === 'Activa').length;
     const evaluacion = becas.filter((beca) => beca.estado === 'En evaluación').length;
     const finalizadas = becas.filter((beca) => beca.estado === 'Finalizada').length;
+    const archivadas = becas.filter((beca) => beca.estado === 'Archivada').length;
 
     return {
       total,
       activas,
       evaluacion,
       finalizadas,
+      archivadas,
     };
   }, [becas]);
 
@@ -63,6 +65,8 @@ const DashboardAdmin = () => {
         return 'warning';
       case 'Finalizada':
         return 'secondary';
+      case 'Archivada':
+        return 'dark';
       default:
         return 'primary';
     }
@@ -117,8 +121,8 @@ const DashboardAdmin = () => {
       </header>
 
       <Container className="py-4">
-        <Row className="mb-4">
-          <Col md={4}>
+        <Row className="g-3 mb-4">
+          <Col xs={12} sm={6} xl={3}>
             <Card className="text-center metric-card">
               <Card.Body>
                 <h2 className="text-primary">{estadisticas.total}</h2>
@@ -126,7 +130,7 @@ const DashboardAdmin = () => {
               </Card.Body>
             </Card>
           </Col>
-          <Col md={4}>
+          <Col xs={12} sm={6} xl={3}>
             <Card className="text-center metric-card">
               <Card.Body>
                 <h2 className="text-success">{estadisticas.activas}</h2>
@@ -134,7 +138,7 @@ const DashboardAdmin = () => {
               </Card.Body>
             </Card>
           </Col>
-          <Col md={4}>
+          <Col xs={12} sm={6} xl={3}>
             <Card className="text-center metric-card">
               <Card.Body>
                 <h2 className="text-warning">{estadisticas.evaluacion}</h2>
@@ -142,7 +146,27 @@ const DashboardAdmin = () => {
               </Card.Body>
             </Card>
           </Col>
+          <Col xs={12} sm={6} xl={3}>
+            <Card className="text-center metric-card">
+              <Card.Body>
+                <h2 className="text-dark">{estadisticas.archivadas}</h2>
+                <p className="text-muted mb-0">Becas en archivo histórico</p>
+              </Card.Body>
+            </Card>
+          </Col>
         </Row>
+
+        {estadisticas.finalizadas > 0 && (
+          <Row className="mb-4">
+            <Col>
+              <div className="alert alert-info mb-0" role="alert">
+                {estadisticas.finalizadas === 1
+                  ? 'Existe 1 beca finalizada pendiente de archivo.'
+                  : `Existen ${estadisticas.finalizadas} becas finalizadas pendientes de archivo.`}
+              </div>
+            </Col>
+          </Row>
+        )}
 
         <Row>
           <Col lg={8}>

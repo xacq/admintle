@@ -93,6 +93,8 @@ const DashboardBecario = () => {
         return 'warning';
       case 'Finalizada':
         return 'secondary';
+      case 'Archivada':
+        return 'dark';
       default:
         return 'primary';
     }

@@ -24,6 +24,7 @@ class BecaResource extends JsonResource
             'promedioReportes' => $this->reportes_avg_calificacion !== null
                 ? round((float) $this->reportes_avg_calificacion, 2)
                 : null,
+            'fechaCierre' => $this->fecha_cierre?->toIso8601String(),
             'becario' => $this->whenLoaded('becario', function () {
                 return [
                     'id' => $this->becario->id,
@@ -34,6 +35,12 @@ class BecaResource extends JsonResource
                 return [
                     'id' => $this->tutor->id,
                     'nombre' => $this->tutor->name,
+                ];
+            }),
+            'cerradaPor' => $this->whenLoaded('cerradaPor', function () {
+                return [
+                    'id' => $this->cerradaPor->id,
+                    'nombre' => $this->cerradaPor->name,
                 ];
             }),
             'evaluacionFinal' => $this->whenLoaded('evaluacionFinal', function () {
