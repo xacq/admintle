@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Table, Badge, Button } from 'react-bootstrap';
+import { useEffect, useMemo, useState } from 'react';
+import { Container, Row, Col, Card, Table, Badge, Button, Alert, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import useSessionUser from '../hooks/useSessionUser';
 import '../becario/estudiante.css';
@@ -10,6 +10,9 @@ const DashboardBecario = () => {
   const [beca, setBeca] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reportes, setReportes] = useState([]);
+  const [reportesLoading, setReportesLoading] = useState(true);
+  const [reportesError, setReportesError] = useState('');
 
   useEffect(() => {
     if (!user?.id) {
@@ -38,6 +41,49 @@ const DashboardBecario = () => {
 
     loadBeca();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    const loadReportes = async () => {
+      setReportesLoading(true);
+      setReportesError('');
+
+      try {
+        const response = await fetch(`/api/reportes?becario_id=${user.id}`);
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const data = Array.isArray(payload?.data) ? payload.data : payload;
+        setReportes(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setReportesError(err.message || 'No se pudieron obtener tus reportes de avance.');
+      } finally {
+        setReportesLoading(false);
+      }
+    };
+
+    loadReportes();
+  }, [user?.id]);
+
+  const indicadoresReportes = useMemo(() => {
+    const pendientes = reportes.filter((reporte) => reporte.estado === 'Pendiente').length;
+    const aprobados = reportes.filter((reporte) => reporte.estado === 'Aprobado').length;
+    const devueltos = reportes.filter((reporte) => reporte.estado === 'Devuelto').length;
+
+    return {
+      pendientes,
+      aprobados,
+      devueltos,
+      total: reportes.length,
+    };
+  }, [reportes]);
+
+  const ultimosReportes = useMemo(() => reportes.slice(0, 3), [reportes]);
 
   const getEstadoBadgeVariant = (estado) => {
     switch (estado) {
@@ -137,20 +183,55 @@ const DashboardBecario = () => {
           </Card.Body>
         </Card>
 
-        <Row className="mb-4">
-          <Col md={6}>
-            <Card className="text-center metric-card">
+        <Row className="mb-4 g-3">
+          <Col md={4}>
+            <Card className="text-center metric-card h-100">
               <Card.Body>
                 <h5 className="text-muted">Fecha de inicio</h5>
                 <h2 className="text-primary">{beca?.fechaInicio ?? '—'}</h2>
               </Card.Body>
             </Card>
           </Col>
-          <Col md={6}>
-            <Card className="text-center metric-card">
+          <Col md={4}>
+            <Card className="text-center metric-card h-100">
               <Card.Body>
                 <h5 className="text-muted">Fecha de finalización</h5>
                 <h2 className="text-success">{beca?.fechaFin ?? '—'}</h2>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={4}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h5 className="text-muted">Reportes enviados</h5>
+                <h2 className="text-info">{indicadoresReportes.total}</h2>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+
+        <Row className="mb-4 g-3">
+          <Col md={4}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h6 className="text-muted mb-1">Pendientes de revisión</h6>
+                <h3 className="text-warning mb-0">{indicadoresReportes.pendientes}</h3>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={4}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h6 className="text-muted mb-1">Aprobados</h6>
+                <h3 className="text-success mb-0">{indicadoresReportes.aprobados}</h3>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={4}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h6 className="text-muted mb-1">Devueltos</h6>
+                <h3 className="text-danger mb-0">{indicadoresReportes.devueltos}</h3>
               </Card.Body>
             </Card>
           </Col>
@@ -204,37 +285,103 @@ const DashboardBecario = () => {
           </Col>
 
           <Col lg={4}>
-            <Card className="h-100">
-              <Card.Header as="h5" className="fw-bold">
-                Accesos Directos
-              </Card.Header>
-              <Card.Body className="d-flex flex-column justify-content-around">
-                <Button
-                  variant="primary"
-                  className="mb-3 w-100"
-                  onClick={() => handleAccesoDirecto('Subir Nuevo Reporte de Avance')}
-                  disabled={!beca}
-                >
-                  📤 Subir Nuevo Reporte de Avance
-                </Button>
-                <Button
-                  variant="info"
-                  className="mb-3 w-100"
-                  onClick={() => handleAccesoDirecto('Revisar Observaciones del Tutor')}
-                  disabled={!beca}
-                >
-                  🗒️ Revisar Observaciones del Tutor
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="w-100"
-                  onClick={() => handleAccesoDirecto('Ver Calificaciones Finales')}
-                  disabled={!beca}
-                >
-                  📊 Ver Calificaciones Finales
-                </Button>
-              </Card.Body>
-            </Card>
+            <div className="d-flex flex-column gap-3 h-100">
+              <Card className="flex-fill">
+                <Card.Header as="h5" className="fw-bold">
+                  Accesos Directos
+                </Card.Header>
+                <Card.Body className="d-flex flex-column justify-content-around">
+                  <Button
+                    variant="primary"
+                    className="mb-3 w-100"
+                    onClick={() => handleAccesoDirecto('Subir Nuevo Reporte de Avance')}
+                    disabled={!beca}
+                  >
+                    📤 Subir Nuevo Reporte de Avance
+                  </Button>
+                  <Button
+                    variant="info"
+                    className="mb-3 w-100"
+                    onClick={() => handleAccesoDirecto('Revisar Observaciones del Tutor')}
+                    disabled={!beca}
+                  >
+                    🗒️ Revisar Observaciones del Tutor
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="w-100"
+                    onClick={() => handleAccesoDirecto('Ver Calificaciones Finales')}
+                    disabled={!beca}
+                  >
+                    📊 Ver Calificaciones Finales
+                  </Button>
+                </Card.Body>
+              </Card>
+
+              <Card>
+                <Card.Header as="h5" className="fw-bold">
+                  Últimos reportes enviados
+                </Card.Header>
+                <Card.Body>
+                  {reportesError && (
+                    <Alert variant="danger" className="mb-3">
+                      {reportesError}
+                    </Alert>
+                  )}
+
+                  {reportesLoading ? (
+                    <div className="d-flex align-items-center justify-content-center py-3">
+                      <Spinner animation="border" role="status" className="me-2" />
+                      <span>Cargando reportes…</span>
+                    </div>
+                  ) : ultimosReportes.length === 0 ? (
+                    <p className="mb-0">Aún no registraste reportes.</p>
+                  ) : (
+                    <ul className="list-unstyled mb-0">
+                      {ultimosReportes.map((reporte) => (
+                        <li key={reporte.id} className="mb-3">
+                          <div className="d-flex justify-content-between align-items-center">
+                            <div>
+                              <strong>{reporte.titulo}</strong>
+                              <div className="text-muted small">
+                                {reporte.fechaEnvio
+                                  ? new Date(reporte.fechaEnvio).toLocaleDateString('es-BO')
+                                  : '—'}
+                              </div>
+                            </div>
+                            <Badge bg={(() => {
+                              switch (reporte.estado) {
+                                case 'Aprobado':
+                                  return 'success';
+                                case 'Devuelto':
+                                  return 'danger';
+                                case 'Pendiente':
+                                default:
+                                  return 'warning';
+                              }
+                            })()}>
+                              {reporte.estado}
+                            </Badge>
+                          </div>
+                          {reporte.observaciones && (
+                            <div className="small text-muted mt-1 text-break">
+                              {reporte.observaciones}
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <Button
+                    variant="link"
+                    className="px-0 mt-3"
+                    onClick={() => navigate('/reportesavance')}
+                  >
+                    Ver historial completo →
+                  </Button>
+                </Card.Body>
+              </Card>
+            </div>
           </Col>
         </Row>
       </Container>

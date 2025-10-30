@@ -1,376 +1,264 @@
-// src/components/ReportesAvance.js
-
-// src/components/ReportesAvance.js
-
-import React, { useState } from 'react';
-import { Container, Card, Row, Col, ProgressBar, Form, Button, Table, Badge, Alert } from 'react-bootstrap';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Container, Card, Row, Col, ProgressBar, Table, Badge, Alert, Button, Spinner } from 'react-bootstrap';
+import useSessionUser from '../hooks/useSessionUser';
 import './estudiante.css';
 
+const ESTADO_VARIANTS = {
+  Aprobado: 'success',
+  Pendiente: 'warning',
+  Devuelto: 'danger',
+};
+
 const ReportesAvance = () => {
-  // --- DATOS ESTÁTICOS DE EJEMPLO ---
-  const infoBeca = {
-    tituloProyecto: 'Energías Limpias y Desarrollo Sostenible',
-    tutor: 'Lic. Mayra Chumacero',
-    periodo: 'Marzo – Septiembre 2025',
-    estado: 'Activa',
-    progreso: 60, // Porcentaje de progreso
-  };
+  const user = useSessionUser();
+  const [beca, setBeca] = useState(null);
+  const [reportes, setReportes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Historial de reportes enviados
-  const historialReportes = [
-    {
-      id: 1,
-      titulo: 'Primer avance',
-      fechaEnvio: '15/04/2025',
-      estado: 'En revisión',
-      observaciones: '—',
-    },
-    {
-      id: 2,
-      titulo: 'Segundo avance',
-      fechaEnvio: '15/05/2025',
-      estado: 'Aprobado',
-      observaciones: 'Buen progreso',
-    },
-    {
-      id: 3,
-      titulo: 'Tercer avance',
-      fechaEnvio: '15/06/2025',
-      estado: 'Devuelto',
-      observaciones: 'Faltan anexos',
+  const indicadores = useMemo(() => {
+    const total = reportes.length;
+    const aprobados = reportes.filter((reporte) => reporte.estado === 'Aprobado').length;
+    const pendientes = reportes.filter((reporte) => reporte.estado === 'Pendiente').length;
+    const devueltos = reportes.filter((reporte) => reporte.estado === 'Devuelto').length;
+
+    return { total, aprobados, pendientes, devueltos };
+  }, [reportes]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return;
     }
-  ];
 
-  // Retroalimentación del tutor
-  const retroalimentacionTutor = [
-    {
-      id: 2,
-      titulo: 'Reporte #2 — Aprobado',
-      texto: 'El análisis de datos está completo. Continúa con la redacción final.',
-      fechaRevision: '18/05/2025',
-    }
-  ];
+    const fetchData = async () => {
+      setLoading(true);
+      setError('');
 
-  // Estado para el formulario de nuevo reporte
-  const [nuevoReporte, setNuevoReporte] = useState({
-    titulo: '',
-    descripcion: '',
-    fechaEntrega: new Date().toISOString().split('T')[0], // Fecha actual en formato YYYY-MM-DD
-    archivo: null
-  });
+      try {
+        const [becaResponse, reportesResponse] = await Promise.all([
+          fetch(`/api/becas?becario_id=${user.id}`),
+          fetch(`/api/reportes?becario_id=${user.id}`),
+        ]);
 
-  // Estado para mostrar alerta de archivo
-  const [mostrarAlerta, setMostrarAlerta] = useState(false);
+        if (!becaResponse.ok) {
+          throw new Error(`Error ${becaResponse.status}`);
+        }
 
-  // Función para manejar cambios en el formulario
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setNuevoReporte({
-      ...nuevoReporte,
-      [name]: value
-    });
-  };
+        if (!reportesResponse.ok) {
+          throw new Error(`Error ${reportesResponse.status}`);
+        }
 
-  // Función para manejar el cambio de archivo
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Verificar tamaño del archivo (10 MB = 10 * 1024 * 1024 bytes)
-      if (file.size > 10 * 1024 * 1024) {
-        setMostrarAlerta(true);
-        setTimeout(() => setMostrarAlerta(false), 5000);
-        return;
+        const becaPayload = await becaResponse.json();
+        const becaData = Array.isArray(becaPayload?.data) ? becaPayload.data : becaPayload;
+        setBeca(Array.isArray(becaData) ? becaData[0] ?? null : null);
+
+        const reportesPayload = await reportesResponse.json();
+        const reportesData = Array.isArray(reportesPayload?.data) ? reportesPayload.data : reportesPayload;
+        setReportes(Array.isArray(reportesData) ? reportesData : []);
+      } catch (err) {
+        setError(err.message || 'No se pudo cargar la información de la beca.');
+      } finally {
+        setLoading(false);
       }
-      
-      // Verificar tipo de archivo
-      if (!file.name.match(/\.(pdf|docx)$/)) {
-        setMostrarAlerta(true);
-        setTimeout(() => setMostrarAlerta(false), 5000);
-        return;
-      }
-      
-      setNuevoReporte({
-        ...nuevoReporte,
-        archivo: file
-      });
+    };
+
+    fetchData();
+  }, [user?.id]);
+
+  const progreso = useMemo(() => {
+    if (!reportes.length) {
+      return 0;
     }
-  };
 
-  // Función para manejar el envío del formulario
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert('Reporte enviado con éxito (simulación)');
-    console.log('Datos del reporte:', nuevoReporte);
-    // Reiniciar formulario
-    setNuevoReporte({
-      titulo: '',
-      descripcion: '',
-      fechaEntrega: new Date().toISOString().split('T')[0],
-      archivo: null
-    });
-  };
+    const base = 25;
+    const aprobados = indicadores.aprobados;
+    return Math.min(100, base + aprobados * 15 + (reportes.length - aprobados) * 5);
+  }, [indicadores.aprobados, reportes.length]);
 
-  // Función para descargar reporte
-  const handleDescargarReporte = (id) => {
-    alert(`Descargando reporte ID: ${id} (simulación)`);
-  };
-
-  // Función para obtener el color del estado
-  const getEstadoVariant = (estado) => {
-    switch (estado) {
-      case 'Aprobado':
-        return 'success';
-      case 'En revisión':
-        return 'warning';
-      case 'Devuelto':
-        return 'danger';
-      default:
-        return 'secondary';
+  const handleDescargarReporte = (reporte) => {
+    if (!reporte?.archivoUrl) {
+      return;
     }
-  };
 
-  // Calcular indicadores
-  const totalReportes = historialReportes.length;
-  const reportesAprobados = historialReportes.filter(r => r.estado === 'Aprobado').length;
-  const reportesEnRevision = historialReportes.filter(r => r.estado === 'En revisión').length;
-  const reportesDevueltos = historialReportes.filter(r => r.estado === 'Devuelto').length;
+    window.open(reporte.archivoUrl, '_blank', 'noopener');
+  };
 
   return (
     <div className="reportes-avance-wrapper">
-      {/* Sección 1: Información de la beca */}
-      <Card className="mb-4">
-        <Card.Header as="h5" className="fw-bold">
-          Información de la Beca
-        </Card.Header>
-        <Card.Body>
-          <Row className="g-3">
-            <Col sm={6} md={3} className="fw-bold text-secondary">
-              Título del proyecto
-            </Col>
-            <Col sm={6} md={9}>
-              Beca Auxiliar de Investigación: "{infoBeca.tituloProyecto}"
-            </Col>
+      <header className="reportes-avance-header text-center py-4 border-bottom">
+        <Container>
+          <h1 className="h2 fw-bold">Mis reportes de avance</h1>
+          <p className="text-muted">
+            Consulta el estado de los informes enviados y las observaciones registradas por tu tutor.
+          </p>
+        </Container>
+      </header>
 
-            <Col sm={6} md={3} className="fw-bold text-secondary">
-              Tutor / Evaluador
-            </Col>
-            <Col sm={6} md={9}>
-              {infoBeca.tutor}
-            </Col>
+      <Container className="py-4">
+        {error && (
+          <Alert variant="danger" className="mb-4">
+            {error}
+          </Alert>
+        )}
 
-            <Col sm={6} md={3} className="fw-bold text-secondary">
-              Periodo de la beca
-            </Col>
-            <Col sm={6} md={9}>
-              {infoBeca.periodo}
-            </Col>
-
-            <Col sm={6} md={3} className="fw-bold text-secondary">
-              Estado actual
-            </Col>
-            <Col sm={6} md={9}>
-              <span className="status-indicator status-active"></span>
-              {infoBeca.estado}
-            </Col>
-
-            <Col sm={6} md={3} className="fw-bold text-secondary">
-              Progreso
-            </Col>
-            <Col sm={6} md={9}>
+        <Card className="mb-4">
+          <Card.Header as="h5" className="fw-bold">
+            Información de la beca
+          </Card.Header>
+          <Card.Body>
+            {loading ? (
               <div className="d-flex align-items-center">
-                <ProgressBar now={infoBeca.progreso} className="flex-grow-1 me-2" />
-                <span>{infoBeca.progreso}%</span>
+                <Spinner animation="border" role="status" className="me-2" />
+                <span>Cargando información…</span>
               </div>
-            </Col>
-          </Row>
-        </Card.Body>
-      </Card>
-
-      <Row>
-        <Col lg={8}>
-          {/* Sección 2: Envío de nuevo reporte */}
-          <Card className="mb-4">
-            <Card.Header as="h5" className="fw-bold">
-              📝 Registrar nuevo reporte de avance
-            </Card.Header>
-            <Card.Body>
-              <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Título del reporte</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="titulo"
-                    value={nuevoReporte.titulo}
-                    onChange={handleChange}
-                    placeholder="Ej: Avance de investigación - Mes de junio"
-                    required
-                  />
-                </Form.Group>
-
-                <Form.Group className="mb-3">
-                  <Form.Label>Descripción del trabajo realizado</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={5}
-                    name="descripcion"
-                    value={nuevoReporte.descripcion}
-                    onChange={handleChange}
-                    placeholder="Describa detalladamente las actividades realizadas en este periodo..."
-                    required
-                  />
-                </Form.Group>
-
-                <Row className="mb-3">
-                  <Col md={6}>
-                    <Form.Group>
-                      <Form.Label>Fecha de entrega</Form.Label>
-                      <Form.Control
-                        type="date"
-                        name="fechaEntrega"
-                        value={nuevoReporte.fechaEntrega}
-                        onChange={handleChange}
-                        required
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group>
-                      <Form.Label>Adjuntar archivo</Form.Label>
-                      <Form.Control
-                        type="file"
-                        onChange={handleFileChange}
-                        accept=".pdf,.docx"
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-
-                {mostrarAlerta && (
-                  <Alert variant="danger" className="mb-3">
-                    El archivo no debe superar los 10 MB. Solo se permiten formatos PDF o DOCX.
-                  </Alert>
-                )}
-
-                <div className="d-flex justify-content-between">
-                  <small className="text-muted">
-                    El archivo no debe superar los 10 MB. Solo se permiten formatos PDF o DOCX.
-                  </small>
-                  <Button variant="primary" type="submit">
-                    Enviar reporte
-                  </Button>
-                </div>
-              </Form>
-            </Card.Body>
-          </Card>
-
-          {/* Sección 3: Historial de reportes enviados */}
-          <Card className="mb-4">
-            <Card.Header as="h5" className="fw-bold">
-              📂 Mis reportes anteriores
-            </Card.Header>
-            <Card.Body>
-              <Table responsive striped hover>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Título del reporte</th>
-                    <th>Fecha de envío</th>
-                    <th>Estado</th>
-                    <th>Observaciones</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historialReportes.map((reporte) => (
-                    <tr key={reporte.id}>
-                      <td>{reporte.id}</td>
-                      <td>{reporte.titulo}</td>
-                      <td>{reporte.fechaEnvio}</td>
-                      <td>
-                        <Badge bg={getEstadoVariant(reporte.estado)}>
-                          {reporte.estado}
-                        </Badge>
-                      </td>
-                      <td>{reporte.observaciones}</td>
-                      <td>
-                        <Button 
-                          variant="outline-primary" 
-                          size="sm"
-                          onClick={() => handleDescargarReporte(reporte.id)}
-                        >
-                          📎
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col lg={4}>
-          {/* Sección 4: Retroalimentación del tutor */}
-          <Card className="mb-4">
-            <Card.Header as="h5" className="fw-bold">
-              💬 Observaciones y calificaciones recibidas
-            </Card.Header>
-            <Card.Body>
-              {retroalimentacionTutor.length > 0 ? (
-                retroalimentacionTutor.map((retro) => (
-                  <div key={retro.id} className="mb-3 p-3 border rounded">
-                    <h6 className="fw-bold">{retro.titulo}</h6>
-                    <p className="mb-1">{retro.texto}</p>
-                    <small className="text-muted">Fecha de revisión: {retro.fechaRevision}</small>
-                  </div>
-                ))
-              ) : (
-                <p className="text-muted">Aún no existen observaciones registradas.</p>
-              )}
-            </Card.Body>
-          </Card>
-
-          {/* Sección 5: Indicadores generales del seguimiento */}
-          <Card className="mb-4">
-            <Card.Header as="h5" className="fw-bold">
-              📈 Indicadores generales del seguimiento
-            </Card.Header>
-            <Card.Body>
-              <Row className="text-center mb-3">
-                <Col xs={6} className="mb-3">
-                  <h4 className="text-primary">{totalReportes}</h4>
-                  <p className="small mb-0">Total de reportes enviados</p>
+            ) : !beca ? (
+              <p className="mb-0">Aún no tienes una beca activa registrada.</p>
+            ) : (
+              <Row className="g-3">
+                <Col sm={6} md={3} className="fw-bold text-secondary">
+                  Código o título
                 </Col>
-                <Col xs={6} className="mb-3">
-                  <h4 className="text-success">{reportesAprobados}</h4>
-                  <p className="small mb-0">Reportes aprobados</p>
+                <Col sm={6} md={9}>{beca.codigo}</Col>
+
+                <Col sm={6} md={3} className="fw-bold text-secondary">
+                  Tutor asignado
                 </Col>
-                <Col xs={6} className="mb-3">
-                  <h4 className="text-warning">{reportesEnRevision}</h4>
-                  <p className="small mb-0">En revisión</p>
+                <Col sm={6} md={9}>{beca.tutor?.nombre ?? 'Sin asignar'}</Col>
+
+                <Col sm={6} md={3} className="fw-bold text-secondary">
+                  Estado actual
                 </Col>
-                <Col xs={6} className="mb-3">
-                  <h4 className="text-danger">{reportesDevueltos}</h4>
-                  <p className="small mb-0">Devueltos</p>
+                <Col sm={6} md={9}>
+                  <Badge bg="info">{beca.estado}</Badge>
                 </Col>
+
+                <Col sm={6} md={3} className="fw-bold text-secondary">
+                  Reportes registrados
+                </Col>
+                <Col sm={6} md={9}>{indicadores.total}</Col>
               </Row>
-              
-              <div className="mb-2">
-                <div className="d-flex justify-content-between">
-                  <span>Cumplimiento del cronograma</span>
-                  <span>{infoBeca.progreso}%</span>
-                </div>
-                <ProgressBar now={infoBeca.progreso} />
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+            )}
+          </Card.Body>
+        </Card>
 
-      {/* Pie de página */}
-      <footer className="text-center py-3 mt-5 border-top">
-        <p className="mb-1">Dirección de Ciencia e Innovación Tecnológica – Universidad Autónoma Tomás Frías</p>
-        <p className="mb-0 small text-muted">v1.0.3 – 2025 | <a href="#help" className="text-decoration-none">Manual de usuario</a></p>
+        <Row className="mb-4 g-3">
+          <Col md={3}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h5 className="text-muted">Total enviados</h5>
+                <h2 className="text-primary">{indicadores.total}</h2>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={3}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h5 className="text-muted">Aprobados</h5>
+                <h2 className="text-success">{indicadores.aprobados}</h2>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={3}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h5 className="text-muted">En revisión</h5>
+                <h2 className="text-warning">{indicadores.pendientes}</h2>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={3}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h5 className="text-muted">Devueltos</h5>
+                <h2 className="text-danger">{indicadores.devueltos}</h2>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+
+        <Row>
+          <Col lg={8} className="mb-4">
+            <Card className="h-100">
+              <Card.Header as="h5" className="fw-bold">
+                Historial de reportes enviados
+              </Card.Header>
+              <Card.Body>
+                {loading ? (
+                  <div className="d-flex align-items-center">
+                    <Spinner animation="border" role="status" className="me-2" />
+                    <span>Cargando reportes…</span>
+                  </div>
+                ) : reportes.length === 0 ? (
+                  <p className="mb-0">Aún no registraste reportes de avance.</p>
+                ) : (
+                  <Table responsive hover>
+                    <thead>
+                      <tr>
+                        <th>Título</th>
+                        <th>Fecha de envío</th>
+                        <th>Estado</th>
+                        <th>Observaciones</th>
+                        <th>Archivo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reportes.map((reporte) => (
+                        <tr key={reporte.id}>
+                          <td>{reporte.titulo}</td>
+                          <td>{reporte.fechaEnvio ? new Date(reporte.fechaEnvio).toLocaleDateString('es-BO') : '—'}</td>
+                          <td>
+                            <Badge bg={ESTADO_VARIANTS[reporte.estado] ?? 'secondary'}>
+                              {reporte.estado}
+                            </Badge>
+                          </td>
+                          <td className="text-break" style={{ maxWidth: '260px' }}>
+                            {reporte.observaciones || '—'}
+                          </td>
+                          <td>
+                            <Button
+                              variant="link"
+                              size="sm"
+                              onClick={() => handleDescargarReporte(reporte)}
+                              disabled={!reporte.archivoUrl}
+                            >
+                              📎 {reporte.archivoNombre}
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+
+          <Col lg={4} className="mb-4">
+            <Card className="h-100">
+              <Card.Header as="h5" className="fw-bold">
+                Progreso estimado del proyecto
+              </Card.Header>
+              <Card.Body className="d-flex flex-column justify-content-center">
+                <p className="text-muted">
+                  Este indicador refleja el avance estimado considerando los reportes aprobados y revisiones registradas.
+                </p>
+                <div className="mb-3">
+                  <ProgressBar now={progreso} className="flex-grow-1" />
+                </div>
+                <h2 className="text-center text-primary">{progreso}%</h2>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
+
+      <footer className="reportes-avance-footer text-center py-3 mt-4 border-top">
+        <p className="mb-0">
+          Dirección de Ciencia e Innovación Tecnología – Universidad Autónoma Tomás Frías
+        </p>
+        <small className="text-muted">
+          Versión 1.0.3 – {new Date().toLocaleDateString('es-BO', { year: 'numeric', month: 'long', day: 'numeric' })}
+        </small>
       </footer>
     </div>
   );

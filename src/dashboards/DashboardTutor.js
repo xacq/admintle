@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Container, Row, Col, Card, Table, Badge, Button } from 'react-bootstrap';
+import { Container, Row, Col, Card, Table, Badge, Button, Alert, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import useSessionUser from '../hooks/useSessionUser';
 import '../docente/docente.css';
@@ -10,6 +10,9 @@ const DashboardTutor = () => {
   const [becas, setBecas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reportes, setReportes] = useState([]);
+  const [reportesLoading, setReportesLoading] = useState(true);
+  const [reportesError, setReportesError] = useState('');
 
   useEffect(() => {
     if (!user?.id) {
@@ -39,6 +42,34 @@ const DashboardTutor = () => {
     loadBecas();
   }, [user?.id]);
 
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    const loadReportes = async () => {
+      setReportesLoading(true);
+      setReportesError('');
+
+      try {
+        const response = await fetch(`/api/reportes?tutor_id=${user.id}`);
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const data = Array.isArray(payload?.data) ? payload.data : payload;
+        setReportes(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setReportesError(err.message || 'No se pudo recuperar el estado de los reportes.');
+      } finally {
+        setReportesLoading(false);
+      }
+    };
+
+    loadReportes();
+  }, [user?.id]);
+
   const indicadores = useMemo(() => {
     const asignadas = becas.length;
     const finalizadas = becas.filter((beca) => beca.estado === 'Finalizada').length;
@@ -50,6 +81,28 @@ const DashboardTutor = () => {
       evaluacion,
     };
   }, [becas]);
+
+  const resumenReportes = useMemo(() => {
+    const pendientes = reportes.filter((reporte) => reporte.estado === 'Pendiente').length;
+    const aprobados = reportes.filter((reporte) => reporte.estado === 'Aprobado').length;
+    const devueltos = reportes.filter((reporte) => reporte.estado === 'Devuelto').length;
+
+    return {
+      total: reportes.length,
+      pendientes,
+      aprobados,
+      devueltos,
+    };
+  }, [reportes]);
+
+  const pendientesPorBeca = useMemo(() => {
+    return reportes.reduce((acc, reporte) => {
+      if (reporte.estado === 'Pendiente') {
+        acc[reporte.becaId] = (acc[reporte.becaId] || 0) + 1;
+      }
+      return acc;
+    }, {});
+  }, [reportes]);
 
   const getEstadoBadgeVariant = (estado) => {
     switch (estado) {
@@ -140,6 +193,41 @@ const DashboardTutor = () => {
           </Col>
         </Row>
 
+        <Row className="mb-4 g-3">
+          <Col md={3}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h6 className="text-muted mb-1">Reportes recibidos</h6>
+                <h3 className="text-primary mb-0">{resumenReportes.total}</h3>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={3}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h6 className="text-muted mb-1">Pendientes</h6>
+                <h3 className="text-warning mb-0">{resumenReportes.pendientes}</h3>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={3}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h6 className="text-muted mb-1">Aprobados</h6>
+                <h3 className="text-success mb-0">{resumenReportes.aprobados}</h3>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={3}>
+            <Card className="text-center metric-card h-100">
+              <Card.Body>
+                <h6 className="text-muted mb-1">Devueltos</h6>
+                <h3 className="text-danger mb-0">{resumenReportes.devueltos}</h3>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+
         <Row>
           <Col lg={8}>
             <Card className="h-100">
@@ -160,19 +248,20 @@ const DashboardTutor = () => {
                       <th>Estado</th>
                       <th>Fecha de inicio</th>
                       <th>Fecha de finalización</th>
+                      <th>Reportes pendientes</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan="6" className="text-center py-4">
+                        <td colSpan="7" className="text-center py-4">
                           Cargando becarios…
                         </td>
                       </tr>
                     ) : becas.length === 0 ? (
                       <tr>
-                        <td colSpan="6" className="text-center py-4">
+                        <td colSpan="7" className="text-center py-4">
                           Aún no tienes becarios asignados.
                         </td>
                       </tr>
@@ -188,6 +277,7 @@ const DashboardTutor = () => {
                           </td>
                           <td>{beca.fechaInicio ?? '—'}</td>
                           <td>{beca.fechaFin ?? '—'}</td>
+                          <td>{pendientesPorBeca[beca.id] ?? 0}</td>
                           <td>
                             <Button
                               variant="outline-primary"
@@ -207,49 +297,87 @@ const DashboardTutor = () => {
           </Col>
 
           <Col lg={4}>
-            <Card className="h-100">
-              <Card.Header as="h5" className="fw-bold">
-                Accesos Directos
-              </Card.Header>
-              <Card.Body className="d-flex flex-column justify-content-around">
-                <Button
-                  variant="primary"
-                  className="mb-3 w-100"
-                  onClick={() => handleAccesoDirecto('Revisar Reportes de Avance')}
-                >
-                  📑 Revisar Reportes de Avance
-                </Button>
-                <Button
-                  variant="info"
-                  className="mb-3 w-100"
-                  onClick={() => handleAccesoDirecto('Registrar Evaluación de Desempeño')}
-                >
-                  📝 Registrar Evaluación de Desempeño
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="w-100"
-                  onClick={() => handleAccesoDirecto('Consultar Observaciones Anteriores')}
-                >
-                  🗂️ Consultar Observaciones Anteriores
-                </Button>
-              </Card.Body>
-            </Card>
-            <Card className="mt-3">
-              <Card.Header as="h5" className="fw-bold">
-                Resumen rápido
-              </Card.Header>
-              <Card.Body>
-                <p className="mb-2 d-flex justify-content-between">
-                  <span>Finalizadas</span>
-                  <strong>{indicadores.finalizadas}</strong>
-                </p>
-                <p className="mb-0 d-flex justify-content-between">
-                  <span>Total asignado</span>
-                  <strong>{indicadores.asignadas}</strong>
-                </p>
-              </Card.Body>
-            </Card>
+            <div className="d-flex flex-column gap-3 h-100">
+              <Card className="flex-fill">
+                <Card.Header as="h5" className="fw-bold">
+                  Accesos Directos
+                </Card.Header>
+                <Card.Body className="d-flex flex-column justify-content-around">
+                  <Button
+                    variant="primary"
+                    className="mb-3 w-100"
+                    onClick={() => handleAccesoDirecto('Revisar Reportes de Avance')}
+                  >
+                    📑 Revisar Reportes de Avance
+                  </Button>
+                  <Button
+                    variant="info"
+                    className="mb-3 w-100"
+                    onClick={() => handleAccesoDirecto('Registrar Evaluación de Desempeño')}
+                  >
+                    📝 Registrar Evaluación de Desempeño
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="w-100"
+                    onClick={() => handleAccesoDirecto('Consultar Observaciones Anteriores')}
+                  >
+                    🗂️ Consultar Observaciones Anteriores
+                  </Button>
+                </Card.Body>
+              </Card>
+
+              <Card>
+                <Card.Header as="h5" className="fw-bold">
+                  Estado de los reportes
+                </Card.Header>
+                <Card.Body>
+                  {reportesError && (
+                    <Alert variant="danger" className="mb-3">
+                      {reportesError}
+                    </Alert>
+                  )}
+
+                  {reportesLoading ? (
+                    <div className="d-flex align-items-center justify-content-center py-3">
+                      <Spinner animation="border" role="status" className="me-2" />
+                      <span>Cargando reportes…</span>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="mb-2 d-flex justify-content-between">
+                        <span>Pendientes</span>
+                        <strong>{resumenReportes.pendientes}</strong>
+                      </p>
+                      <p className="mb-2 d-flex justify-content-between">
+                        <span>Aprobados</span>
+                        <strong>{resumenReportes.aprobados}</strong>
+                      </p>
+                      <p className="mb-0 d-flex justify-content-between">
+                        <span>Devueltos</span>
+                        <strong>{resumenReportes.devueltos}</strong>
+                      </p>
+                    </>
+                  )}
+                </Card.Body>
+              </Card>
+
+              <Card>
+                <Card.Header as="h5" className="fw-bold">
+                  Resumen rápido
+                </Card.Header>
+                <Card.Body>
+                  <p className="mb-2 d-flex justify-content-between">
+                    <span>Finalizadas</span>
+                    <strong>{indicadores.finalizadas}</strong>
+                  </p>
+                  <p className="mb-0 d-flex justify-content-between">
+                    <span>Total asignado</span>
+                    <strong>{indicadores.asignadas}</strong>
+                  </p>
+                </Card.Body>
+              </Card>
+            </div>
           </Col>
         </Row>
       </Container>
