@@ -27,6 +27,7 @@ Route::middleware('api')->group(function () {
 
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
+    Route::get('/users/{user}', [UserController::class, 'show']);
     Route::patch('/users/{user}/toggle', [UserController::class, 'toggle']);
     Route::get('/roles', [UserController::class, 'roles']);
 
