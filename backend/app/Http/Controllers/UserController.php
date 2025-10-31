@@ -44,6 +44,13 @@ class UserController extends Controller
         return response()->json(['data' => $this->transformUser($user)], 201);
     }
 
+    public function show(User $user): JsonResponse
+    {
+        $user->load('role');
+
+        return response()->json(['data' => $this->transformUser($user)]);
+    }
+
     public function toggle(User $user): JsonResponse
     {
         $user->is_active = ! $user->is_active;
