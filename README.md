@@ -67,7 +67,7 @@ El backend vive en la carpeta `backend/` y utiliza PostgreSQL como motor de base
 
 ## Arquitectura del backend
 
-- **Framework**: Laravel 12 configurado para usar PostgreSQL por defecto. El entorno de pruebas continúa ejecutándose sobre SQLite en memoria para mantener la velocidad de los tests automatizados.
+- **Framework**: Laravel 12 configurado para usar PostgreSQL tanto en la aplicación como en las pruebas automatizadas; asegúrate de definir una base específica para testing si la necesitas.
 - **Migraciones**: se definen tablas `roles`, `users`, `designaciones`, `historial_estudiantes`, `estudiantes`, `materias` y `notificaciones` con los campos que requiere cada vista.
 - **Seeder**: `DocenteModuleSeeder` inserta roles, usuarios de ejemplo y el resto de los registros que antes residían en arreglos del cliente.
 - **Rutas API**: `routes/api.php` agrupa los endpoints bajo el prefijo `/api` y aplica un middleware personalizado de CORS (`App\Http\Middleware\CorsHeaders`) para aceptar peticiones desde el frontend.
