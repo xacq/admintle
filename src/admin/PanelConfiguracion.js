@@ -34,6 +34,8 @@ const permisosData = [
   { modulo: 'Configuración', ver: false, crear: false, editar: false, eliminar: false }
 ];
 
+const crearPermisosPorDefecto = () => permisosData.map((permiso) => ({ ...permiso }));
+
 const PanelConfiguracion = () => {
   const [activeTab, setActiveTab] = useState('usuarios');
   const [usuarios, setUsuarios] = useState([]);
@@ -69,10 +71,126 @@ const PanelConfiguracion = () => {
   const [parametrosError, setParametrosError] = useState('');
   const [parametrosSaving, setParametrosSaving] = useState(false);
   const [parametrosFeedback, setParametrosFeedback] = useState(null);
+  const [rolesFeedback, setRolesFeedback] = useState(null);
+  const [permisosPorRol, setPermisosPorRol] = useState({});
+  const [selectedRoleId, setSelectedRoleId] = useState('');
+  const [guardandoPermisos, setGuardandoPermisos] = useState(false);
+
+  const rolesDisponibles = useMemo(() => {
+    if (Array.isArray(roles) && roles.length > 0) {
+      return roles
+        .map((rol) => {
+          const derivedId =
+            rol?.id ?? rol?.ID ?? rol?.uuid ?? rol?.slug ?? rol?.name ?? rol?.displayName ?? rol?.nombre;
+
+          if (derivedId == null) {
+            return null;
+          }
+
+          return {
+            id: String(derivedId),
+            nombre: rol?.displayName ?? rol?.name ?? rol?.nombre ?? 'Rol sin nombre',
+            descripcion: rol?.description ?? rol?.descripcion ?? 'Sin descripción disponible',
+          };
+        })
+        .filter(Boolean);
+    }
+
+    return rolesData.map((rol) => ({
+      id: String(rol.id),
+      nombre: rol.nombre,
+      descripcion: rol.descripcion ?? 'Sin descripción disponible',
+    }));
+  }, [roles]);
+
+  useEffect(() => {
+    if (rolesDisponibles.length === 0) {
+      setPermisosPorRol({});
+      setSelectedRoleId('');
+      return;
+    }
+
+    setPermisosPorRol((prev) => {
+      const next = { ...prev };
+
+      rolesDisponibles.forEach((rol) => {
+        if (!next[rol.id]) {
+          next[rol.id] = crearPermisosPorDefecto();
+        }
+      });
+
+      Object.keys(next).forEach((rolId) => {
+        if (!rolesDisponibles.some((rol) => rol.id === rolId)) {
+          delete next[rolId];
+        }
+      });
+
+      return next;
+    });
+
+    setSelectedRoleId((prev) => {
+      if (prev && rolesDisponibles.some((rol) => rol.id === prev)) {
+        return prev;
+      }
+
+      return rolesDisponibles[0]?.id ?? '';
+    });
+  }, [rolesDisponibles]);
 
   // --- MANEJADORES DE EVENTOS ---
   const handleTabSelect = (tab) => {
     setActiveTab(tab);
+  };
+
+  const handleSeleccionarRol = (event) => {
+    setSelectedRoleId(event.target.value);
+    setRolesFeedback(null);
+  };
+
+  const handleTogglePermiso = (roleId, modulo, campo) => {
+    setPermisosPorRol((prev) => {
+      const permisosActuales = prev[roleId]
+        ? prev[roleId].map((permiso) => ({ ...permiso }))
+        : crearPermisosPorDefecto();
+
+      const permisosActualizados = permisosActuales.map((permiso) =>
+        permiso.modulo === modulo ? { ...permiso, [campo]: !permiso[campo] } : permiso
+      );
+
+      return {
+        ...prev,
+        [roleId]: permisosActualizados,
+      };
+    });
+    setRolesFeedback(null);
+  };
+
+  const handleGuardarPermisos = async () => {
+    if (!selectedRoleId) {
+      setRolesFeedback({
+        type: 'warning',
+        message: 'Seleccione un rol para guardar sus permisos.',
+      });
+      return;
+    }
+
+    setGuardandoPermisos(true);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      setRolesFeedback({
+        type: 'success',
+        message: 'Permisos actualizados correctamente para el rol seleccionado (simulación).',
+      });
+    } catch (error) {
+      console.error(error);
+      setRolesFeedback({
+        type: 'danger',
+        message: 'No se pudieron guardar los permisos. Intente nuevamente.',
+      });
+    } finally {
+      setGuardandoPermisos(false);
+    }
   };
 
   const cargarUsuarios = async () => {
@@ -645,24 +763,68 @@ const PanelConfiguracion = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {rolesData.map(rol => (
-                            <tr key={rol.id}>
-                              <td>{rol.id}</td>
-                              <td>{rol.nombre}</td>
-                              <td>{rol.descripcion}</td>
-                              <td>
-                                <Button variant="outline-primary" size="sm" className="me-1">Editar</Button>
-                                <Button variant="outline-danger" size="sm">Eliminar</Button>
+                          {rolesDisponibles.length === 0 ? (
+                            <tr>
+                              <td colSpan="4" className="text-center text-muted">
+                                No hay roles registrados.
                               </td>
                             </tr>
-                          ))}
+                          ) : (
+                            rolesDisponibles.map((rol) => (
+                              <tr key={rol.id}>
+                                <td>{rol.id}</td>
+                                <td>{rol.nombre}</td>
+                                <td>{rol.descripcion}</td>
+                                <td>
+                                  <Button variant="outline-primary" size="sm" className="me-1">
+                                    Editar
+                                  </Button>
+                                  <Button variant="outline-danger" size="sm">Eliminar</Button>
+                                </td>
+                              </tr>
+                            ))
+                          )}
                         </tbody>
                       </Table>
                     </Card.Body>
                   </Tab.Pane>
                   <Tab.Pane eventKey="permisos">
                     <Card.Body>
-                      <p className="mb-3">Permisos para el rol: <strong>Administrador</strong></p>
+                      {rolesFeedback && (
+                        <Alert
+                          variant={rolesFeedback.type}
+                          onClose={() => setRolesFeedback(null)}
+                          dismissible
+                          className="mb-3"
+                        >
+                          {rolesFeedback.message}
+                        </Alert>
+                      )}
+                      <Row className="align-items-end mb-3">
+                        <Col md={6} className="mb-3 mb-md-0">
+                          <Form.Group controlId="permisosRolSeleccionado">
+                            <Form.Label>Rol a configurar</Form.Label>
+                            <Form.Select value={selectedRoleId} onChange={handleSeleccionarRol}>
+                              {rolesDisponibles.map((rol) => (
+                                <option key={rol.id} value={rol.id}>
+                                  {rol.nombre}
+                                </option>
+                              ))}
+                            </Form.Select>
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <p className="mb-0 text-muted small">
+                            Ajuste los permisos que tendrá el rol seleccionado sobre cada módulo del sistema.
+                          </p>
+                        </Col>
+                      </Row>
+                      <p className="mb-3">
+                        Permisos para el rol:{' '}
+                        <strong>
+                          {rolesDisponibles.find((rol) => rol.id === selectedRoleId)?.nombre || 'Sin rol seleccionado'}
+                        </strong>
+                      </p>
                       <Table striped bordered hover>
                         <thead>
                           <tr>
@@ -674,43 +836,59 @@ const PanelConfiguracion = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {permisosData.map((permiso, index) => (
-                            <tr key={index}>
+                          {(permisosPorRol[selectedRoleId] ?? []).map((permiso) => (
+                            <tr key={permiso.modulo}>
                               <td>{permiso.modulo}</td>
                               <td className="text-center">
-                                <Form.Check 
-                                  type="checkbox" 
-                                  checked={permiso.ver} 
-                                  onChange={() => {}} 
+                                <Form.Check
+                                  type="checkbox"
+                                  checked={permiso.ver}
+                                  onChange={() => handleTogglePermiso(selectedRoleId, permiso.modulo, 'ver')}
                                 />
                               </td>
                               <td className="text-center">
-                                <Form.Check 
-                                  type="checkbox" 
-                                  checked={permiso.crear} 
-                                  onChange={() => {}} 
+                                <Form.Check
+                                  type="checkbox"
+                                  checked={permiso.crear}
+                                  onChange={() => handleTogglePermiso(selectedRoleId, permiso.modulo, 'crear')}
                                 />
                               </td>
                               <td className="text-center">
-                                <Form.Check 
-                                  type="checkbox" 
-                                  checked={permiso.editar} 
-                                  onChange={() => {}} 
+                                <Form.Check
+                                  type="checkbox"
+                                  checked={permiso.editar}
+                                  onChange={() => handleTogglePermiso(selectedRoleId, permiso.modulo, 'editar')}
                                 />
                               </td>
                               <td className="text-center">
-                                <Form.Check 
-                                  type="checkbox" 
-                                  checked={permiso.eliminar} 
-                                  onChange={() => {}} 
+                                <Form.Check
+                                  type="checkbox"
+                                  checked={permiso.eliminar}
+                                  onChange={() => handleTogglePermiso(selectedRoleId, permiso.modulo, 'eliminar')}
                                 />
                               </td>
                             </tr>
                           ))}
+                          {(permisosPorRol[selectedRoleId] ?? []).length === 0 && (
+                            <tr>
+                              <td colSpan="5" className="text-center text-muted">
+                                No hay permisos definidos para el rol seleccionado.
+                              </td>
+                            </tr>
+                          )}
                         </tbody>
                       </Table>
                       <div className="d-flex justify-content-end mt-3">
-                        <Button variant="primary">Guardar permisos</Button>
+                        <Button variant="primary" onClick={handleGuardarPermisos} disabled={guardandoPermisos}>
+                          {guardandoPermisos ? (
+                            <>
+                              <Spinner animation="border" role="status" size="sm" className="me-2" />
+                              Guardando…
+                            </>
+                          ) : (
+                            'Guardar permisos'
+                          )}
+                        </Button>
                       </div>
                     </Card.Body>
                   </Tab.Pane>
