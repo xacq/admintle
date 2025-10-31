@@ -1,10 +1,6 @@
 # Proyecto React – admintle
 
-<<<<<<< HEAD
-Este proyecto es una aplicación React creada con Create React App. A partir de esta actualización incorpora un backend en [Laravel 12](https://laravel.com) que expone una API REST alimentada por una base de datos SQLite con los datos de ejemplo que se muestran en las pantallas del módulo docente.
-=======
 Este proyecto es una aplicación React creada con Create React App. A partir de esta actualización incorpora un backend en [Laravel 12](https://laravel.com) que expone una API REST respaldada por PostgreSQL con los datos de ejemplo que se muestran en las pantallas del módulo docente y los nuevos tableros por rol.
->>>>>>> f479927a0665b9937dade86cff0763858ccffa3b
 
 ## Requisitos previos
 - Node.js (versión LTS recomendada) y npm.
