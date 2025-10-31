@@ -11,6 +11,11 @@ class Evaluacion extends Model
     use HasFactory;
 
     /**
+     * @var string
+     */
+    protected $table = 'evaluaciones';
+
+    /**
      * @var list<string>
      */
     protected $fillable = [
