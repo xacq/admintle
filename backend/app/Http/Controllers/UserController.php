@@ -6,7 +6,9 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -67,6 +69,52 @@ class UserController extends Controller
             ->get(['id', 'name', 'display_name as displayName']);
 
         return response()->json(['data' => $roles]);
+    }
+
+    public function update(Request $request, User $user): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'username' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('users', 'username')->ignore($user->id),
+            ],
+            'password' => ['nullable', 'string', 'min:8'],
+            'role_id' => ['required', 'integer', 'exists:roles,id'],
+        ]);
+
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->username = $validated['username'];
+        $user->role_id = $validated['role_id'];
+
+        $password = $validated['password'] ?? null;
+
+        if (! empty($password)) {
+            $user->password = Hash::make($password);
+        }
+
+        $user->save();
+
+        $user->load('role');
+
+        return response()->json(['data' => $this->transformUser($user)]);
+    }
+
+    public function destroy(User $user): Response
+    {
+        $user->delete();
+
+        return response()->noContent();
     }
 
     private function transformUser(User $user): array
