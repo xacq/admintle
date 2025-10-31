@@ -41,6 +41,7 @@ const PanelConfiguracion = () => {
   const [usuariosError, setUsuariosError] = useState(null);
   const [roles, setRoles] = useState([]);
   const [showUsuarioModal, setShowUsuarioModal] = useState(false);
+  const [usuarioEditando, setUsuarioEditando] = useState(null);
   const [usuarioForm, setUsuarioForm] = useState({
     name: '',
     email: '',
@@ -52,6 +53,7 @@ const PanelConfiguracion = () => {
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [usuarioAccionId, setUsuarioAccionId] = useState(null);
+  const [usuarioEliminandoId, setUsuarioEliminandoId] = useState(null);
   const [parametros, setParametros] = useState({
     academicYear: '',
     managementStartDate: '',
@@ -267,8 +269,25 @@ const PanelConfiguracion = () => {
     alert(`Realizando acción de respaldo: ${accion} (simulación)`);
   };
 
-  const handleAbrirModalUsuario = () => {
-    setUsuarioForm({ name: '', email: '', username: '', password: '', roleId: '' });
+  const handleAbrirModalUsuario = (usuario = null) => {
+    if (usuario) {
+      setUsuarioEditando(usuario);
+      setUsuarioForm({
+        name: usuario.name ?? '',
+        email: usuario.email ?? '',
+        username: usuario.username ?? '',
+        password: '',
+        roleId:
+          usuario.role?.id != null
+            ? String(usuario.role.id)
+            : usuario.role_id != null
+            ? String(usuario.role_id)
+            : '',
+      });
+    } else {
+      setUsuarioEditando(null);
+      setUsuarioForm({ name: '', email: '', username: '', password: '', roleId: '' });
+    }
     setFormErrors({});
     setFeedback(null);
     setShowUsuarioModal(true);
@@ -277,6 +296,7 @@ const PanelConfiguracion = () => {
   const handleCerrarModalUsuario = () => {
     if (!formSubmitting) {
       setShowUsuarioModal(false);
+      setUsuarioEditando(null);
     }
   };
 
@@ -299,9 +319,13 @@ const PanelConfiguracion = () => {
       errores.username = 'El nombre de usuario es obligatorio.';
     }
 
-    if (!usuarioForm.password.trim()) {
-      errores.password = 'La contraseña es obligatoria.';
-    } else if (usuarioForm.password.length < 8) {
+    if (!usuarioEditando) {
+      if (!usuarioForm.password.trim()) {
+        errores.password = 'La contraseña es obligatoria.';
+      } else if (usuarioForm.password.length < 8) {
+        errores.password = 'La contraseña debe tener al menos 8 caracteres.';
+      }
+    } else if (usuarioForm.password && usuarioForm.password.length < 8) {
       errores.password = 'La contraseña debe tener al menos 8 caracteres.';
     }
 
@@ -324,17 +348,25 @@ const PanelConfiguracion = () => {
     setFormSubmitting(true);
     setFeedback(null);
 
+    const payload = {
+      name: usuarioForm.name.trim(),
+      email: usuarioForm.email.trim(),
+      username: usuarioForm.username.trim(),
+      role_id: Number(usuarioForm.roleId),
+    };
+
+    if (usuarioForm.password.trim()) {
+      payload.password = usuarioForm.password.trim();
+    }
+
+    const endpoint = usuarioEditando ? `/api/users/${usuarioEditando.id}` : '/api/users';
+    const method = usuarioEditando ? 'PUT' : 'POST';
+
     try {
-      const response = await fetch('/api/users', {
-        method: 'POST',
+      const response = await fetch(endpoint, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: usuarioForm.name.trim(),
-          email: usuarioForm.email.trim(),
-          username: usuarioForm.username.trim(),
-          password: usuarioForm.password,
-          role_id: Number(usuarioForm.roleId),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -342,24 +374,76 @@ const PanelConfiguracion = () => {
         const firstError = errorBody?.errors
           ? Object.values(errorBody.errors).flat()[0]
           : null;
-        const message = firstError || errorBody?.message || 'No se pudo crear el usuario.';
+        const defaultMessage = usuarioEditando
+          ? 'No se pudo actualizar el usuario.'
+          : 'No se pudo crear el usuario.';
+        const message = firstError || errorBody?.message || defaultMessage;
         throw new Error(message);
       }
 
       const data = await response.json();
-      const nuevoUsuario = data.data;
+      const usuarioGuardado = data.data;
 
-      setUsuarios((prevUsuarios) =>
-        [...prevUsuarios, nuevoUsuario].sort((a, b) => a.name.localeCompare(b.name))
-      );
+      setUsuarios((prevUsuarios) => {
+        if (usuarioEditando) {
+          return prevUsuarios
+            .map((usuario) => (usuario.id === usuarioEditando.id ? usuarioGuardado : usuario))
+            .sort((a, b) => a.name.localeCompare(b.name));
+        }
 
-      setFeedback({ type: 'success', message: 'Usuario creado correctamente.' });
+        return [...prevUsuarios, usuarioGuardado].sort((a, b) => a.name.localeCompare(b.name));
+      });
+
+      setFeedback({
+        type: 'success',
+        message: usuarioEditando
+          ? 'Usuario actualizado correctamente.'
+          : 'Usuario creado correctamente.',
+      });
       setShowUsuarioModal(false);
+      setUsuarioEditando(null);
     } catch (error) {
       console.error(error);
       setFeedback({ type: 'danger', message: error.message });
     } finally {
       setFormSubmitting(false);
+    }
+  };
+
+  const handleEditarUsuario = (usuario) => {
+    handleAbrirModalUsuario(usuario);
+  };
+
+  const handleEliminarUsuario = async (id) => {
+    const usuario = usuarios.find((item) => item.id === id);
+    const nombreUsuario = usuario?.name ? ` al usuario "${usuario.name}"` : '';
+
+    if (!window.confirm(`¿Está seguro de eliminar${nombreUsuario}? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    setUsuarioEliminandoId(id);
+    setFeedback(null);
+
+    try {
+      const response = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        const firstError = errorBody?.errors
+          ? Object.values(errorBody.errors).flat()[0]
+          : null;
+        const message = firstError || errorBody?.message || 'No se pudo eliminar el usuario.';
+        throw new Error(message);
+      }
+
+      setUsuarios((prevUsuarios) => prevUsuarios.filter((usuarioItem) => usuarioItem.id !== id));
+      setFeedback({ type: 'success', message: 'Usuario eliminado correctamente.' });
+    } catch (error) {
+      console.error(error);
+      setFeedback({ type: 'danger', message: error.message });
+    } finally {
+      setUsuarioEliminandoId(null);
     }
   };
 
@@ -437,7 +521,7 @@ const PanelConfiguracion = () => {
             <Card>
               <Card.Header as="h5" className="fw-bold d-flex justify-content-between align-items-center">
                 <span>Gestión de Usuarios</span>
-                <Button variant="primary" size="sm" onClick={handleAbrirModalUsuario}>
+                <Button variant="primary" size="sm" onClick={() => handleAbrirModalUsuario()}>
                   Nuevo usuario
                 </Button>
               </Card.Header>
@@ -486,7 +570,12 @@ const PanelConfiguracion = () => {
                           </td>
                           <td>{usuario.fechaCreacion}</td>
                           <td>
-                            <Button variant="outline-primary" size="sm" className="me-1" disabled>
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              className="me-1"
+                              onClick={() => handleEditarUsuario(usuario)}
+                            >
                               Editar
                             </Button>
                             <Button
@@ -500,6 +589,18 @@ const PanelConfiguracion = () => {
                                 <Spinner animation="border" size="sm" role="status" className="me-1" />
                               ) : null}
                               {usuario.estado === 'Activo' ? 'Desactivar' : 'Activar'}
+                            </Button>
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              className="me-1"
+                              onClick={() => handleEliminarUsuario(usuario.id)}
+                              disabled={usuarioEliminandoId === usuario.id}
+                            >
+                              {usuarioEliminandoId === usuario.id ? (
+                                <Spinner animation="border" size="sm" role="status" className="me-1" />
+                              ) : null}
+                              Eliminar
                             </Button>
                             <Button
                               variant="outline-secondary"
@@ -784,7 +885,7 @@ const PanelConfiguracion = () => {
       <Modal show={showUsuarioModal} onHide={handleCerrarModalUsuario} centered>
         <Form onSubmit={handleSubmitUsuario}>
           <Modal.Header closeButton={!formSubmitting}>
-            <Modal.Title>Nuevo usuario</Modal.Title>
+            <Modal.Title>{usuarioEditando ? 'Editar usuario' : 'Nuevo usuario'}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <Form.Group className="mb-3" controlId="nuevoUsuarioNombre">
@@ -821,13 +922,21 @@ const PanelConfiguracion = () => {
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="nuevoUsuarioPassword">
-              <Form.Label>Contraseña temporal</Form.Label>
+              <Form.Label>
+                {usuarioEditando
+                  ? 'Contraseña temporal (opcional)'
+                  : 'Contraseña temporal'}
+              </Form.Label>
               <Form.Control
                 type="password"
                 value={usuarioForm.password}
                 onChange={(event) => handleChangeUsuarioForm('password', event.target.value)}
                 isInvalid={Boolean(formErrors.password)}
-                placeholder="Mínimo 8 caracteres"
+                placeholder={
+                  usuarioEditando
+                    ? 'Dejar en blanco para mantener la contraseña actual'
+                    : 'Mínimo 8 caracteres'
+                }
               />
               <Form.Control.Feedback type="invalid">{formErrors.password}</Form.Control.Feedback>
             </Form.Group>
@@ -841,7 +950,7 @@ const PanelConfiguracion = () => {
               >
                 <option value="">Seleccione un rol</option>
                 {roles.map((rol) => (
-                  <option key={rol.id} value={rol.id}>
+                  <option key={rol.id} value={String(rol.id)}>
                     {rol.displayName}
                   </option>
                 ))}
@@ -855,7 +964,7 @@ const PanelConfiguracion = () => {
             </Button>
             <Button type="submit" variant="primary" disabled={formSubmitting}>
               {formSubmitting ? <Spinner animation="border" size="sm" role="status" className="me-2" /> : null}
-              Guardar usuario
+              {usuarioEditando ? 'Actualizar usuario' : 'Guardar usuario'}
             </Button>
           </Modal.Footer>
         </Form>
