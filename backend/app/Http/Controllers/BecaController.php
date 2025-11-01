@@ -59,6 +59,8 @@ class BecaController extends Controller
             'fecha_inicio' => $data['fechaInicio'],
             'fecha_fin' => $data['fechaFin'] ?? null,
             'estado' => $data['estado'],
+            'titulo_proyecto' => $data['tituloProyecto'],
+            'area_investigacion' => $data['areaInvestigacion'],
         ]);
 
         $beca->load(['becario', 'tutor', 'evaluacionFinal', 'cerradaPor']);
@@ -89,6 +91,8 @@ class BecaController extends Controller
             'fecha_inicio' => $data['fechaInicio'],
             'fecha_fin' => $data['fechaFin'] ?? null,
             'estado' => $data['estado'],
+            'titulo_proyecto' => $data['tituloProyecto'],
+            'area_investigacion' => $data['areaInvestigacion'],
         ]);
 
         $beca->load(['becario', 'tutor', 'evaluacionFinal', 'cerradaPor']);
@@ -181,7 +185,7 @@ class BecaController extends Controller
         $investigadorRoleId = Role::where('name', 'investigador')->value('id');
         $evaluadorRoleId = Role::where('name', 'evaluador')->value('id');
 
-        return $request->validate([
+        $data = $request->validate([
             'codigo' => [
                 'required',
                 'string',
@@ -209,12 +213,24 @@ class BecaController extends Controller
             'fechaInicio' => ['required', 'date'],
             'fechaFin' => ['nullable', 'date', 'after_or_equal:fechaInicio'],
             'estado' => ['required', 'string', Rule::in($estadoOptions)],
+            'tituloProyecto' => ['nullable', 'string', 'max:255'],
+            'areaInvestigacion' => ['nullable', 'string', 'max:255'],
         ], [], [
             'becarioId' => 'becario',
             'tutorId' => 'tutor',
             'fechaInicio' => 'fecha de inicio',
             'fechaFin' => 'fecha de fin',
         ]);
+
+        foreach (['tituloProyecto', 'areaInvestigacion'] as $attribute) {
+            if (array_key_exists($attribute, $data)) {
+                $data[$attribute] = trim((string) $data[$attribute]) ?: null;
+            } else {
+                $data[$attribute] = null;
+            }
+        }
+
+        return $data;
     }
 
     /**

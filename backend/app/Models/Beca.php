@@ -26,6 +26,8 @@ class Beca extends Model
         'fecha_cierre',
         'cerrada_por',
         'estado',
+        'titulo_proyecto',
+        'area_investigacion',
     ];
 
     /**

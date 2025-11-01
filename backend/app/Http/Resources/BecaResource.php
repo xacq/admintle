@@ -19,6 +19,8 @@ class BecaResource extends JsonResource
             'id' => $this->id,
             'codigo' => $this->codigo,
             'estado' => $this->estado,
+            'tituloProyecto' => $this->titulo_proyecto,
+            'areaInvestigacion' => $this->area_investigacion,
             'fechaInicio' => $this->fecha_inicio?->format('Y-m-d'),
             'fechaFin' => $this->fecha_fin?->format('Y-m-d'),
             'promedioReportes' => $this->reportes_avg_calificacion !== null
