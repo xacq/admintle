@@ -31,12 +31,22 @@ class BecaResource extends JsonResource
                 return [
                     'id' => $this->becario->id,
                     'nombre' => $this->becario->name,
+                    'role' => $this->becario->role ? [
+                        'id' => $this->becario->role->id,
+                        'name' => $this->becario->role->name,
+                        'displayName' => $this->becario->role->display_name,
+                    ] : null,
                 ];
             }),
             'tutor' => $this->whenLoaded('tutor', function () {
                 return [
                     'id' => $this->tutor->id,
                     'nombre' => $this->tutor->name,
+                    'role' => $this->tutor->role ? [
+                        'id' => $this->tutor->role->id,
+                        'name' => $this->tutor->role->name,
+                        'displayName' => $this->tutor->role->display_name,
+                    ] : null,
                 ];
             }),
             'cerradaPor' => $this->whenLoaded('cerradaPor', function () {

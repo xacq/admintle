@@ -26,7 +26,7 @@ const ListadoBecas = () => {
   const [formData, setFormData] = useState(emptyForm);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
-  const [investigadores, setInvestigadores] = useState([]);
+  const [becarios, setBecarios] = useState([]);
   const [evaluadores, setEvaluadores] = useState([]);
   const [assigningBecaId, setAssigningBecaId] = useState(null);
   const [assignmentTutorId, setAssignmentTutorId] = useState('');
@@ -60,19 +60,36 @@ const ListadoBecas = () => {
 
   const fetchOptions = async () => {
     try {
-      const [investigadoresResponse, evaluadoresResponse] = await Promise.all([
+      const [investigadoresResponse, becariosResponse, evaluadoresResponse] = await Promise.all([
         fetch('/api/roles/investigador/usuarios'),
+        fetch('/api/roles/becario/usuarios'),
         fetch('/api/roles/evaluador/usuarios'),
       ]);
 
-      if (!investigadoresResponse.ok || !evaluadoresResponse.ok) {
+      if (!investigadoresResponse.ok || !becariosResponse.ok || !evaluadoresResponse.ok) {
         throw new Error('No se pudieron cargar las listas de usuarios.');
       }
 
       const investigadoresData = await investigadoresResponse.json();
+      const becariosData = await becariosResponse.json();
       const evaluadoresData = await evaluadoresResponse.json();
 
-      setInvestigadores(Array.isArray(investigadoresData) ? investigadoresData : []);
+      const formatUsers = (items, roleLabel) =>
+        (Array.isArray(items) ? items : []).map((item) => ({
+          ...item,
+          roleLabel,
+        }));
+
+      const combinedBecarios = [
+        ...formatUsers(investigadoresData, 'Investigador'),
+        ...formatUsers(becariosData, 'Becario'),
+      ];
+
+      const uniqueBecarios = Array.from(
+        new Map(combinedBecarios.map((user) => [user.id, user])).values()
+      ).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+
+      setBecarios(uniqueBecarios);
       setEvaluadores(Array.isArray(evaluadoresData) ? evaluadoresData : []);
     } catch (err) {
       console.error(err);
@@ -105,6 +122,21 @@ const ListadoBecas = () => {
       default:
         return 'bg-primary';
     }
+  };
+
+  const renderUsuario = (usuario, fallback = 'Sin asignar') => {
+    if (!usuario?.nombre) {
+      return fallback;
+    }
+
+    const roleLabel = usuario.role?.displayName ?? usuario.role?.name;
+
+    return (
+      <div>
+        <div>{usuario.nombre}</div>
+        {roleLabel && <small className="text-muted">{roleLabel}</small>}
+      </div>
+    );
   };
 
   const formatDate = (value) => {
@@ -447,8 +479,8 @@ const ListadoBecas = () => {
                       <td>{beca.codigo}</td>
                       <td>{beca.tituloProyecto ?? '—'}</td>
                       <td>{beca.areaInvestigacion ?? '—'}</td>
-                      <td>{beca.becario?.nombre ?? 'Sin asignar'}</td>
-                      <td>{beca.tutor?.nombre ?? 'Sin asignar'}</td>
+                      <td>{renderUsuario(beca.becario)}</td>
+                      <td>{renderUsuario(beca.tutor)}</td>
                       <td>{beca.fechaInicio ?? '—'}</td>
                       <td>{beca.fechaFin ?? '—'}</td>
                       <td>{formatDate(beca.fechaCierre)}</td>
@@ -642,7 +674,7 @@ const ListadoBecas = () => {
 
                   <div className="mb-3">
                     <label className="form-label" htmlFor="becarioId">
-                      Becario (Investigador)
+                      Becario
                     </label>
                     <select
                       id="becarioId"
@@ -652,10 +684,11 @@ const ListadoBecas = () => {
                       onChange={handleInputChange}
                       required
                     >
-                      <option value="">Selecciona un investigador…</option>
-                      {investigadores.map((investigador) => (
-                        <option key={investigador.id} value={investigador.id}>
-                          {investigador.name}
+                      <option value="">Selecciona un becario o investigador…</option>
+                      {becarios.map((usuario) => (
+                        <option key={usuario.id} value={usuario.id}>
+                          {usuario.name}
+                          {usuario.roleLabel ? ` (${usuario.roleLabel})` : ''}
                         </option>
                       ))}
                     </select>

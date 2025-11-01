@@ -16,7 +16,7 @@ class BecaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Beca::with(['becario', 'tutor', 'evaluacionFinal', 'cerradaPor'])
+        $query = Beca::with(['becario.role', 'tutor.role', 'evaluacionFinal', 'cerradaPor'])
             ->withAvg('reportes', 'calificacion')
             ->orderByDesc('created_at');
 
@@ -63,7 +63,7 @@ class BecaController extends Controller
             'area_investigacion' => $data['areaInvestigacion'],
         ]);
 
-        $beca->load(['becario', 'tutor', 'evaluacionFinal', 'cerradaPor']);
+        $beca->load(['becario.role', 'tutor.role', 'evaluacionFinal', 'cerradaPor']);
         $beca->loadAvg('reportes', 'calificacion');
 
         return (new BecaResource($beca))
@@ -95,7 +95,7 @@ class BecaController extends Controller
             'area_investigacion' => $data['areaInvestigacion'],
         ]);
 
-        $beca->load(['becario', 'tutor', 'evaluacionFinal', 'cerradaPor']);
+        $beca->load(['becario.role', 'tutor.role', 'evaluacionFinal', 'cerradaPor']);
         $beca->loadAvg('reportes', 'calificacion');
 
         return new BecaResource($beca);
@@ -115,7 +115,7 @@ class BecaController extends Controller
             'tutor_id' => $data['tutorId'],
         ]);
 
-        $beca->load(['becario', 'tutor', 'evaluacionFinal', 'cerradaPor']);
+        $beca->load(['becario.role', 'tutor.role', 'evaluacionFinal', 'cerradaPor']);
         $beca->loadAvg('reportes', 'calificacion');
 
         return new BecaResource($beca);
@@ -148,7 +148,7 @@ class BecaController extends Controller
         }
 
         if ($beca->estado === 'Archivada') {
-            $beca->load(['becario', 'tutor', 'evaluacionFinal', 'cerradaPor']);
+            $beca->load(['becario.role', 'tutor.role', 'evaluacionFinal', 'cerradaPor']);
             $beca->loadAvg('reportes', 'calificacion');
 
             return (new BecaResource($beca))
@@ -164,7 +164,7 @@ class BecaController extends Controller
             'cerrada_por' => $data['cerradaPorId'] ?? null,
         ]);
 
-        $beca->load(['becario', 'tutor', 'evaluacionFinal', 'cerradaPor']);
+        $beca->load(['becario.role', 'tutor.role', 'evaluacionFinal', 'cerradaPor']);
         $beca->loadAvg('reportes', 'calificacion');
 
         return new BecaResource($beca);
@@ -182,7 +182,9 @@ class BecaController extends Controller
         }
         $becaId = $beca?->id;
 
-        $investigadorRoleId = Role::where('name', 'investigador')->value('id');
+        $becarioRoles = Role::whereIn('name', ['investigador', 'becario'])
+            ->pluck('id')
+            ->all();
         $evaluadorRoleId = Role::where('name', 'evaluador')->value('id');
 
         $data = $request->validate([
@@ -195,9 +197,9 @@ class BecaController extends Controller
             'becarioId' => [
                 'required',
                 'integer',
-                Rule::exists('users', 'id')->where(function ($query) use ($investigadorRoleId) {
-                    if ($investigadorRoleId) {
-                        $query->where('role_id', $investigadorRoleId);
+                Rule::exists('users', 'id')->where(function ($query) use ($becarioRoles) {
+                    if (! empty($becarioRoles)) {
+                        $query->whereIn('role_id', $becarioRoles);
                     }
                 }),
             ],
