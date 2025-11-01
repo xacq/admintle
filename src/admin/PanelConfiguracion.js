@@ -23,7 +23,8 @@ const rolesData = [
   { id: 1, nombre: 'Administrador', descripcion: 'Acceso completo al sistema' },
   { id: 2, nombre: 'Director', descripcion: 'Supervisión general de becas' },
   { id: 3, nombre: 'Tutor', descripcion: 'Evaluación de proyectos asignados' },
-  { id: 4, nombre: 'Investigador', descripcion: 'Gestión de becas y reportes propios' }
+  { id: 4, nombre: 'Investigador', descripcion: 'Gestión de becas y reportes propios' },
+  { id: 5, nombre: 'Becario', descripcion: 'Accede a su beca y gestiona reportes personales' }
 ];
 
 const permisosData = [

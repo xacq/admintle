@@ -211,6 +211,18 @@ class DocenteModuleSeeder extends Seeder
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
+            [
+                'codigo' => 'PI-UATF-044',
+                'becario_id' => $userIds['becario'],
+                'tutor_id' => $userIds['tutor'],
+                'fecha_inicio' => '2024-04-01',
+                'fecha_fin' => '2024-12-15',
+                'estado' => 'Activa',
+                'fecha_cierre' => null,
+                'cerrada_por' => null,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
         ]);
 
         DB::table('designaciones')->insert([
