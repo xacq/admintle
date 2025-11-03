@@ -38,12 +38,18 @@ class EvaluacionController extends Controller
         $data = $this->validateData($request);
 
         /** @var Beca $beca */
-        $beca = Beca::with('tutor')->findOrFail($data['becaId']);
+        $beca = Beca::with(['tutor', 'evaluacionFinal'])->findOrFail($data['becaId']);
 
         if ($beca->tutor_id !== (int) $data['tutorId']) {
             return response()->json([
                 'message' => 'Solo el tutor asignado puede registrar la evaluación final de esta beca.',
             ], Response::HTTP_FORBIDDEN);
+        }
+
+        if ($beca->evaluacionFinal) {
+            return response()->json([
+                'message' => 'La beca ya cuenta con una evaluación final registrada.',
+            ], Response::HTTP_CONFLICT);
         }
 
         $evaluacion = Evaluacion::create([
@@ -102,6 +108,10 @@ class EvaluacionController extends Controller
     {
         $estadoOptions = ['Pendiente', 'Aprobado', 'Reprobado', 'Concluido'];
 
+        $messages = [
+            'becaId.unique' => 'La beca ya cuenta con una evaluación final registrada.',
+        ];
+
         $data = $request->validate([
             'becaId' => [
                 'required',
@@ -113,7 +123,7 @@ class EvaluacionController extends Controller
             'calificacionFinal' => ['nullable', 'numeric', 'between:0,10'],
             'observacionesFinales' => ['nullable', 'string'],
             'estadoFinal' => ['required', 'string', Rule::in($estadoOptions)],
-        ], [], [
+        ], $messages, [
             'becaId' => 'beca',
             'tutorId' => 'tutor',
             'calificacionFinal' => 'calificación final',
