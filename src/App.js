@@ -35,7 +35,6 @@ import Calificaciones from "./becario/Calificaciones";
 import RevisarReportes from "./tutor/RevisarReportes";
 import EvaluacionFinal from "./tutor/EvaluacionFinal";
 
-
 function App() {
   return (
     <Router>

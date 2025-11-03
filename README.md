@@ -34,7 +34,7 @@ El backend vive en la carpeta `backend/` y utiliza PostgreSQL como motor de base
 2. Crear el archivo de entorno y configurar la URL del frontend (el proxy de Create React App usa `http://localhost:3000`). Ajusta las variables de conexión a PostgreSQL según tu entorno:
    ```bash
    cp .env.example .env
-   php artisan key:generate
+   editar o eliminar becas
    ```
    Si necesitas personalizar el origen permitido por CORS edita la variable `FRONTEND_URL` en `.env`.
 3. Asegúrate de que la base de datos indicada en `DB_DATABASE` exista (por ejemplo `createdb admintle` en una terminal) y luego ejecuta las migraciones y siembra de datos:
