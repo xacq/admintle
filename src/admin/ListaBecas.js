@@ -4,6 +4,12 @@ import './admin.css';
 
 const ARCHIVED_STATE = 'Archivada';
 const ESTADO_OPTIONS = ['Activa', 'En evaluación', 'Finalizada'];
+const EVALUACION_BADGE_CLASS = {
+  Aprobado: 'bg-success',
+  Reprobado: 'bg-danger',
+  Concluido: 'bg-info text-dark',
+  Pendiente: 'bg-secondary',
+};
 
 const emptyForm = {
   id: null,
@@ -146,6 +152,20 @@ const ListadoBecas = () => {
 
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('es-BO');
+  };
+
+  const formatEvaluacionCalificacion = (evaluacion) => {
+    if (!evaluacion) {
+      return 'Sin registrar';
+    }
+
+    const { calificacionFinal } = evaluacion;
+    if (calificacionFinal === null || calificacionFinal === undefined) {
+      return 'Sin registrar';
+    }
+
+    const numeric = Number(calificacionFinal);
+    return Number.isFinite(numeric) ? `${numeric.toFixed(2)} / 10` : 'Sin registrar';
   };
 
   const openCreateModal = () => {
@@ -490,9 +510,22 @@ const ListadoBecas = () => {
                         </span>
                       </td>
                       <td>
-                        {beca.evaluacionFinal?.estadoFinal
-                          ? `${beca.evaluacionFinal.estadoFinal}`
-                          : beca.evaluacionFinal ?? '—'}
+                        {beca.evaluacionFinal ? (
+                          <div className="d-flex flex-column">
+                            <span className="fw-semibold">
+                              {formatEvaluacionCalificacion(beca.evaluacionFinal)}
+                            </span>
+                            <span
+                              className={`badge ${
+                                EVALUACION_BADGE_CLASS[beca.evaluacionFinal.estadoFinal] ?? 'bg-secondary'
+                              }`}
+                            >
+                              {beca.evaluacionFinal.estadoFinal}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="badge bg-secondary">Pendiente</span>
+                        )}
                       </td>
                       <td className="text-center">
                         <div className="btn-group" role="group">

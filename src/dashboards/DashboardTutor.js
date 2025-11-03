@@ -119,8 +119,35 @@ const DashboardTutor = () => {
     }
   };
 
+  const getEvaluacionBadgeVariant = (estado) => {
+    switch (estado) {
+      case 'Aprobado':
+        return 'success';
+      case 'Reprobado':
+        return 'danger';
+      case 'Concluido':
+        return 'info';
+      case 'Pendiente':
+      default:
+        return 'secondary';
+    }
+  };
+
   const handleRevisarReporte = (codigo) => {
     navigate('/listaregistros', { state: { focusBecaCodigo: codigo } });
+  };
+
+  const formatCalificacionFinal = (beca) => {
+    if (!beca.evaluacionFinal) {
+      return 'Pendiente';
+    }
+
+    const calificacion = beca.evaluacionFinal.calificacionFinal;
+    if (calificacion === null || calificacion === undefined || Number.isNaN(Number(calificacion))) {
+      return 'Sin calificación';
+    }
+
+    return `${Number(calificacion).toFixed(2)} / 10`;
   };
 
   const handleAccesoDirecto = (modulo) => {
@@ -129,7 +156,7 @@ const DashboardTutor = () => {
         navigate('/listaregistros');
         break;
       case 'Registrar Evaluación de Desempeño':
-        navigate('/docenteconfig');
+        navigate('/evaluacionfinal');
         break;
       case 'Consultar Observaciones Anteriores':
         navigate('/notificacionesanteriores');
@@ -251,6 +278,7 @@ const DashboardTutor = () => {
                       <th>Fecha de inicio</th>
                       <th>Fecha de finalización</th>
                       <th>Reportes pendientes</th>
+                      <th>Evaluación final</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
@@ -280,6 +308,18 @@ const DashboardTutor = () => {
                           <td>{beca.fechaInicio ?? '—'}</td>
                           <td>{beca.fechaFin ?? '—'}</td>
                           <td>{pendientesPorBeca[beca.id] ?? 0}</td>
+                          <td>
+                            {beca.evaluacionFinal ? (
+                              <div className="d-flex flex-column">
+                                <span className="fw-semibold">{formatCalificacionFinal(beca)}</span>
+                                <Badge bg={getEvaluacionBadgeVariant(beca.evaluacionFinal.estadoFinal)}>
+                                  {beca.evaluacionFinal.estadoFinal}
+                                </Badge>
+                              </div>
+                            ) : (
+                              <Badge bg="secondary">Pendiente</Badge>
+                            )}
+                          </td>
                           <td>
                             <Button
                               variant="outline-primary"
