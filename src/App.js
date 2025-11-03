@@ -16,6 +16,7 @@ import DashboardTutor from "./dashboards/DashboardTutor";
 import DashboardBecario from "./dashboards/DashboardBecario";
 import DashboardAdmin from "./dashboards/DashboardAdmin";
 import DashboardDirector from "./dashboards/DashboardDirector";
+import EvaluacionFinalForm from "./docente/EvaluacionFinalForm";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 
@@ -73,6 +74,7 @@ function App() {
         <Route path="/calificaciones" element={<Calificaciones />} />
         <Route path="/listabecas" element={<ListaBecas />} />
         <Route path="/revisarreportes" element={<RevisarReportes/>} />
+        <Route path="/evaluacionfinal" element={<EvaluacionFinalForm/>} />
       </Routes>
     </Router>
   );
