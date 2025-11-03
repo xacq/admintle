@@ -250,8 +250,11 @@ footer a:hover {
 .observacion-devuelto {
   border-left-color: #dc3545; /* Rojo */
 }
-.observacion-pendiente de revisión {
+.observacion-pendiente {
   border-left-color: #ffc107; /* Amarillo */
+}
+.observacion-estado-generico {
+  border-left-color: #6c757d; /* Gris */
 }
 
 .observacion-header {

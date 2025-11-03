@@ -1053,6 +1053,11 @@ header img{
   color: #495057;
 }
 
+.observaciones-cell__empty {
+  color: #adb5bd;
+  font-style: italic;
+}
+
 .revision-panel {
   margin-top: 24px;
   background: #ffffff;
