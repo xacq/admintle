@@ -295,7 +295,11 @@ const ListaRegistros = () => {
                         <span className={estadoClassName(reporte.estado)}>{reporte.estado}</span>
                       </td>
                       <td className="observaciones-cell">
-                        {reporte.observaciones ? reporte.observaciones : 'Sin observaciones registradas.'}
+                        {reporte.observaciones ? (
+                          <span title={reporte.observaciones}>{reporte.observaciones}</span>
+                        ) : (
+                          <span className="observaciones-cell__empty">Sin observaciones registradas.</span>
+                        )}
                       </td>
                       <td>
                         <button
