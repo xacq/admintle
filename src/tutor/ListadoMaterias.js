@@ -1,24 +1,67 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./docente.css";
 import Menu from "../components/Menu";
 import Header from "../components/Header";
 import useApiData from "../hooks/useApiData";
+import useSystemParameters from "../hooks/useSystemParameters";
+import buildManagementLabels from "../utils/managementLabels";
 
 const ListadoMaterias = () => {
   const { data: materias, loading, error } = useApiData("/api/materias");
+  const { summary, loading: parametrosLoading } = useSystemParameters();
+  const { gestion, periodo } = buildManagementLabels(summary, parametrosLoading);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const materiasList = useMemo(() => {
+    if (Array.isArray(materias?.data)) {
+      return materias.data;
+    }
+
+    return Array.isArray(materias) ? materias : [];
+  }, [materias]);
 
   const rows = useMemo(() => {
     if (loading || error) {
       return [];
     }
 
-    return materias.map((materia) => ({
+    return materiasList.map((materia) => ({
       ...materia,
       details: {
         checked: materia.details?.checked ?? false,
       },
     }));
-  }, [error, loading, materias]);
+  }, [error, loading, materiasList]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [rows.length]);
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / itemsPerPage));
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedRows = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return rows.slice(start, start + itemsPerPage);
+  }, [currentPage, rows]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+  };
 
   return (
     <div className="Docente">
@@ -48,8 +91,8 @@ const ListadoMaterias = () => {
               </div>
 
               <div>
-                <p>Gestión 2/2024</p>
-                <p>Periodo 1</p>
+                <p>{gestion}</p>
+                <p>{periodo}</p>
               </div>
             </div>
           </main>
@@ -89,8 +132,8 @@ const ListadoMaterias = () => {
                     </td>
                   </tr>
                 )}
-                {!loading && !error &&
-                  rows.map((materia) => (
+                {!loading && !error && paginatedRows.length > 0 &&
+                  paginatedRows.map((materia) => (
                     <tr key={materia.id}>
                       <td>{materia.name}</td>
                       <td>{materia.agu}</td>
@@ -145,21 +188,38 @@ const ListadoMaterias = () => {
             </table>
           </div>
 
-          <div className="pagination">
-            <button className="page-btn prev-btn" type="button">
-              &lt;
-            </button>
-            <div className="page-numbers">
-              {[...Array(10)].map((_, i) => (
-                <button key={i} className={`page-number ${i === 0 ? "active" : ""}`} type="button">
-                  {i + 1}
-                </button>
-              ))}
+          {rows.length > 0 && (
+            <div className="pagination">
+              <button
+                className="page-btn prev-btn"
+                type="button"
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+              >
+                &lt;
+              </button>
+              <div className="page-numbers">
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                  <button
+                    key={page}
+                    className={`page-number ${page === currentPage ? "active" : ""}`}
+                    type="button"
+                    onClick={() => handlePageChange(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button
+                className="page-btn next-btn"
+                type="button"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+              >
+                &gt;
+              </button>
             </div>
-            <button className="page-btn next-btn" type="button">
-              &gt;
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </div>

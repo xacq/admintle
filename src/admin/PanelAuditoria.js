@@ -1,160 +1,132 @@
 // src/components/PanelAuditoria.js
 
-import React, { useState, useMemo } from 'react';
-import { Container, Card, Row, Col, Form, Button, Table, Badge, Modal, Alert, ProgressBar } from 'react-bootstrap';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Container,
+  Card,
+  Row,
+  Col,
+  Form,
+  Button,
+  Table,
+  Badge,
+  Modal,
+  Alert,
+  ProgressBar,
+  Spinner,
+} from 'react-bootstrap';
 import './admin.css';
 
-// --- DATOS ESTÁTICOS DE EJEMPLO ---
-const auditoriaData = [
-  {
-    id: 1,
-    fechaHora: '2025-09-28 09:34:15',
-    usuario: 'admin_dycit',
-    rol: 'Administrador',
-    accion: 'Creó nuevo usuario',
-    modulo: 'Configuración',
-    resultado: 'Éxito',
-    ip: '192.168.1.2',
-    dispositivo: 'Chrome / Windows 10',
-    descripcion: 'Se creó un nuevo usuario con el nombre "María García López" y rol "Tutor".',
-    datosPrevios: '{}',
-    datosPosteriores: '{"id": 5, "nombre": "María García López", "correo": "maria.garcia@uatf.edu.bo", "rol": "Tutor", "estado": "Activo"}'
-  },
-  {
-    id: 2,
-    fechaHora: '2025-09-28 09:36:22',
-    usuario: 'juan.perez',
-    rol: 'Tutor',
-    accion: 'Revisó reporte de avance',
-    modulo: 'Seguimiento',
-    resultado: 'Éxito',
-    ip: '192.168.1.45',
-    dispositivo: 'Firefox / Windows 11',
-    descripcion: 'El tutor revisó y aprobó el reporte de avance N°3 del becario "Ana Guzmán".',
-    datosPrevios: '{"id_reporte": 3, "estado": "En revisión"}',
-    datosPosteriores: '{"id_reporte": 3, "estado": "Aprobado", "calificacion": 8.5, "observaciones": "Buen progreso"}'
-  },
-  {
-    id: 3,
-    fechaHora: '2025-09-28 10:02:47',
-    usuario: 'ana.guzman',
-    rol: 'Becaria',
-    accion: 'Subió informe de avance',
-    modulo: 'Seguimiento',
-    resultado: 'Éxito',
-    ip: '192.168.1.87',
-    dispositivo: 'Safari / macOS',
-    descripcion: 'La becaria subió el informe de avance correspondiente al mes de septiembre.',
-    datosPrevios: '{}',
-    datosPosteriores: '{"id_reporte": 4, "titulo": "Avance Septiembre", "archivo": "informe_septiembre.pdf", "estado": "En revisión"}'
-  },
-  {
-    id: 4,
-    fechaHora: '2025-09-28 10:05:13',
-    usuario: 'admin_dycit',
-    rol: 'Administrador',
-    accion: 'Eliminó registro antiguo',
-    modulo: 'Archivo',
-    resultado: 'Advertencia',
-    ip: '192.168.1.2',
-    dispositivo: 'Chrome / Windows 10',
-    descripcion: 'Se eliminó un registro de proyecto del año 2020 por solicitud del departamento.',
-    datosPrevios: '{"id": 15, "codigo": "PI-UATF-005", "titulo": "Estudio de suelos", "estado": "Archivado"}',
-    datosPosteriores: '{}'
-  },
-  {
-    id: 5,
-    fechaHora: '2025-09-28 10:15:30',
-    usuario: 'carlos.rojas',
-    rol: 'Director',
-    accion: 'Generó reporte institucional',
-    modulo: 'Reportes',
-    resultado: 'Éxito',
-    ip: '192.168.1.33',
-    dispositivo: 'Edge / Windows 10',
-    descripcion: 'El director generó un reporte consolidado de todas las becas activas del semestre.',
-    datosPrevios: '{}',
-    datosPosteriores: '{"id_reporte": 8, "tipo": "Consolidado", "periodo": "2025-1", "estado": "Generado"}'
-  },
-  {
-    id: 6,
-    fechaHora: '2025-09-28 10:22:18',
-    usuario: 'sistema',
-    rol: 'Sistema',
-    accion: 'Respaldo automático',
-    modulo: 'Sistema',
-    resultado: 'Éxito',
-    ip: '127.0.0.1',
-    dispositivo: 'Servidor',
-    descripcion: 'Se realizó un respaldo automático de la base de datos.',
-    datosPrevios: '{}',
-    datosPosteriores: '{"backup": "backup_20250928_102218.sql", "tamano": "245.7 MB", "ubicacion": "/srv/backups/"}'
-  },
-  {
-    id: 7,
-    fechaHora: '2025-09-28 10:30:45',
-    usuario: 'luis.mamani',
-    rol: 'Becario',
-    accion: 'Inicio de sesión fallido',
-    modulo: 'Autenticación',
-    resultado: 'Error',
-    ip: '192.168.1.92',
-    dispositivo: 'Chrome / Android',
-    descripcion: 'Intento de inicio de sesión fallido por contraseña incorrecta.',
-    datosPrevios: '{}',
-    datosPosteriores: '{"error": "Contraseña incorrecta", "intento": 3, "usuario": "luis.mamani"}'
-  }
-];
-
 const PanelAuditoria = () => {
-  const [auditoria, setAuditoria] = useState(auditoriaData);
+  const [registros, setRegistros] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showStats, setShowStats] = useState(true);
   const [auditoriaActiva, setAuditoriaActiva] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(true); // Simular rol de administrador
   const [filters, setFilters] = useState({
     usuario: '',
     accion: '',
     modulo: '',
     fechaDesde: '',
-    fechaHasta: ''
+    fechaHasta: '',
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // --- LÓGICA DE FILTRADO ---
-  const filteredEvents = useMemo(() => {
-    return auditoria.filter(evento => {
-      const usuarioMatch = filters.usuario === '' || evento.usuario.toLowerCase().includes(filters.usuario.toLowerCase());
-      const accionMatch = filters.accion === '' || evento.accion.toLowerCase().includes(filters.accion.toLowerCase());
-      const moduloMatch = filters.modulo === '' || evento.modulo.toLowerCase().includes(filters.modulo.toLowerCase());
-      
-      let fechaMatch = true;
-      if (filters.fechaDesde && filters.fechaHasta) {
-        const eventoFecha = new Date(evento.fechaHora);
-        const fechaDesde = new Date(filters.fechaDesde);
-        const fechaHasta = new Date(filters.fechaHasta);
-        fechaHasta.setHours(23, 59, 59, 999); // Incluir todo el día
-        fechaMatch = eventoFecha >= fechaDesde && eventoFecha <= fechaHasta;
+  const loadRegistros = async (abortSignal) => {
+    setLoading(true);
+    setError('');
+
+    const params = new URLSearchParams();
+    if (filters.usuario) {
+      params.append('usuario', filters.usuario);
+    }
+    if (filters.accion) {
+      params.append('accion', filters.accion);
+    }
+    if (filters.modulo) {
+      params.append('modulo', filters.modulo);
+    }
+    if (filters.fechaDesde && filters.fechaHasta) {
+      params.append('fecha_desde', filters.fechaDesde);
+      params.append('fecha_hasta', filters.fechaHasta);
+    }
+
+    try {
+      const response = await fetch(`/api/audit-logs?${params.toString()}`, { signal: abortSignal });
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}`);
       }
-      
-      return usuarioMatch && accionMatch && moduloMatch && fechaMatch;
-    });
-  }, [auditoria, filters]);
 
-  // --- MANEJADORES DE EVENTOS ---
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters({ ...filters, [name]: value });
+      const payload = await response.json();
+      const data = Array.isArray(payload?.data) ? payload.data : payload;
+
+      const mapped = (Array.isArray(data) ? data : []).map((item) => ({
+        id: item.id,
+        fechaHora: item.eventAt ? new Date(item.eventAt) : null,
+        usuario: item.usuario ?? 'Desconocido',
+        rol: item.rol ?? '—',
+        accion: item.accion ?? 'Evento',
+        modulo: item.modulo ?? '—',
+        resultado: item.resultado ?? 'Información',
+        ip: item.ip ?? '—',
+        dispositivo: item.dispositivo ?? '—',
+        descripcion: item.descripcion ?? 'Sin descripción proporcionada.',
+        datosPrevios: item.datosPrevios ?? {},
+        datosPosteriores: item.datosPosteriores ?? {},
+      }));
+
+      setRegistros(mapped);
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error(err);
+        setError(err.message || 'No se pudieron recuperar los registros de auditoría.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadRegistros(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.usuario, filters.accion, filters.modulo, filters.fechaDesde, filters.fechaHasta]);
+
+  const filteredEvents = useMemo(() => registros, [registros]);
+
+  const totalsPorResultado = useMemo(() => {
+    return filteredEvents.reduce((acc, evento) => {
+      const key = evento.resultado || 'Sin resultado';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+  }, [filteredEvents]);
+
+  const resultadoStats = useMemo(() => {
+    const totalEventos = filteredEvents.length || 1;
+
+    return Object.entries(totalsPorResultado)
+      .sort(([, totalA], [, totalB]) => totalB - totalA)
+      .map(([resultado, total]) => ({
+        resultado,
+        total,
+        variant: getResultBadge(resultado),
+        porcentaje: Math.round((total / totalEventos) * 100),
+      }));
+  }, [filteredEvents.length, totalsPorResultado]);
+
+  const handleFilterChange = (event) => {
+    const { name, value } = event.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleClearFilters = () => {
-    setFilters({
-      usuario: '',
-      accion: '',
-      modulo: '',
-      fechaDesde: '',
-      fechaHasta: ''
-    });
+    setFilters({ usuario: '', accion: '', modulo: '', fechaDesde: '', fechaHasta: '' });
   };
 
   const handleSelectEvent = (evento) => {
@@ -168,29 +140,28 @@ const PanelAuditoria = () => {
   };
 
   const handleDownloadLog = () => {
-    alert(`Descargando registro de auditoría en formato .log (simulación)`);
+    alert('Descargando registro de auditoría consolidado (simulación).');
   };
 
   const handleExportRecords = (format) => {
-    alert(`Exportando registros en formato ${format} (simulación)`);
+    alert(`Exportando registros en formato ${format} (simulación).`);
   };
 
   const handleDeleteOldRecords = () => {
-    if (window.confirm('¿Está seguro de que desea eliminar los registros antiguos? Esta acción no se puede deshacer.')) {
-      alert('Registros antiguos eliminados (simulación)');
+    if (window.confirm('¿Está seguro de eliminar los registros antiguos? Esta acción no se puede deshacer.')) {
+      alert('Registros antiguos eliminados (simulación).');
     }
   };
 
   const handleToggleAuditoria = () => {
-    setAuditoriaActiva(!auditoriaActiva);
-    alert(`Auditoría en tiempo real ${!auditoriaActiva ? 'activada' : 'desactivada'} (simulación)`);
+    setAuditoriaActiva((prev) => !prev);
+    alert(`Auditoría en tiempo real ${!auditoriaActiva ? 'activada' : 'desactivada'} (simulación).`);
   };
 
   const handleConfigureAlerts = () => {
-    alert('Abriendo configuración de alertas automáticas (simulación)');
+    alert('Configuración de alertas automáticas en desarrollo.');
   };
 
-  // --- FUNCIONES AUXILIARES ---
   const getResultBadge = (resultado) => {
     switch (resultado) {
       case 'Éxito':
@@ -204,334 +175,264 @@ const PanelAuditoria = () => {
     }
   };
 
-  // --- ESTADÍSTICAS DE ACTIVIDAD ---
-  const estadisticas = useMemo(() => {
-    const totalOperaciones = auditoria.length;
-    const operacionesExitosas = auditoria.filter(e => e.resultado === 'Éxito').length;
-    const operacionesFallidas = auditoria.filter(e => e.resultado === 'Error').length;
-    const porcentajeExitosas = totalOperaciones > 0 ? Math.round((operacionesExitosas / totalOperaciones) * 100) : 0;
-    
-    // Contar acciones por usuario
-    const usuariosActivos = {};
-    auditoria.forEach(evento => {
-      if (evento.usuario !== 'sistema') {
-        usuariosActivos[evento.usuario] = (usuariosActivos[evento.usuario] || 0) + 1;
-      }
-    });
-    
-    const topUsuarios = Object.entries(usuariosActivos)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([usuario, count]) => ({ usuario, count }));
-    
-    // Contar módulos más modificados
-    const modulosModificados = {};
-    auditoria.forEach(evento => {
-      if (evento.accion !== 'Inicio de sesión' && evento.accion !== 'Inicio de sesión fallido') {
-        modulosModificados[evento.modulo] = (modulosModificados[evento.modulo] || 0) + 1;
-      }
-    });
-    
-    const topModulos = Object.entries(modulosModificados)
-      .sort((a, b) => b[1] - a[1])
-      .map(([modulo, count]) => ({ modulo, count }));
-    
-    return {
-      totalOperaciones,
-      operacionesExitosas,
-      operacionesFallidas,
-      porcentajeExitosas,
-      topUsuarios,
-      topModulos,
-      ultimoRespaldo: '2025-09-28 10:22:18'
-    };
-  }, [auditoria]);
-
   return (
     <Container fluid className="panel-auditoria-wrapper">
-      {/* 1. Encabezado principal */}
       <div className="text-center mb-4">
-        <h1 className="h2 fw-bold d-inline-flex align-items-center">
-          🧾 Panel de Auditoría y Control de Actividades del Sistema – DyCIT
-        </h1>
-        <p className="lead text-muted">Registro y monitoreo de operaciones realizadas por los usuarios en la plataforma</p>
-        <p className="text-muted small">
-          Este módulo garantiza la seguridad, transparencia y trazabilidad de las operaciones administrativas y académicas.
+        <h1 className="h2 fw-bold">📋 Panel de Auditoría y Registro de Cambios del Sistema</h1>
+        <p className="lead text-muted">
+          Seguimiento en tiempo real de acciones críticas y eventos registrados en la plataforma institucional.
         </p>
       </div>
 
-      <Row>
-        <Col lg={isAdmin ? 9 : 12}>
-          {/* 2. Panel de filtros de búsqueda */}
-          <Card className="mb-4">
-            <Card.Header as="h5" className="fw-bold">Filtros de Búsqueda</Card.Header>
+      {error && <Alert variant="danger">{error}</Alert>}
+
+      <Row className="mb-4">
+        <Col md={8}>
+          <Card>
+            <Card.Header as="h5" className="fw-bold">Filtros avanzados</Card.Header>
             <Card.Body>
               <Row className="g-3">
-                <Col md={4}>
+                <Col md={3}>
                   <Form.Label>Usuario</Form.Label>
                   <Form.Control
                     type="text"
                     name="usuario"
                     value={filters.usuario}
                     onChange={handleFilterChange}
-                    placeholder="Ingrese nombre de usuario..."
+                    placeholder="Ej: admin_dycit"
                   />
                 </Col>
-                <Col md={4}>
-                  <Form.Label>Tipo de acción</Form.Label>
+                <Col md={3}>
+                  <Form.Label>Acción</Form.Label>
                   <Form.Control
                     type="text"
                     name="accion"
                     value={filters.accion}
                     onChange={handleFilterChange}
-                    placeholder="Ej: Creó, Modificó, Eliminó"
+                    placeholder="Crear usuario"
                   />
                 </Col>
-                <Col md={4}>
-                  <Form.Label>Módulo afectado</Form.Label>
+                <Col md={3}>
+                  <Form.Label>Módulo</Form.Label>
                   <Form.Control
                     type="text"
                     name="modulo"
                     value={filters.modulo}
                     onChange={handleFilterChange}
-                    placeholder="Ej: Configuración, Seguimiento"
+                    placeholder="Configuración"
                   />
                 </Col>
-                <Col md={4}>
-                  <Form.Label>Fecha desde</Form.Label>
-                  <Form.Control
-                    type="date"
-                    name="fechaDesde"
-                    value={filters.fechaDesde}
-                    onChange={handleFilterChange}
-                  />
-                </Col>
-                <Col md={4}>
-                  <Form.Label>Fecha hasta</Form.Label>
-                  <Form.Control
-                    type="date"
-                    name="fechaHasta"
-                    value={filters.fechaHasta}
-                    onChange={handleFilterChange}
-                  />
-                </Col>
-                <Col md={4} className="d-flex align-items-end">
-                  <div className="d-grid gap-2 w-100">
-                    <Button variant="primary">Buscar</Button>
-                    <Button variant="outline-secondary" onClick={handleClearFilters}>Limpiar filtros</Button>
+                <Col md={3}>
+                  <Form.Label>Rango de fechas</Form.Label>
+                  <div className="d-flex gap-2">
+                    <Form.Control
+                      type="date"
+                      name="fechaDesde"
+                      value={filters.fechaDesde}
+                      onChange={handleFilterChange}
+                    />
+                    <Form.Control
+                      type="date"
+                      name="fechaHasta"
+                      value={filters.fechaHasta}
+                      onChange={handleFilterChange}
+                    />
                   </div>
                 </Col>
               </Row>
-            </Card.Body>
-          </Card>
-
-          {/* 3. Tabla de registros de auditoría */}
-          <Card>
-            <Card.Header as="h5" className="fw-bold d-flex justify-content-between align-items-center">
-              <span>Registros de Auditoría ({filteredEvents.length} resultados)</span>
-              <div>
-                <Button variant="outline-info" size="sm" onClick={() => setShowStats(!showStats)} className="me-2">
-                  {showStats ? 'Ocultar' : 'Mostrar'} estadísticas
+              <div className="d-flex justify-content-end mt-3 gap-2">
+                <Button variant="outline-secondary" onClick={handleClearFilters}>
+                  Limpiar filtros
                 </Button>
-                <Badge bg={auditoriaActiva ? 'success' : 'danger'}>
-                  Auditoría {auditoriaActiva ? 'activa' : 'inactiva'}
-                </Badge>
+                <Button variant="primary" onClick={() => loadRegistros()} disabled={loading}>
+                  {loading ? 'Actualizando…' : 'Aplicar filtros'}
+                </Button>
               </div>
-            </Card.Header>
-            <Card.Body>
-              <Table responsive striped hover>
-                <thead>
-                  <tr>
-                    <th>Fecha y hora</th>
-                    <th>Usuario</th>
-                    <th>Rol</th>
-                    <th>Acción realizada</th>
-                    <th>Módulo afectado</th>
-                    <th>Resultado</th>
-                    <th>IP / Dispositivo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEvents.length > 0 ? (
-                    filteredEvents.map(evento => (
-                      <tr key={evento.id} onClick={() => handleSelectEvent(evento)} style={{ cursor: 'pointer' }}>
-                        <td>{evento.fechaHora}</td>
-                        <td>{evento.usuario}</td>
-                        <td>{evento.rol}</td>
-                        <td>{evento.accion}</td>
-                        <td>{evento.modulo}</td>
-                        <td>
-                          <Badge bg={getResultBadge(evento.resultado)}>
-                            {evento.resultado === 'Éxito' && '✅ '}
-                            {evento.resultado === 'Error' && '❌ '}
-                            {evento.resultado === 'Advertencia' && '⚠️ '}
-                            {evento.resultado}
-                          </Badge>
-                        </td>
-                        <td>
-                          <small>{evento.ip}</small>
-                          <br />
-                          <small className="text-muted">{evento.dispositivo}</small>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="7" className="text-center py-3">No se encontraron registros con los filtros seleccionados.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </Table>
             </Card.Body>
           </Card>
         </Col>
-
-        {isAdmin && (
-          <Col lg={3}>
-            {/* 5. Panel de acciones del administrador */}
-            <Card className="mb-4">
-              <Card.Header as="h5" className="fw-bold">Acciones del Administrador</Card.Header>
-              <Card.Body>
-                <Alert variant="info">
-                  Estas acciones solo están disponibles para usuarios con rol de administrador.
-                </Alert>
-                <div className="d-grid gap-2">
-                  <Button variant="outline-primary" size="sm" onClick={() => handleExportRecords('CSV')}>
-                    Exportar registros (CSV)
-                  </Button>
-                  <Button variant="outline-primary" size="sm" onClick={() => handleExportRecords('PDF')}>
-                    Exportar registros (PDF)
-                  </Button>
-                  <Button variant="outline-danger" size="sm" onClick={handleDeleteOldRecords}>
-                    Eliminar registros antiguos
-                  </Button>
-                  <Button 
-                    variant={auditoriaActiva ? 'outline-warning' : 'outline-success'} 
-                    size="sm" 
-                    onClick={handleToggleAuditoria}
-                  >
-                    {auditoriaActiva ? 'Desactivar' : 'Activar'} auditoría
-                  </Button>
-                  <Button variant="outline-secondary" size="sm" onClick={handleConfigureAlerts}>
-                    Configurar alertas automáticas
-                  </Button>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-        )}
+        <Col md={4}>
+          <Card>
+            <Card.Header as="h5" className="fw-bold">Acciones rápidas</Card.Header>
+            <Card.Body className="d-grid gap-2">
+              <Button variant="outline-primary" onClick={handleDownloadLog}>
+                Descargar log completo
+              </Button>
+              <Button variant="outline-success" onClick={() => handleExportRecords('CSV')}>
+                Exportar en CSV
+              </Button>
+              <Button variant="outline-info" onClick={() => handleExportRecords('PDF')}>
+                Exportar en PDF
+              </Button>
+              <Button variant="outline-danger" onClick={handleDeleteOldRecords}>
+                Eliminar registros antiguos
+              </Button>
+              <Button variant={auditoriaActiva ? 'outline-warning' : 'outline-success'} onClick={handleToggleAuditoria}>
+                {auditoriaActiva ? 'Pausar auditoría en tiempo real' : 'Reanudar auditoría'}
+              </Button>
+              <Button variant="outline-secondary" onClick={handleConfigureAlerts}>
+                Configurar alertas automáticas
+              </Button>
+            </Card.Body>
+          </Card>
+        </Col>
       </Row>
 
-      {/* 6. Panel de estadísticas de actividad */}
-      {showStats && (
-        <Card className="mt-4">
-          <Card.Header as="h5" className="fw-bold">Estadísticas de Actividad</Card.Header>
-          <Card.Body>
-            <Row>
-              <Col md={3}>
-                <h6>Total de operaciones registradas</h6>
-                <h3 className="text-primary">{estadisticas.totalOperaciones}</h3>
-              </Col>
-              <Col md={3}>
-                <h6>Porcentaje de acciones exitosas / fallidas</h6>
-                <div className="mb-2">
-                  <ProgressBar now={estadisticas.porcentajeExitosas} label={`${estadisticas.porcentajeExitosas}%`} />
-                </div>
-                <small>Éxitos: {estadisticas.operacionesExitosas} | Fallidas: {estadisticas.operacionesFallidas}</small>
-              </Col>
-              <Col md={3}>
-                <h6>Top 5 usuarios más activos</h6>
-                <ul>
-                  {estadisticas.topUsuarios.map((item, index) => (
-                    <li key={index}>{item.usuario}: {item.count} operaciones</li>
-                  ))}
-                </ul>
-              </Col>
-              <Col md={3}>
-                <h6>Módulos más modificados</h6>
-                <ul>
-                  {estadisticas.topModulos.map((item, index) => (
-                    <li key={index}>{item.modulo}: {item.count} operaciones</li>
-                  ))}
-                </ul>
-              </Col>
-            </Row>
-            <hr />
-            <Row>
-              <Col md={12}>
-                <h6>Último respaldo del registro de auditoría</h6>
-                <p>{estadisticas.ultimoRespaldo}</p>
-              </Col>
-            </Row>
-          </Card.Body>
-        </Card>
-      )}
+      <Row className="mb-4">
+        <Col>
+          <Card>
+            <Card.Header as="h5" className="fw-bold d-flex justify-content-between align-items-center">
+              <span>Resumen de eventos registrados</span>
+              <Button variant="link" onClick={() => setShowStats((prev) => !prev)}>
+                {showStats ? 'Ocultar' : 'Mostrar'} estadísticas
+              </Button>
+            </Card.Header>
+            {showStats && (
+              <Card.Body>
+                {resultadoStats.length === 0 ? (
+                  <p className="text-muted mb-0">No existen eventos suficientes para generar estadísticas.</p>
+                ) : (
+                  <Row>
+                    {resultadoStats.map((item) => (
+                      <Col key={item.resultado} md={6} lg={4} className="mb-3">
+                        <h6 className="text-muted">{item.resultado}</h6>
+                        <ProgressBar
+                          now={item.total}
+                          max={filteredEvents.length || 1}
+                          variant={item.variant}
+                        />
+                        <p className="small mt-1">
+                          {item.total} registros ({item.porcentaje}%)
+                        </p>
+                      </Col>
+                    ))}
+                  </Row>
+                )}
+              </Card.Body>
+            )}
+          </Card>
+        </Col>
+      </Row>
 
-      {/* 4. Detalle del evento (modal emergente) */}
+      <Card>
+        <Card.Header as="h5" className="fw-bold d-flex align-items-center justify-content-between">
+          <span>Historial de auditoría</span>
+          {loading && (
+            <div className="d-flex align-items-center gap-2">
+              <Spinner animation="border" size="sm" />
+              <span className="small text-muted">Cargando…</span>
+            </div>
+          )}
+        </Card.Header>
+        <div className="table-responsive">
+          <Table hover className="mb-0">
+            <thead>
+              <tr>
+                <th>Fecha y hora</th>
+                <th>Usuario</th>
+                <th>Rol</th>
+                <th>Acción</th>
+                <th>Módulo</th>
+                <th>Resultado</th>
+                <th>IP</th>
+                <th>Dispositivo</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredEvents.length > 0 ? (
+                filteredEvents.map((evento) => (
+                  <tr key={evento.id}>
+                    <td>{evento.fechaHora ? evento.fechaHora.toLocaleString('es-BO') : '—'}</td>
+                    <td>{evento.usuario}</td>
+                    <td>{evento.rol}</td>
+                    <td>{evento.accion}</td>
+                    <td>{evento.modulo}</td>
+                    <td>
+                      <Badge bg={getResultBadge(evento.resultado)}>{evento.resultado}</Badge>
+                    </td>
+                    <td>{evento.ip}</td>
+                    <td>{evento.dispositivo}</td>
+                    <td>
+                      <Button variant="outline-primary" size="sm" onClick={() => handleSelectEvent(evento)}>
+                        Ver detalle
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={9} className="text-center text-muted py-4">
+                    No existen registros que coincidan con los filtros seleccionados.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </Table>
+        </div>
+      </Card>
+
       <Modal show={showModal} onHide={handleCloseModal} size="lg">
-        {selectedEvent && (
-          <>
-            <Modal.Header closeButton>
-              <Modal.Title>Detalle del Evento de Auditoría</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <Row>
+        <Modal.Header closeButton>
+          <Modal.Title>Detalle del evento</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedEvent && (
+            <div>
+              <Row className="mb-3">
                 <Col md={6}>
-                  <h6>Usuario responsable</h6>
-                  <p>{selectedEvent.usuario} ({selectedEvent.rol})</p>
+                  <strong>Fecha y hora:</strong> {selectedEvent.fechaHora ? selectedEvent.fechaHora.toLocaleString('es-BO') : '—'}
                 </Col>
                 <Col md={6}>
-                  <h6>Fecha y hora exacta</h6>
-                  <p>{selectedEvent.fechaHora}</p>
+                  <strong>Usuario:</strong> {selectedEvent.usuario} ({selectedEvent.rol})
+                </Col>
+              </Row>
+              <Row className="mb-3">
+                <Col md={6}>
+                  <strong>Acción:</strong> {selectedEvent.accion}
                 </Col>
                 <Col md={6}>
-                  <h6>Ubicación / IP del equipo</h6>
-                  <p>{selectedEvent.ip}</p>
-                  <p className="text-muted">{selectedEvent.dispositivo}</p>
+                  <strong>Módulo:</strong> {selectedEvent.modulo}
+                </Col>
+              </Row>
+              <Row className="mb-3">
+                <Col md={6}>
+                  <strong>Resultado:</strong>{' '}
+                  <Badge bg={getResultBadge(selectedEvent.resultado)}>{selectedEvent.resultado}</Badge>
                 </Col>
                 <Col md={6}>
-                  <h6>Resultado</h6>
-                  <Badge bg={getResultBadge(selectedEvent.resultado)}>
-                    {selectedEvent.resultado}
-                  </Badge>
+                  <strong>IP:</strong> {selectedEvent.ip}
                 </Col>
-                <Col md={12}>
-                  <h6>Descripción completa de la acción</h6>
-                  <p>{selectedEvent.descripcion}</p>
+              </Row>
+              <Row className="mb-3">
+                <Col>
+                  <strong>Descripción:</strong>
+                  <p className="mb-0">{selectedEvent.descripcion}</p>
                 </Col>
+              </Row>
+              <Row className="mb-3">
                 <Col md={6}>
-                  <h6>Datos previos</h6>
-                  <pre className="bg-light p-2 rounded">
-                    {selectedEvent.datosPrevios}
+                  <strong>Datos previos:</strong>
+                  <pre className="bg-light p-3 rounded small">
+                    {JSON.stringify(selectedEvent.datosPrevios ?? {}, null, 2)}
                   </pre>
                 </Col>
                 <Col md={6}>
-                  <h6>Datos posteriores</h6>
-                  <pre className="bg-light p-2 rounded">
-                    {selectedEvent.datosPosteriores}
+                  <strong>Datos posteriores:</strong>
+                  <pre className="bg-light p-3 rounded small">
+                    {JSON.stringify(selectedEvent.datosPosteriores ?? {}, null, 2)}
                   </pre>
                 </Col>
               </Row>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={handleCloseModal}>
-                Cerrar
-              </Button>
-              <Button variant="primary" onClick={handleDownloadLog}>
-                Descargar registro (.log)
-              </Button>
-            </Modal.Footer>
-          </>
-        )}
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Cerrar
+          </Button>
+        </Modal.Footer>
       </Modal>
-
-      {/* Pie institucional */}
-      <footer className="text-center py-3 mt-5 border-top">
-        <p className="mb-1">Dirección de Ciencia e Innovación Tecnológica – UATF</p>
-        <p className="mb-0 small text-muted">
-          {new Date().toLocaleDateString()} - v1.0.3 – 2025
-        </p>
-      </footer>
     </Container>
   );
 };

@@ -1,30 +1,75 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import './docente.css';
 import Menu from '../components/Menu';
 import Header from '../components/Header';
 import useApiData from '../hooks/useApiData';
+import useSystemParameters from '../hooks/useSystemParameters';
+import buildManagementLabels from '../utils/managementLabels';
 
 const BuscarEstudiantes = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { data: estudiantes, loading, error } = useApiData('/api/estudiantes');
+  const { summary, loading: parametrosLoading } = useSystemParameters();
+  const { gestion, periodo } = buildManagementLabels(summary, parametrosLoading);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const estudiantesList = useMemo(() => {
+    if (Array.isArray(estudiantes?.data)) {
+      return estudiantes.data;
+    }
+
+    return Array.isArray(estudiantes) ? estudiantes : [];
+  }, [estudiantes]);
 
   const filteredEstudiantes = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) {
-      return estudiantes;
+      return estudiantesList;
     }
 
-    return estudiantes.filter((estudiante) => {
+    return estudiantesList.filter((estudiante) => {
       const valuesToSearch = [
-        estudiante.name,
-        estudiante.ci,
-        estudiante.ru,
-        estudiante.celular,
-      ];
+        estudiante?.name,
+        estudiante?.ci,
+        estudiante?.ru,
+        estudiante?.celular,
+      ]
+        .filter((value) => value !== null && value !== undefined)
+        .map((value) => value.toString().toLowerCase());
 
-      return valuesToSearch.some((value) => value.toLowerCase().includes(term));
+      return valuesToSearch.some((value) => value.includes(term));
     });
-  }, [estudiantes, searchTerm]);
+  }, [estudiantesList, searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, estudiantesList]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredEstudiantes.length / itemsPerPage));
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedEstudiantes = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredEstudiantes.slice(start, start + itemsPerPage);
+  }, [filteredEstudiantes, currentPage]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+  };
 
   return (
     <div className="Docente">
@@ -47,15 +92,15 @@ const BuscarEstudiantes = () => {
                     </div>
             </div>
 
-                <div className='second_part'>
+                    <div className='second_part'>
                     <div>
                         <p>Estudiante</p>
                         <p>Carrera</p>
                     </div>
 
                     <div>
-                        <p>Gestión 2/2024</p>
-                        <p>Periodo 1</p>
+                        <p>{gestion}</p>
+                        <p>{periodo}</p>
                     </div>
 
                 </div>
@@ -111,37 +156,63 @@ const BuscarEstudiantes = () => {
                 </td>
               </tr>
             )}
-            {!loading && !error &&
-              filteredEstudiantes.map((estudiante, index) => (
-                <tr key={estudiante.id}>
-                  <td>{index + 1}</td>
-                  <td>{estudiante.ru}</td>
-                  <td>{estudiante.name}</td>
-                  <td>{estudiante.ci}</td>
-                  <td className={`nota ${estudiante.nota >= 60 ? 'aprobado' : 'reprobado'}`}>
-                    {estudiante.nota}
-                  </td>
-                  <td>{estudiante.celular}</td>
-                </tr>
-              ))}
+            {!loading && !error && paginatedEstudiantes.length > 0 &&
+              paginatedEstudiantes.map((estudiante, index) => {
+                const notaNumerica = Number(estudiante.nota);
+                const notaValida = Number.isFinite(notaNumerica);
+
+                return (
+                  <tr key={estudiante.id}>
+                    <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                    <td>{estudiante.ru}</td>
+                    <td>{estudiante.name}</td>
+                    <td>{estudiante.ci}</td>
+                    <td className={`nota ${notaValida && notaNumerica >= 60 ? 'aprobado' : 'reprobado'}`}>
+                      {notaValida ? notaNumerica : '—'}
+                    </td>
+                    <td>{estudiante.celular}</td>
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
       </div>
 
       {/* Paginación */}
-      <div className="pagination">
-        <button className="page-btn prev-btn">&lt;</button>
-        <div className="page-numbers">
-          {[...Array(10)].map((_, i) => (
-            <button key={i} className={`page-number ${i === 0 ? 'active' : ''}`}>
-              {i + 1}
-            </button>
-          ))}
+      {filteredEstudiantes.length > 0 && (
+        <div className="pagination">
+          <button
+            className="page-btn prev-btn"
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            type="button"
+          >
+            &lt;
+          </button>
+          <div className="page-numbers">
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+              <button
+                key={page}
+                className={`page-number ${page === currentPage ? 'active' : ''}`}
+                onClick={() => handlePageChange(page)}
+                type="button"
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+          <button
+            className="page-btn next-btn"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            type="button"
+          >
+            &gt;
+          </button>
         </div>
-        <button className="page-btn next-btn">&gt;</button>
+      )}
        </div>
       </div>
-     </div>
     </div>
   );
 };

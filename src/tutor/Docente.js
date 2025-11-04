@@ -1,10 +1,14 @@
 import './docente.css';
-import profile from '../assets/profile.png'
 import Header from '../components/Header';
 import Menu from '../components/Menu';
 import { Link } from "react-router-dom";
+import useSystemParameters from '../hooks/useSystemParameters';
+import buildManagementLabels from '../utils/managementLabels';
 
 function Docente() {
+    const { summary, loading: parametrosLoading } = useSystemParameters();
+    const { gestion, periodo } = buildManagementLabels(summary, parametrosLoading);
+
     return (
         <div className="Docente">
 
@@ -35,8 +39,8 @@ function Docente() {
                            </div>
 
                            <div>
-                                <p>Gestión 2/2024</p>
-                                <p>Periodo 1</p>
+                                <p>{gestion}</p>
+                                <p>{periodo}</p>
                            </div>
 
                         </div>

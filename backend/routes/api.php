@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BecaController;
 use App\Http\Controllers\EvaluacionController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\ReporteInstitucionalController;
+use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\SystemParameterController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -25,6 +27,7 @@ Route::middleware('api')->group(function () {
     Route::get('/system-parameters', [SystemParameterController::class, 'show']);
     Route::put('/system-parameters', [SystemParameterController::class, 'update']);
     Route::post('/system-parameters/maintenance', [SystemParameterController::class, 'maintenance']);
+    Route::get('/system-parameters/maintenance/tasks', [SystemParameterController::class, 'tasks']);
 
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
@@ -123,4 +126,7 @@ Route::middleware('api')->group(function () {
             'dashboardRoute' => $user->dashboardRoute,
         ];
     });
+
+    Route::apiResource('support-tickets', SupportTicketController::class)->only(['index', 'store', 'update']);
+    Route::get('/audit-logs', [AuditLogController::class, 'index']);
 });

@@ -1,23 +1,8 @@
 // src/components/FormularioBeca.js
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Container, Form, Button, Row, Col } from 'react-bootstrap';
 import './admin.css'; // Importamos los estilos personalizados
-
-// --- DATOS ESTÁTICOS DE EJEMPLO PARA LOS DESPLEGABLES ---
-// En una aplicación real, estos datos vendrían de una API.
-const investigadoresData = [
-  { id: 1, nombre: 'Mayra Chumacero Vargas' },
-  { id: 2, nombre: 'Carlos Pérez Mamani' },
-  { id: 3, nombre: 'Lucía Quispe Flores' },
-  { id: 4, nombre: 'Roberto Choque' },
-];
-
-const evaluadoresData = [
-  { id: 1, nombre: 'Lic. Anny Mercado Algañaz' },
-  { id: 2, nombre: 'Dr. Luis Rojas' },
-  { id: 3, nombre: 'MSc. Juan García' },
-];
 
 const FormBecas = () => {
   // --- ESTADO DEL FORMULARIO ---
@@ -29,8 +14,96 @@ const FormBecas = () => {
     fechaFin: '',
     investigadorId: '', // Guardaremos el ID, no el nombre
     evaluadorId: '',
-    estado: 'Activo', // Valor por defecto
+    estado: '',
   });
+
+  const [investigadores, setInvestigadores] = useState([]);
+  const [evaluadores, setEvaluadores] = useState([]);
+  const [optionsLoading, setOptionsLoading] = useState(false);
+  const [optionsError, setOptionsError] = useState('');
+  const [statusOptions, setStatusOptions] = useState([]);
+  const [statusError, setStatusError] = useState('');
+
+  useEffect(() => {
+    const loadOptions = async () => {
+      setOptionsLoading(true);
+      setOptionsError('');
+
+      try {
+        const [
+          investigadoresResponse,
+          becariosResponse,
+          evaluadoresResponse,
+          becasResponse,
+        ] = await Promise.all([
+          fetch('/api/roles/investigador/usuarios'),
+          fetch('/api/roles/becario/usuarios'),
+          fetch('/api/roles/evaluador/usuarios'),
+          fetch('/api/becas?include_archived=1'),
+        ]);
+
+        if (
+          !investigadoresResponse.ok ||
+          !becariosResponse.ok ||
+          !evaluadoresResponse.ok ||
+          !becasResponse.ok
+        ) {
+          throw new Error('No se pudieron cargar las listas de usuarios disponibles.');
+        }
+
+        const investigadoresData = await investigadoresResponse.json();
+        const becariosData = await becariosResponse.json();
+        const evaluadoresData = await evaluadoresResponse.json();
+        const becasData = await becasResponse.json();
+
+        const normalizedInvestigadores = [...(Array.isArray(investigadoresData) ? investigadoresData : []), ...(Array.isArray(becariosData) ? becariosData : [])]
+          .map((usuario) => ({
+            id: usuario.id,
+            nombre: usuario.name || usuario.nombre || usuario.username,
+          }))
+          .filter((usuario) => usuario.id != null && usuario.nombre)
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+        const normalizedEvaluadores = (Array.isArray(evaluadoresData) ? evaluadoresData : [])
+          .map((usuario) => ({
+            id: usuario.id,
+            nombre: usuario.name || usuario.nombre || usuario.username,
+          }))
+          .filter((usuario) => usuario.id != null && usuario.nombre)
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+        setInvestigadores(normalizedInvestigadores);
+        setEvaluadores(normalizedEvaluadores);
+
+        const becasList = Array.isArray(becasData?.data)
+          ? becasData.data
+          : Array.isArray(becasData)
+          ? becasData
+          : [];
+        const derivedStatuses = Array.from(
+          new Set(becasList.map((beca) => beca.estado).filter((estado) => Boolean(estado)))
+        ).sort((a, b) => a.localeCompare(b, 'es'));
+
+        setStatusOptions(derivedStatuses);
+        setStatusError('');
+        setFormData((prev) => ({
+          ...prev,
+          estado: prev.estado || derivedStatuses[0] || '',
+        }));
+      } catch (error) {
+        console.error(error);
+        setOptionsError(error.message || 'No se pudieron cargar los datos de referencia.');
+        setStatusError('No se pudieron cargar los estados disponibles de las becas.');
+      } finally {
+        setOptionsLoading(false);
+      }
+    };
+
+    loadOptions();
+  }, []);
+
+  const investigadoresDisponibles = useMemo(() => investigadores, [investigadores]);
+  const evaluadoresDisponibles = useMemo(() => evaluadores, [evaluadores]);
 
   // --- MANEJADORES DE EVENTOS ---
 
@@ -128,14 +201,18 @@ const FormBecas = () => {
                 value={formData.investigadorId}
                 onChange={handleChange}
                 required
+                disabled={optionsLoading || investigadoresDisponibles.length === 0}
               >
                 <option value="">Selecciona un investigador...</option>
-                {investigadoresData.map((inv) => (
+                {investigadoresDisponibles.map((inv) => (
                   <option key={inv.id} value={inv.id}>
                     {inv.nombre}
                   </option>
                 ))}
               </Form.Select>
+              {optionsError && investigadoresDisponibles.length === 0 && (
+                <Form.Text className="text-danger">{optionsError}</Form.Text>
+              )}
             </Form.Group>
           </Col>
           <Col md={6}>
@@ -146,30 +223,49 @@ const FormBecas = () => {
                 value={formData.evaluadorId}
                 onChange={handleChange}
                 required
+                disabled={optionsLoading || evaluadoresDisponibles.length === 0}
               >
                 <option value="">Selecciona un evaluador...</option>
-                {evaluadoresData.map((ev) => (
+                {evaluadoresDisponibles.map((ev) => (
                   <option key={ev.id} value={ev.id}>
                     {ev.nombre}
                   </option>
                 ))}
               </Form.Select>
+              {optionsError && evaluadoresDisponibles.length === 0 && (
+                <Form.Text className="text-danger">{optionsError}</Form.Text>
+              )}
             </Form.Group>
           </Col>
         </Row>
-        
+
         <Form.Group className="mb-4" controlId="formEstado">
           <Form.Label>Estado</Form.Label>
-          <Form.Select
-            name="estado"
-            value={formData.estado}
-            onChange={handleChange}
-          >
-            <option value="Activo">Activo</option>
-            <option value="Finalizado">Finalizado</option>
-            <option value="En Evaluación">En Evaluación</option>
-            <option value="Pendiente">Pendiente</option>
-          </Form.Select>
+          {statusOptions.length > 0 ? (
+            <Form.Select
+              name="estado"
+              value={formData.estado}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Selecciona un estado…</option>
+              {statusOptions.map((estado) => (
+                <option key={estado} value={estado}>
+                  {estado}
+                </option>
+              ))}
+            </Form.Select>
+          ) : (
+            <Form.Control
+              type="text"
+              name="estado"
+              value={formData.estado}
+              onChange={handleChange}
+              placeholder="Ingresa el estado de la beca"
+              required
+            />
+          )}
+          {statusError && <Form.Text className="text-danger">{statusError}</Form.Text>}
         </Form.Group>
 
         {/* Botones de Acción */}
