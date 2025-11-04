@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, Button, Card, Col, Container, Form, ListGroup, Row, Spinner } from 'react-bootstrap';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Alert, Badge, Button, Card, Col, Container, Form, ListGroup, Row, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import './admin.css';
 
@@ -58,6 +58,42 @@ const ConfiguracionSistema = () => {
   const [statusMessage, setStatusMessage] = useState(null);
   const [executingTask, setExecutingTask] = useState('');
   const [lastSync, setLastSync] = useState(null);
+
+  const resumenTarjetas = useMemo(() => {
+    const statusLabels = {
+      activo: { label: 'Activo', variant: 'success' },
+      mantenimiento: { label: 'En mantenimiento', variant: 'warning' },
+      cerrado: { label: 'Cerrado', variant: 'secondary' },
+    };
+
+    const statusInfo = statusLabels[parametros.systemStatus] ?? statusLabels.activo;
+
+    return [
+      {
+        titulo: 'Estado general',
+        valor: statusInfo.label,
+        badge: statusInfo.variant,
+        descripcion: 'Situación operativa actual del sistema institucional.',
+      },
+      {
+        titulo: 'Gestión académica',
+        valor: parametros.academicYear || 'Sin definir',
+        descripcion: 'Periodo vigente configurado para las convocatorias.',
+      },
+      {
+        titulo: 'Fecha límite de reportes',
+        valor: parametros.reportDeadline
+          ? new Date(parametros.reportDeadline).toLocaleDateString('es-BO')
+          : 'No establecido',
+        descripcion: 'Fecha tope para recepción de informes de avance.',
+      },
+      {
+        titulo: 'Máx. reportes por becario',
+        valor: parametros.maxReportsPerScholar !== '' ? parametros.maxReportsPerScholar : '—',
+        descripcion: 'Cantidad máxima de reportes permitidos por gestión.',
+      },
+    ];
+  }, [parametros]);
 
   const cargarParametros = async () => {
     setLoading(true);
@@ -207,13 +243,14 @@ const ConfiguracionSistema = () => {
           ← Volver al panel principal
         </Button>
 
-        <div className="mb-4">
-          <h1 className="h3 fw-bold mb-1">⚙️ Configuración del Sistema</h1>
-          <p className="text-muted mb-0">
-            Actualice las fechas de gestión, el estado general y los límites de reportes para mantener el
-            funcionamiento institucional.
-          </p>
-          <div className="text-muted small mt-2">
+        <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-4 gap-3">
+          <div>
+            <h1 className="h3 fw-bold mb-1">⚙️ Configuración del Sistema</h1>
+            <p className="text-muted mb-0">
+              Defina parámetros institucionales y ejecute tareas de mantenimiento general del sistema.
+            </p>
+          </div>
+          <div className="text-muted small">
             Última sincronización:{' '}
             <strong>{lastSync ? formatDateTime(lastSync) : 'Sin información'}</strong>
           </div>
