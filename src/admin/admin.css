@@ -433,3 +433,42 @@ pre {
 .dashboard-footer p {
   margin-bottom: 0.25rem;
 }
+/* Configuración del Sistema */
+.configuracion-sistema-wrapper {
+  background-color: #f5f7fb;
+  min-height: 100vh;
+}
+
+.configuracion-sistema-wrapper .summary-card {
+  border-radius: 1rem;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  border: 0;
+}
+
+.configuracion-sistema-wrapper .summary-card h2 {
+  font-size: 1.75rem;
+}
+
+.configuracion-sistema-wrapper .maintenance-list .list-group-item {
+  border: none;
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+  background-color: transparent;
+}
+
+.configuracion-sistema-wrapper .maintenance-list .list-group-item:first-child {
+  border-top: none;
+}
+
+.configuracion-sistema-wrapper .maintenance-list .btn {
+  width: fit-content;
+}
+
+.configuracion-sistema-wrapper .maintenance-list .display-6 {
+  font-size: 2rem;
+}
+
+@media (max-width: 767.98px) {
+  .configuracion-sistema-wrapper .summary-card h2 {
+    font-size: 1.5rem;
+  }
+}

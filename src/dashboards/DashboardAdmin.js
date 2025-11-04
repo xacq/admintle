@@ -85,7 +85,7 @@ const DashboardAdmin = () => {
         navigate('/generacionreportes');
         break;
       case 'Configuración del Sistema':
-        navigate('/panelconfiguracion');
+        navigate('/configuracion-sistema');
         break;
       default:
         break;
