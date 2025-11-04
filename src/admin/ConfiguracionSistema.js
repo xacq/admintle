@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Badge, Button, Card, Col, Container, Form, ListGroup, Row, Spinner } from 'react-bootstrap';
+import React, { useEffect, useState } from 'react';
+import { Alert, Button, Card, Col, Container, Form, ListGroup, Row, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import './admin.css';
 
@@ -20,6 +20,7 @@ const formatDateTime = (value) => {
 };
 
 const initialParameters = {
+  academicYear: '',
   managementStartDate: '',
   managementEndDate: '',
   reportDeadline: '',
@@ -59,42 +60,6 @@ const ConfiguracionSistema = () => {
   const [executingTask, setExecutingTask] = useState('');
   const [lastSync, setLastSync] = useState(null);
 
-  const resumenTarjetas = useMemo(() => {
-    const statusLabels = {
-      activo: { label: 'Activo', variant: 'success' },
-      mantenimiento: { label: 'En mantenimiento', variant: 'warning' },
-      cerrado: { label: 'Cerrado', variant: 'secondary' },
-    };
-
-    const statusInfo = statusLabels[parametros.systemStatus] ?? statusLabels.activo;
-
-    return [
-      {
-        titulo: 'Estado general',
-        valor: statusInfo.label,
-        badge: statusInfo.variant,
-        descripcion: 'Situación operativa actual del sistema institucional.',
-      },
-      {
-        titulo: 'Gestión académica',
-        valor: parametros.academicYear || 'Sin definir',
-        descripcion: 'Periodo vigente configurado para las convocatorias.',
-      },
-      {
-        titulo: 'Fecha límite de reportes',
-        valor: parametros.reportDeadline
-          ? new Date(parametros.reportDeadline).toLocaleDateString('es-BO')
-          : 'No establecido',
-        descripcion: 'Fecha tope para recepción de informes de avance.',
-      },
-      {
-        titulo: 'Máx. reportes por becario',
-        valor: parametros.maxReportsPerScholar !== '' ? parametros.maxReportsPerScholar : '—',
-        descripcion: 'Cantidad máxima de reportes permitidos por gestión.',
-      },
-    ];
-  }, [parametros]);
-
   const cargarParametros = async () => {
     setLoading(true);
     setLoadError('');
@@ -109,6 +74,7 @@ const ConfiguracionSistema = () => {
       const payload = await response.json();
       const data = payload?.data ?? payload ?? {};
       const parsed = {
+        academicYear: data.academicYear ?? data.academic_year ?? initialParameters.academicYear,
         managementStartDate: data.managementStartDate ?? data.management_start_date ?? '',
         managementEndDate: data.managementEndDate ?? data.management_end_date ?? '',
         reportDeadline: data.reportDeadline ?? data.report_deadline ?? '',
@@ -146,6 +112,7 @@ const ConfiguracionSistema = () => {
     const maxReports = Number.parseInt(parametros.maxReportsPerScholar, 10);
 
     const payload = {
+      academic_year: (parametros.academicYear || '').toString().trim() || null,
       management_start_date: parametros.managementStartDate || null,
       management_end_date: parametros.managementEndDate || null,
       report_deadline: parametros.reportDeadline || null,
@@ -169,6 +136,7 @@ const ConfiguracionSistema = () => {
 
       const updated = data?.data ?? {};
       const parsed = {
+        academicYear: updated.academicYear ?? payload.academic_year ?? initialParameters.academicYear,
         managementStartDate: updated.managementStartDate ?? payload.management_start_date ?? '',
         managementEndDate: updated.managementEndDate ?? payload.management_end_date ?? '',
         reportDeadline: updated.reportDeadline ?? payload.report_deadline ?? '',
@@ -293,6 +261,17 @@ const ConfiguracionSistema = () => {
                   <Card.Body>
                     <Form onSubmit={handleSubmit}>
                       <Row className="g-3">
+                        <Col md={6}>
+                          <Form.Group controlId="academicYear">
+                            <Form.Label>Gestión académica</Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={parametros.academicYear ?? ''}
+                              onChange={(event) => handleChange('academicYear', event.target.value)}
+                              placeholder="Ej. 2025"
+                            />
+                          </Form.Group>
+                        </Col>
                         <Col md={6}>
                           <Form.Group controlId="systemStatus">
                             <Form.Label>Estado general del sistema</Form.Label>

@@ -27,7 +27,7 @@ class UpdateSystemParameterRequest extends FormRequest
             'management_end_date' => ['required', 'date', 'after_or_equal:management_start_date'],
             'report_deadline' => ['required', 'date', 'after_or_equal:management_start_date'],
             'max_reports_per_scholar' => ['required', 'integer', 'min:0'],
-            'system_status' => ['required', 'in:activo,cerrado'],
+            'system_status' => ['required', 'in:activo,mantenimiento,cerrado'],
             'research_lines' => ['nullable', 'array'],
             'research_lines.*' => ['nullable', 'string', 'max:255'],
         ];

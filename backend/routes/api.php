@@ -24,6 +24,7 @@ Route::middleware('api')->group(function () {
 
     Route::get('/system-parameters', [SystemParameterController::class, 'show']);
     Route::put('/system-parameters', [SystemParameterController::class, 'update']);
+    Route::post('/system-parameters/maintenance', [SystemParameterController::class, 'maintenance']);
 
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
