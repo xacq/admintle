@@ -20,7 +20,6 @@ const formatDateTime = (value) => {
 };
 
 const initialParameters = {
-  academicYear: '',
   managementStartDate: '',
   managementEndDate: '',
   reportDeadline: '',
@@ -110,7 +109,6 @@ const ConfiguracionSistema = () => {
       const payload = await response.json();
       const data = payload?.data ?? payload ?? {};
       const parsed = {
-        academicYear: data.academicYear ?? data.academic_year ?? '',
         managementStartDate: data.managementStartDate ?? data.management_start_date ?? '',
         managementEndDate: data.managementEndDate ?? data.management_end_date ?? '',
         reportDeadline: data.reportDeadline ?? data.report_deadline ?? '',
@@ -148,7 +146,6 @@ const ConfiguracionSistema = () => {
     const maxReports = Number.parseInt(parametros.maxReportsPerScholar, 10);
 
     const payload = {
-      academic_year: parametros.academicYear,
       management_start_date: parametros.managementStartDate || null,
       management_end_date: parametros.managementEndDate || null,
       report_deadline: parametros.reportDeadline || null,
@@ -172,7 +169,6 @@ const ConfiguracionSistema = () => {
 
       const updated = data?.data ?? {};
       const parsed = {
-        academicYear: updated.academicYear ?? payload.academic_year,
         managementStartDate: updated.managementStartDate ?? payload.management_start_date ?? '',
         managementEndDate: updated.managementEndDate ?? payload.management_end_date ?? '',
         reportDeadline: updated.reportDeadline ?? payload.report_deadline ?? '',
@@ -260,25 +256,6 @@ const ConfiguracionSistema = () => {
           </div>
         </div>
 
-        <Row className="g-3 mb-4">
-          {resumenTarjetas.map((tarjeta) => (
-            <Col key={tarjeta.titulo} xs={12} md={6} xl={3}>
-              <Card className="summary-card h-100">
-                <Card.Body>
-                  <Card.Title className="text-uppercase text-muted fs-6 fw-semibold mb-2">
-                    {tarjeta.titulo}
-                  </Card.Title>
-                  <div className="d-flex align-items-center gap-2 mb-2">
-                    <h2 className="mb-0 fw-bold">{tarjeta.valor}</h2>
-                    {tarjeta.badge && <Badge bg={tarjeta.badge}>{tarjeta.valor}</Badge>}
-                  </div>
-                  <p className="text-muted small mb-0">{tarjeta.descripcion}</p>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-
         {statusMessage && (
           <Alert
             variant={statusMessage.type}
@@ -316,17 +293,6 @@ const ConfiguracionSistema = () => {
                   <Card.Body>
                     <Form onSubmit={handleSubmit}>
                       <Row className="g-3">
-                        <Col md={6}>
-                          <Form.Group controlId="academicYear">
-                            <Form.Label>Gestión académica vigente</Form.Label>
-                            <Form.Control
-                              type="text"
-                              value={parametros.academicYear}
-                              onChange={(event) => handleChange('academicYear', event.target.value)}
-                              placeholder="Ej. 2025"
-                            />
-                          </Form.Group>
-                        </Col>
                         <Col md={6}>
                           <Form.Group controlId="systemStatus">
                             <Form.Label>Estado general del sistema</Form.Label>
