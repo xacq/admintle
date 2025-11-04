@@ -4,11 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateSystemParameterRequest;
 use App\Models\SystemParameter;
+use App\Services\MaintenanceTaskService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SystemParameterController extends Controller
 {
+    public function __construct(private readonly MaintenanceTaskService $maintenanceTaskService)
+    {
+    }
+
     public function show(): JsonResponse
     {
         $parameter = $this->ensureParameter();
@@ -34,6 +41,23 @@ class SystemParameterController extends Controller
         return response()->json([
             'message' => 'Parámetros del sistema actualizados correctamente.',
             'data' => $this->transform($parameter),
+        ]);
+    }
+
+    public function maintenance(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', Rule::in(MaintenanceTaskService::SUPPORTED_ACTIONS)],
+        ]);
+
+        $message = $this->maintenanceTaskService->handle($validated['action']);
+
+        return response()->json([
+            'message' => $message,
+            'meta' => [
+                'action' => $validated['action'],
+                'completed_at' => now()->toIso8601String(),
+            ],
         ]);
     }
 
