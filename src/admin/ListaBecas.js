@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import useSessionUser from '../hooks/useSessionUser';
 import './admin.css';
 
 const ARCHIVED_STATE = 'Archivada';
-const ESTADO_OPTIONS = ['Activa', 'En evaluación', 'Finalizada'];
 const EVALUACION_BADGE_CLASS = {
   Aprobado: 'bg-success',
   Reprobado: 'bg-danger',
@@ -11,25 +10,25 @@ const EVALUACION_BADGE_CLASS = {
   Pendiente: 'bg-secondary',
 };
 
-const emptyForm = {
+const createEmptyForm = (estado = '') => ({
   id: null,
   codigo: '',
   becarioId: '',
   tutorId: '',
   fechaInicio: '',
   fechaFin: '',
-  estado: ESTADO_OPTIONS[0],
+  estado,
   tituloProyecto: '',
   areaInvestigacion: '',
   evaluacionFinal: '',
-};
+});
 
 const ListadoBecas = () => {
   const [becas, setBecas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [formData, setFormData] = useState(emptyForm);
+  const [formData, setFormData] = useState(() => createEmptyForm(''));
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [becarios, setBecarios] = useState([]);
@@ -40,8 +39,15 @@ const ListadoBecas = () => {
   const [assignmentSaving, setAssignmentSaving] = useState(false);
   const [archivingBecaId, setArchivingBecaId] = useState(null);
   const [archiveFeedback, setArchiveFeedback] = useState({ type: '', message: '' });
+  const [statusOptions, setStatusOptions] = useState([]);
 
   const sessionUser = useSessionUser();
+
+  const deriveStatusOptions = useCallback((items) => {
+    return Array.from(
+      new Set((Array.isArray(items) ? items : []).map((beca) => beca.estado).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b, 'es'));
+  }, []);
 
   const fetchBecas = async () => {
     setLoading(true);
@@ -57,6 +63,7 @@ const ListadoBecas = () => {
       const data = Array.isArray(payload?.data) ? payload.data : payload;
       setBecas(data);
       setArchiveFeedback({ type: '', message: '' });
+      setStatusOptions(deriveStatusOptions(data));
     } catch (err) {
       setError(err.message || 'No se pudo cargar el listado de becas.');
     } finally {
@@ -105,7 +112,18 @@ const ListadoBecas = () => {
   useEffect(() => {
     fetchOptions();
     fetchBecas();
-  }, []);
+  }, [deriveStatusOptions]);
+
+  useEffect(() => {
+    if (modalOpen && formData.estado && statusOptions.length > 0) {
+      const validStatuses = [ARCHIVED_STATE, ...statusOptions];
+
+      if (!validStatuses.includes(formData.estado)) {
+        const fallback = statusOptions[0] ?? '';
+        setFormData((prev) => ({ ...prev, estado: fallback }));
+      }
+    }
+  }, [formData.estado, modalOpen, statusOptions]);
 
   const sortedBecas = useMemo(() => {
     return [...becas].sort((a, b) => {
@@ -114,6 +132,11 @@ const ListadoBecas = () => {
       return codeA.localeCompare(codeB, 'es');
     });
   }, [becas]);
+
+  const editableStatuses = useMemo(
+    () => statusOptions.filter((estado) => estado !== ARCHIVED_STATE),
+    [statusOptions]
+  );
 
   const getEstadoBadge = (estado) => {
     switch (estado) {
@@ -169,7 +192,8 @@ const ListadoBecas = () => {
   };
 
   const openCreateModal = () => {
-    setFormData(emptyForm);
+    const defaultEstado = editableStatuses[0] ?? statusOptions[0] ?? '';
+    setFormData(createEmptyForm(defaultEstado));
     setFormError('');
     setModalOpen(true);
   };
@@ -182,7 +206,7 @@ const ListadoBecas = () => {
       tutorId: beca.tutor?.id ? String(beca.tutor.id) : '',
       fechaInicio: beca.fechaInicio ?? '',
       fechaFin: beca.fechaFin ?? '',
-      estado: beca.estado ?? ESTADO_OPTIONS[0],
+      estado: beca.estado ?? editableStatuses[0] ?? statusOptions[0] ?? '',
       tituloProyecto: beca.tituloProyecto ?? '',
       areaInvestigacion: beca.areaInvestigacion ?? '',
       evaluacionFinal: beca.evaluacionFinal ?? '',
@@ -779,32 +803,54 @@ const ListadoBecas = () => {
                   </div>
 
                   <div className="mt-3">
-                    <label className="form-label" htmlFor="estado">
-                      Estado de la beca
-                    </label>
-                    <select
-                      id="estado"
-                      name="estado"
-                      className="form-select"
-                      value={formData.estado}
-                      onChange={handleInputChange}
-                      required
-                      disabled={formData.estado === ARCHIVED_STATE}
-                    >
-                      {(formData.estado === ARCHIVED_STATE
+                  <label className="form-label" htmlFor="estado">
+                    Estado de la beca
+                  </label>
+                  {(() => {
+                    const selectableEstados =
+                      formData.estado === ARCHIVED_STATE
                         ? [ARCHIVED_STATE]
-                        : ESTADO_OPTIONS
-                      ).map((estado) => (
-                        <option key={estado} value={estado}>
-                          {estado}
-                        </option>
-                      ))}
-                    </select>
-                    {formData.estado === ARCHIVED_STATE && (
-                      <small className="form-text text-muted">
-                        Las becas archivadas son de solo lectura.
-                      </small>
-                    )}
+                        : editableStatuses.length > 0
+                        ? editableStatuses
+                        : statusOptions;
+
+                    if (selectableEstados.length === 0) {
+                      return (
+                        <input
+                          id="estado"
+                          name="estado"
+                          type="text"
+                          className="form-control"
+                          value={formData.estado}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      );
+                    }
+
+                    return (
+                      <select
+                        id="estado"
+                        name="estado"
+                        className="form-select"
+                        value={formData.estado}
+                        onChange={handleInputChange}
+                        required
+                        disabled={formData.estado === ARCHIVED_STATE}
+                      >
+                        {selectableEstados.map((estado) => (
+                          <option key={estado} value={estado}>
+                            {estado}
+                          </option>
+                        ))}
+                      </select>
+                    );
+                  })()}
+                  {formData.estado === ARCHIVED_STATE && (
+                    <small className="form-text text-muted">
+                      Las becas archivadas son de solo lectura.
+                    </small>
+                  )}
                   </div>
 
                   <div className="mb-3">

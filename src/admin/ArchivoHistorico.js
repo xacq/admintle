@@ -73,6 +73,30 @@ const ArchivoHistorico = () => {
   const [error, setError] = useState('');
   const [backupFeedback, setBackupFeedback] = useState('');
 
+  const availableYears = useMemo(() => {
+    const years = new Set();
+
+    proyectos.forEach((proyecto) => {
+      if (proyecto.anio && proyecto.anio !== 'Sin gestión') {
+        years.add(proyecto.anio);
+      }
+    });
+
+    return Array.from(years).sort((a, b) => b.localeCompare(a, 'es', { numeric: true }));
+  }, [proyectos]);
+
+  const availableStates = useMemo(() => {
+    const states = new Set();
+
+    proyectos.forEach((proyecto) => {
+      if (proyecto.estado) {
+        states.add(proyecto.estado);
+      }
+    });
+
+    return Array.from(states).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [proyectos]);
+
   const formatFecha = (value) => {
     if (!value) {
       return '—';
@@ -188,19 +212,14 @@ const ArchivoHistorico = () => {
 
   // --- ESTADÍSTICAS HISTÓRICAS ---
   const estadisticas = useMemo(() => {
-    const totalPorAnio = {};
+    const totalPorAnio = new Map();
     const sumaCalificaciones = { total: 0, count: 0 };
-    const tutoresActivos = {};
-    const areasInvestigacion = {
-      'Tecnología': 0,
-      'Medio Ambiente': 0,
-      'Agricultura': 0,
-      'Otras': 0
-    };
+    const tutoresActivos = new Map();
+    const areasInvestigacion = new Map();
 
     proyectos.forEach((proyecto) => {
       const anioClave = proyecto.anio || 'Sin gestión';
-      totalPorAnio[anioClave] = (totalPorAnio[anioClave] || 0) + 1;
+      totalPorAnio.set(anioClave, (totalPorAnio.get(anioClave) || 0) + 1);
 
       if (proyecto.calificacionFinal !== null && proyecto.calificacionFinal !== undefined) {
         sumaCalificaciones.total += Number(proyecto.calificacionFinal);
@@ -208,27 +227,22 @@ const ArchivoHistorico = () => {
       }
 
       if (proyecto.tutor && proyecto.tutor !== 'Sin asignar') {
-        tutoresActivos[proyecto.tutor] = (tutoresActivos[proyecto.tutor] || 0) + 1;
+        tutoresActivos.set(proyecto.tutor, (tutoresActivos.get(proyecto.tutor) || 0) + 1);
       }
 
-      const areaReferencia = (proyecto.areaInvestigacion || proyecto.titulo || '').toLowerCase();
-
-      if (areaReferencia.includes('algoritmo') || areaReferencia.includes('sistema') || areaReferencia.includes('blockchain')) {
-        areasInvestigacion['Tecnología'] += 1;
-      } else if (areaReferencia.includes('agua') || areaReferencia.includes('ambiental') || areaReferencia.includes('minería')) {
-        areasInvestigacion['Medio Ambiente'] += 1;
-      } else if (areaReferencia.includes('quinua') || areaReferencia.includes('agrícola')) {
-        areasInvestigacion['Agricultura'] += 1;
-      } else {
-        areasInvestigacion['Otras'] += 1;
-      }
+      const area = proyecto.areaInvestigacion && proyecto.areaInvestigacion !== 'Sin área declarada'
+        ? proyecto.areaInvestigacion
+        : 'Sin área declarada';
+      areasInvestigacion.set(area, (areasInvestigacion.get(area) || 0) + 1);
     });
 
     return {
-      totalPorAnio,
+      totalPorAnio: Array.from(totalPorAnio.entries()).sort((a, b) =>
+        b[0].localeCompare(a[0], 'es', { numeric: true })
+      ),
       promedioCalificaciones: sumaCalificaciones.count > 0 ? (sumaCalificaciones.total / sumaCalificaciones.count).toFixed(1) : 0,
-      tutoresActivos: Object.entries(tutoresActivos).sort((a, b) => b[1] - a[1]).slice(0, 3),
-      areasInvestigacion
+      tutoresActivos: Array.from(tutoresActivos.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3),
+      areasInvestigacion: Array.from(areasInvestigacion.entries()).sort((a, b) => b[1] - a[1]),
     };
   }, [proyectos]);
 
@@ -280,9 +294,11 @@ const ArchivoHistorico = () => {
                   <Form.Label>Filtro por año o gestión</Form.Label>
                   <Form.Select name="anio" value={filters.anio} onChange={handleFilterChange}>
                     <option value="todos">Todos los años</option>
-                    <option value="2023">2023</option>
-                    <option value="2022">2022</option>
-                    <option value="2021">2021</option>
+                    {availableYears.map((anio) => (
+                      <option key={anio} value={anio}>
+                        {anio}
+                      </option>
+                    ))}
                   </Form.Select>
                 </Col>
                 <Col md={4}>
@@ -299,11 +315,11 @@ const ArchivoHistorico = () => {
                   <Form.Label>Estado final</Form.Label>
                   <Form.Select name="estado" value={filters.estado} onChange={handleFilterChange}>
                     <option value="todos">Todos los estados</option>
-                    <option value="Aprobado">Aprobado</option>
-                    <option value="Concluido">Concluido</option>
-                    <option value="Observado">Observado</option>
-                    <option value="Reprobado">Reprobado</option>
-                    <option value="Sin evaluación">Sin evaluación</option>
+                    {availableStates.map((estado) => (
+                      <option key={estado} value={estado}>
+                        {estado}
+                      </option>
+                    ))}
                   </Form.Select>
                 </Col>
               </Row>
@@ -451,7 +467,7 @@ const ArchivoHistorico = () => {
               <Col md={3}>
                 <h6>Total de becas concluidas por año</h6>
                 <ul>
-                  {Object.entries(estadisticas.totalPorAnio).map(([anio, total]) => (
+                  {estadisticas.totalPorAnio.map(([anio, total]) => (
                     <li key={anio}>{anio}: {total} proyectos</li>
                   ))}
                 </ul>
@@ -471,7 +487,7 @@ const ArchivoHistorico = () => {
               <Col md={3}>
                 <h6>Proyectos por área de investigación</h6>
                 <ul>
-                  {Object.entries(estadisticas.areasInvestigacion).map(([area, count]) => (
+                  {estadisticas.areasInvestigacion.map(([area, count]) => (
                     <li key={area}>{area}: {count} proyectos</li>
                   ))}
                 </ul>
@@ -572,9 +588,7 @@ const ArchivoHistorico = () => {
       {/* Pie institucional */}
       <footer className="text-center py-3 mt-5 border-top">
         <p className="mb-1">Dirección de Ciencia e Innovación Tecnológica – UATF</p>
-        <p className="mb-0 small text-muted">
-          {new Date().toLocaleDateString()} - v1.0.3 – 2025
-        </p>
+        <p className="mb-0 small text-muted">{new Date().toLocaleDateString('es-BO')}</p>
       </footer>
     </Container>
   );

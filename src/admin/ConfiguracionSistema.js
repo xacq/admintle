@@ -28,27 +28,6 @@ const initialParameters = {
   systemStatus: 'activo',
 };
 
-const tareasMantenimiento = [
-  {
-    action: 'backup',
-    titulo: 'Generar respaldo completo',
-    descripcion: 'Realiza una copia de seguridad de la base de datos y archivos adjuntos.',
-    icono: '💾',
-  },
-  {
-    action: 'clean-temp',
-    titulo: 'Depurar archivos temporales',
-    descripcion: 'Elimina archivos temporales y cachés para mejorar el rendimiento.',
-    icono: '🧹',
-  },
-  {
-    action: 'recalculate-metrics',
-    titulo: 'Recalcular métricas globales',
-    descripcion: 'Actualiza estadísticas generales y consolida indicadores institucionales.',
-    icono: '📈',
-  },
-];
-
 const ConfiguracionSistema = () => {
   const navigate = useNavigate();
   const [parametros, setParametros] = useState(initialParameters);
@@ -59,6 +38,8 @@ const ConfiguracionSistema = () => {
   const [statusMessage, setStatusMessage] = useState(null);
   const [executingTask, setExecutingTask] = useState('');
   const [lastSync, setLastSync] = useState(null);
+  const [maintenanceTasks, setMaintenanceTasks] = useState([]);
+  const [maintenanceError, setMaintenanceError] = useState('');
 
   const cargarParametros = async () => {
     setLoading(true);
@@ -98,6 +79,34 @@ const ConfiguracionSistema = () => {
 
   useEffect(() => {
     cargarParametros();
+
+    const controller = new AbortController();
+
+    const cargarTareas = async () => {
+      setMaintenanceError('');
+
+      try {
+        const response = await fetch('/api/system-parameters/maintenance/tasks', { signal: controller.signal });
+        if (!response.ok) {
+          throw new Error('No se pudieron cargar las tareas de mantenimiento.');
+        }
+
+        const payload = await response.json();
+        const data = Array.isArray(payload?.data) ? payload.data : payload;
+        setMaintenanceTasks(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error(err);
+          setMaintenanceError(err.message || 'No se pudieron cargar las tareas de mantenimiento.');
+        }
+      }
+    };
+
+    cargarTareas();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   const handleChange = (field, value) => {
@@ -356,40 +365,54 @@ const ConfiguracionSistema = () => {
                   <Card.Header as="h5" className="fw-semibold">
                     Tareas de mantenimiento
                   </Card.Header>
-                  <ListGroup variant="flush" className="maintenance-list">
-                    {tareasMantenimiento.map((tarea) => (
-                      <ListGroup.Item key={tarea.action} className="py-3">
-                        <div className="d-flex flex-column gap-2">
-                          <div className="d-flex align-items-center gap-2">
-                            <span className="display-6 mb-0" aria-hidden="true">
-                              {tarea.icono}
-                            </span>
+                  <Card.Body className="p-0">
+                    {maintenanceError && (
+                      <Alert variant="danger" className="m-3">
+                        {maintenanceError}
+                      </Alert>
+                    )}
+                    <ListGroup variant="flush" className="maintenance-list">
+                      {(maintenanceTasks.length > 0 ? maintenanceTasks : []).map((tarea) => (
+                        <ListGroup.Item key={tarea.action} className="py-3">
+                          <div className="d-flex flex-column gap-2">
+                            <div className="d-flex align-items-center gap-2">
+                              <span className="display-6 mb-0" aria-hidden="true">
+                                {tarea.icon ?? tarea.icono ?? '🛠️'}
+                              </span>
+                              <div>
+                                <h6 className="mb-0 fw-semibold">{tarea.title ?? tarea.titulo}</h6>
+                                <p className="text-muted small mb-0">{tarea.description ?? tarea.descripcion}</p>
+                              </div>
+                            </div>
                             <div>
-                              <h6 className="mb-0 fw-semibold">{tarea.titulo}</h6>
-                              <p className="text-muted small mb-0">{tarea.descripcion}</p>
+                              <Button
+                                variant="outline-primary"
+                                size="sm"
+                                onClick={() => handleTareaMantenimiento(tarea.action)}
+                                disabled={Boolean(executingTask)}
+                              >
+                                {executingTask === tarea.action ? (
+                                  <>
+                                    <Spinner animation="border" role="status" size="sm" className="me-2" />
+                                    Ejecutando…
+                                  </>
+                                ) : (
+                                  'Ejecutar'
+                                )}
+                              </Button>
                             </div>
                           </div>
-                          <div>
-                            <Button
-                              variant="outline-primary"
-                              size="sm"
-                              onClick={() => handleTareaMantenimiento(tarea.action)}
-                              disabled={Boolean(executingTask)}
-                            >
-                              {executingTask === tarea.action ? (
-                                <>
-                                  <Spinner animation="border" role="status" size="sm" className="me-2" />
-                                  Ejecutando…
-                                </>
-                              ) : (
-                                'Ejecutar'
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-                      </ListGroup.Item>
-                    ))}
-                  </ListGroup>
+                        </ListGroup.Item>
+                      ))}
+                    </ListGroup>
+                    {maintenanceTasks.length === 0 && !maintenanceError && (
+                      <div className="p-3">
+                        <Alert variant="secondary" className="mb-0">
+                          No se encontraron tareas de mantenimiento configuradas en el servidor.
+                        </Alert>
+                      </div>
+                    )}
+                  </Card.Body>
                 </Card>
               </Col>
             </Row>

@@ -61,6 +61,32 @@ class SystemParameterController extends Controller
         ]);
     }
 
+    public function tasks(): JsonResponse
+    {
+        $tasks = [
+            [
+                'action' => MaintenanceTaskService::ACTION_BACKUP,
+                'title' => 'Generar respaldo completo',
+                'description' => 'Realiza una copia de seguridad de la base de datos y archivos adjuntos.',
+                'icon' => '💾',
+            ],
+            [
+                'action' => MaintenanceTaskService::ACTION_CLEAN_TEMP,
+                'title' => 'Depurar archivos temporales',
+                'description' => 'Elimina archivos temporales y cachés para mejorar el rendimiento.',
+                'icon' => '🧹',
+            ],
+            [
+                'action' => MaintenanceTaskService::ACTION_RECALCULATE_METRICS,
+                'title' => 'Recalcular métricas globales',
+                'description' => 'Actualiza estadísticas generales y consolida indicadores institucionales.',
+                'icon' => '📈',
+            ],
+        ];
+
+        return response()->json(['data' => $tasks]);
+    }
+
     private function ensureParameter(): SystemParameter
     {
         $parameter = SystemParameter::query()->first();
