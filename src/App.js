@@ -29,6 +29,7 @@ import ListaBecas from './admin/ListaBecas';
 import EvaluadorDesempeno from './director/EvaluacionDesempeno';
 import PanelAuditoria from './admin/PanelAuditoria';
 import PanelConfiguracion from './admin/PanelConfiguracion';
+import ConfiguracionSistema from './admin/ConfiguracionSistema';
 import ReportesAvance from './becario/ReportesAvance';
 import SubirReporte from "./becario/SubirReporte";
 import Observaciones from "./becario/Observaciones";
@@ -68,6 +69,7 @@ function App() {
         <Route path="/evaluadordesempeno" element={<EvaluadorDesempeno />} />
         <Route path="/panelauditoria" element={<PanelAuditoria />} />
         <Route path="/panelconfiguracion" element={<PanelConfiguracion />} />
+        <Route path="/configuracion-sistema" element={<ConfiguracionSistema />} />
         <Route path="/reportesavance" element={<ReportesAvance />} />
         <Route path="/subirreporte" element ={<SubirReporte />} />
         <Route path="/observaciones" element={<Observaciones />} />
