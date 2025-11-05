@@ -80,7 +80,7 @@ function App() {
         <Route path="/revisarreportes" element={<RevisarReportes/>} />
         <Route path="/evaluacionfinal" element={<EvaluacionFinalForm/>} />
         <Route path="/historialbeca" element={<HistorialBecas />} />
-        <Route path="/detallebeca" element={<DetalleBeca />} />
+        <Route path="/detallebeca/:becaId" element={<DetalleBeca />} />
       </Routes>
     </Router>
   );

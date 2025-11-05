@@ -19,6 +19,7 @@ class BecaResource extends JsonResource
             'id' => $this->id,
             'codigo' => $this->codigo,
             'estado' => $this->estado,
+            'archivada' => (bool) $this->archivada,
             'tituloProyecto' => $this->titulo_proyecto,
             'areaInvestigacion' => $this->area_investigacion,
             'fechaInicio' => $this->fecha_inicio?->format('Y-m-d'),
@@ -27,6 +28,7 @@ class BecaResource extends JsonResource
                 ? round((float) $this->reportes_avg_calificacion, 2)
                 : null,
             'fechaCierre' => $this->fecha_cierre?->toIso8601String(),
+            'fechaArchivo' => $this->fecha_archivo?->toIso8601String(),
             'becario' => $this->whenLoaded('becario', function () {
                 return [
                     'id' => $this->becario->id,

@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 
 Route::middleware('api')->group(function () {
-    Route::apiResource('becas', BecaController::class)->except(['show']);
+    Route::apiResource('becas', BecaController::class);
     Route::patch('/becas/{beca}/tutor', [BecaController::class, 'assignTutor']);
     Route::post('/becas/{beca}/archivar', [BecaController::class, 'archive']);
     Route::apiResource('reportes', ReporteController::class);
