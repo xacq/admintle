@@ -329,6 +329,38 @@ const ListadoBecas = () => {
       return;
     }
 
+    if (beca.estado !== 'Finalizada') {
+      setArchiveFeedback({
+        type: 'warning',
+        message: 'Solo las becas finalizadas pueden archivarse.',
+      });
+      return;
+    }
+
+    if (!beca.evaluacionFinal) {
+      setArchiveFeedback({
+        type: 'warning',
+        message: 'Debes registrar la evaluación final antes de archivar esta beca.',
+      });
+      return;
+    }
+
+    if (beca.archivada) {
+      setArchiveFeedback({
+        type: 'info',
+        message: `La beca ${beca.codigo} ya forma parte del archivo histórico.`,
+      });
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `¿Deseas archivar la beca ${beca.codigo}? Esta acción moverá el registro al historial.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     setArchiveFeedback({ type: '', message: '' });
     setArchivingBecaId(beca.id);
 
@@ -513,9 +545,23 @@ const ListadoBecas = () => {
               </tr>
             </thead>
             <tbody>
-              {sortedBecas.map((beca) => {
-                const isArchived = beca.estado === ARCHIVED_STATE;
-                const canArchive = beca.estado === 'Finalizada';
+              {visibleBecas.map((beca) => {
+                const isArchived = beca.estado === ARCHIVED_STATE || beca.archivada;
+                const hasEvaluacionFinal = Boolean(beca.evaluacionFinal);
+                const canArchive =
+                  beca.estado === 'Finalizada' && !beca.archivada && hasEvaluacionFinal;
+                const archiveTooltip = (() => {
+                  if (isArchived) {
+                    return 'Beca archivada';
+                  }
+                  if (beca.estado !== 'Finalizada') {
+                    return 'Disponible cuando la beca esté finalizada';
+                  }
+                  if (!hasEvaluacionFinal) {
+                    return 'Registra la evaluación final para habilitar el archivo histórico';
+                  }
+                  return 'Cerrar beca y mover al archivo histórico';
+                })();
 
                 return (
                   <React.Fragment key={beca.id}>
@@ -575,12 +621,8 @@ const ListadoBecas = () => {
                           </button>
                           <button
                             type="button"
-                            className="btn btn-sm btn-outline-success"
-                            title={
-                              beca.estado === 'Finalizada'
-                                ? 'Cerrar beca y mover al archivo histórico'
-                                : 'Disponible cuando la beca esté finalizada'
-                            }
+                            className="btn btn-sm btn-outline-dark"
+                            title={archiveTooltip}
                             onClick={() => handleArchive(beca)}
                             disabled={!canArchive || archivingBecaId === beca.id}
                           >

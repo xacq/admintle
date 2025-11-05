@@ -4,57 +4,36 @@ import React, { useState, useMemo } from 'react';
 import { Container, Card, Form, Button, Table, Badge, Modal, ListGroup, Row, Col } from 'react-bootstrap';
 import './admin.css';
 
-// --- DATOS ESTÁTICOS DE EJEMPLO ---
-const historialData = [
-  {
-    id: 1,
-    codigo: 'PI-UATF-015',
-    becario: 'Carlos Vargas',
-    tutor: 'Mg. Soliz',
-    proyecto: 'Modelo predictivo de enfermedades en cultivos de quinua',
-    fechaInicio: '2021-03-10',
-    fechaFin: '2021-11-25',
-    fechaArchivo: '2022-01-15',
-    calificacionFinal: 9.5,
-    observacionesFinales: 'Investigación sobresaliente con resultados de alto impacto para el sector agrícola.',
-    reportes: [
-      { nombre: 'Informe Inicial', fecha: '2021-06-15' },
-      { nombre: 'Avance de Medio Término', fecha: '2021-09-20' },
-      { nombre: 'Informe Final', fecha: '2021-11-25' }
-    ]
-  },
-  {
-    id: 2,
-    codigo: 'PI-UATF-012',
-    becario: 'María Choque',
-    tutor: 'Dr. Fernández',
-    proyecto: 'Aplicación de blockchain en la trazabilidad de productos agrícolas',
-    fechaInicio: '2021-05-15',
-    fechaFin: '2022-01-20',
-    fechaArchivo: '2022-02-10',
-    calificacionFinal: 7.8,
-    observacionesFinales: 'Trabajo innovador con enfoque tecnológico actual. Se requieren ajustes en la implementación del prototipo.',
-    reportes: [
-      { nombre: 'Avance Q1', fecha: '2021-08-15' },
-      { nombre: 'Avance Q3', fecha: '2021-11-20' },
-      { nombre: 'Informe Final', fecha: '2022-01-20' }
-    ]
-  },
-  {
-    id: 3,
-    codigo: 'PI-UATF-008',
-    becario: 'José Flores',
-    tutor: 'Lic. Rojas',
-    proyecto: 'Estudio de impacto ambiental de minería artesanal',
-    fechaInicio: '2022-02-20',
-    fechaFin: '2022-10-30',
-    fechaArchivo: '2022-11-05',
-    calificacionFinal: null,
-    observacionesFinales: 'El proyecto fue concluido pero no se presentó el informe final para evaluación.',
-    reportes: [
-      { nombre: 'Avance 1', fecha: '2022-05-20' },
-      { nombre: 'Avance 2', fecha: '2022-08-30' }
-    ]
+const DEFAULT_OBSERVACION = 'Sin observaciones registradas.';
+
+const normalizarBeca = (beca) => {
+  const evaluacion = beca?.evaluacionFinal ?? null;
+  const fechaArchivo = beca?.fechaArchivo ?? beca?.fechaCierre ?? null;
+
+  return {
+    id: beca?.id ?? null,
+    codigo: beca?.codigo ?? '—',
+    titulo: beca?.tituloProyecto ?? 'Proyecto sin título registrado',
+    areaInvestigacion: beca?.areaInvestigacion ?? 'Sin área declarada',
+    becario: beca?.becario?.nombre ?? 'Sin asignar',
+    tutor: beca?.tutor?.nombre ?? 'Sin asignar',
+    cerradaPor: beca?.cerradaPor?.nombre ?? 'No registrado',
+    fechaArchivo,
+    fechaInicio: beca?.fechaInicio ?? null,
+    fechaFin: beca?.fechaFin ?? null,
+    estado: beca?.estado ?? 'Archivada',
+    evaluacionEstado: evaluacion?.estadoFinal ?? 'Sin evaluación',
+    evaluacionCalificacion:
+      evaluacion?.calificacionFinal !== null && evaluacion?.calificacionFinal !== undefined
+        ? Number(evaluacion.calificacionFinal)
+        : null,
+    evaluacionObservaciones: evaluacion?.observacionesFinales ?? DEFAULT_OBSERVACION,
+  };
+};
+
+const formatFecha = (value) => {
+  if (!value) {
+    return '—';
   }
 ];
 
@@ -78,7 +57,48 @@ const HistorialBecas = () => {
       const yearMatch = filters.year === 'todos' || new Date(scholarship.fechaFin).getFullYear().toString() === filters.year;
       const tutorMatch = filters.tutor === 'todos' || scholarship.tutor === filters.tutor;
 
-      return searchMatch && yearMatch && tutorMatch;
+      try {
+        const response = await fetch('/api/becas?estado=Archivada&include_archived=1');
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const data = Array.isArray(payload?.data) ? payload.data : payload;
+        const normalizadas = Array.isArray(data) ? data.map(normalizarBeca) : [];
+        normalizadas.sort((a, b) => {
+          const fechaA = a.fechaArchivo ?? a.fechaFin ?? a.fechaInicio ?? null;
+          const fechaB = b.fechaArchivo ?? b.fechaFin ?? b.fechaInicio ?? null;
+
+          const timeA = fechaA ? new Date(fechaA).getTime() : 0;
+          const timeB = fechaB ? new Date(fechaB).getTime() : 0;
+
+          return timeB - timeA;
+        });
+        setBecas(normalizadas);
+      } catch (err) {
+        setError(err.message || 'No se pudo cargar el historial de becas.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBecasArchivadas();
+  }, []);
+
+  const availableYears = useMemo(() => {
+    const years = new Set();
+
+    becas.forEach((beca) => {
+      const fecha = beca.fechaArchivo ?? beca.fechaFin ?? beca.fechaInicio;
+      if (!fecha) {
+        return;
+      }
+
+      const parsed = new Date(fecha);
+      if (!Number.isNaN(parsed.getTime())) {
+        years.add(parsed.getFullYear().toString());
+      }
     });
   }, [archivedScholarships, filters]);
 
@@ -279,17 +299,144 @@ const HistorialBecas = () => {
         )}
       </Modal>
 
-      {/* 5. Pie institucional */}
-      <footer className="historial-becas-footer">
-        <Container>
-          <p className="mb-0 text-center">
-            Dirección de Ciencia e Innovación Tecnología – Universidad Autónoma Tomás Frías
-          </p>
-          <p className="text-center small text-muted">
-            {new Date().toLocaleDateString('es-BO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
-        </Container>
-      </footer>
+        <Card className="mb-4">
+          <Card.Header as="h5" className="fw-semibold">
+            Filtros de consulta
+          </Card.Header>
+          <Card.Body>
+            <Row className="g-3">
+              <Col md={4}>
+                <Form.Group controlId="filtroQuery">
+                  <Form.Label>Buscar por código o becario</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Ej: PI-UATF-043"
+                    name="query"
+                    value={filters.query}
+                    onChange={handleFilterChange}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={3}>
+                <Form.Group controlId="filtroTutor">
+                  <Form.Label>Tutor</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Nombre del tutor"
+                    name="tutor"
+                    value={filters.tutor}
+                    onChange={handleFilterChange}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={3}>
+                <Form.Group controlId="filtroAnio">
+                  <Form.Label>Gestión</Form.Label>
+                  <Form.Select name="anio" value={filters.anio} onChange={handleFilterChange}>
+                    <option value="todos">Todas</option>
+                    {availableYears.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={2}>
+                <Form.Group controlId="filtroEvaluacion">
+                  <Form.Label>Evaluación final</Form.Label>
+                  <Form.Select
+                    name="evaluacion"
+                    value={filters.evaluacion}
+                    onChange={handleFilterChange}
+                  >
+                    <option value="todos">Todas</option>
+                    {availableEvaluaciones.map((estado) => (
+                      <option key={estado} value={estado}>
+                        {estado}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+
+        <Card>
+          <Card.Header as="h5" className="fw-semibold">
+            Becas archivadas
+          </Card.Header>
+          <Card.Body className="p-0">
+            {loading ? (
+              <div className="text-center py-5">
+                <Spinner animation="border" role="status" className="me-2" />
+                Cargando historial...
+              </div>
+            ) : filteredBecas.length === 0 ? (
+              <div className="text-center py-5 text-muted">
+                No se encontraron becas archivadas que coincidan con los filtros aplicados.
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <Table hover className="align-middle mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th scope="col">Código</th>
+                      <th scope="col">Proyecto</th>
+                      <th scope="col">Becario</th>
+                      <th scope="col">Tutor</th>
+                      <th scope="col">Gestión de archivo</th>
+                      <th scope="col">Responsable</th>
+                      <th scope="col">Evaluación final</th>
+                      <th scope="col" className="text-center">
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredBecas.map((beca) => (
+                      <tr key={beca.id ?? beca.codigo}>
+                        <td>{beca.codigo}</td>
+                        <td>
+                          <div className="fw-semibold">{beca.titulo}</div>
+                          <div className="text-muted small">{beca.areaInvestigacion}</div>
+                        </td>
+                        <td>{beca.becario}</td>
+                        <td>{beca.tutor}</td>
+                        <td>
+                          <div>{formatFecha(beca.fechaArchivo)}</div>
+                          <small className="text-muted">Finalizó: {formatFecha(beca.fechaFin)}</small>
+                        </td>
+                        <td>{beca.cerradaPor}</td>
+                        <td>
+                          <div>{formatCalificacion(beca.evaluacionCalificacion)}</div>
+                          {(() => {
+                            const variant = getEstadoBadge(beca.evaluacionEstado);
+                            return (
+                              <Badge
+                                bg={variant}
+                                className={variant === 'info' ? 'text-dark' : undefined}
+                              >
+                                {beca.evaluacionEstado}
+                              </Badge>
+                            );
+                          })()}
+                        </td>
+                        <td className="text-center">
+                          <Button variant="outline-primary" size="sm" onClick={() => handleVerDetalle(beca.id)}>
+                            Ver detalle
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+      </Container>
     </div>
   );
 };
