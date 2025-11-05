@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useSessionUser from '../hooks/useSessionUser';
 import './admin.css';
 
@@ -76,6 +76,7 @@ const ListadoBecas = () => {
 
   const sessionUser = useSessionUser();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const loadBecas = useCallback(async () => {
     setLoading(true);
@@ -100,6 +101,17 @@ const ListadoBecas = () => {
   useEffect(() => {
     loadBecas();
   }, [loadBecas]);
+
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      setFeedback({ type: 'success', message: location.state.successMessage });
+
+      const { successMessage, ...restState } = location.state;
+      const nextState = Object.keys(restState).length > 0 ? restState : undefined;
+
+      navigate(location.pathname, { replace: true, state: nextState });
+    }
+  }, [location, navigate]);
 
   const becasActivas = useMemo(
     () => becas.filter((beca) => !beca.archivada),
@@ -240,6 +252,9 @@ const ListadoBecas = () => {
           </p>
         </div>
         <div className="d-flex gap-2">
+          <Link to="/formbeca" className="btn btn-primary">
+            <i className="bi bi-plus-lg"></i> Registrar nueva beca
+          </Link>
           <Link to="/historialbeca" className="btn btn-outline-secondary">
             <i className="bi bi-archive"></i> Ver archivo histórico
           </Link>
