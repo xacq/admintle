@@ -28,6 +28,7 @@ const normalizarBeca = (beca) => {
     areaInvestigacion: beca?.areaInvestigacion ?? 'Sin área declarada',
     becario: beca?.becario?.nombre ?? 'Sin asignar',
     tutor: beca?.tutor?.nombre ?? 'Sin asignar',
+    cerradaPor: beca?.cerradaPor?.nombre ?? 'No registrado',
     fechaArchivo,
     fechaInicio: beca?.fechaInicio ?? null,
     fechaFin: beca?.fechaFin ?? null,
@@ -106,6 +107,15 @@ const HistorialBecas = () => {
         const payload = await response.json();
         const data = Array.isArray(payload?.data) ? payload.data : payload;
         const normalizadas = Array.isArray(data) ? data.map(normalizarBeca) : [];
+        normalizadas.sort((a, b) => {
+          const fechaA = a.fechaArchivo ?? a.fechaFin ?? a.fechaInicio ?? null;
+          const fechaB = b.fechaArchivo ?? b.fechaFin ?? b.fechaInicio ?? null;
+
+          const timeA = fechaA ? new Date(fechaA).getTime() : 0;
+          const timeB = fechaB ? new Date(fechaB).getTime() : 0;
+
+          return timeB - timeA;
+        });
         setBecas(normalizadas);
       } catch (err) {
         setError(err.message || 'No se pudo cargar el historial de becas.');
@@ -300,6 +310,7 @@ const HistorialBecas = () => {
                       <th scope="col">Becario</th>
                       <th scope="col">Tutor</th>
                       <th scope="col">Gestión de archivo</th>
+                      <th scope="col">Responsable</th>
                       <th scope="col">Evaluación final</th>
                       <th scope="col" className="text-center">
                         Acciones
@@ -320,6 +331,7 @@ const HistorialBecas = () => {
                           <div>{formatFecha(beca.fechaArchivo)}</div>
                           <small className="text-muted">Finalizó: {formatFecha(beca.fechaFin)}</small>
                         </td>
+                        <td>{beca.cerradaPor}</td>
                         <td>
                           <div>{formatCalificacion(beca.evaluacionCalificacion)}</div>
                           {(() => {
