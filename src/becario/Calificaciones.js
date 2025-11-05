@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Container, Card, Badge, Button, Table, Spinner, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import Header from '../components/Header';
 import useSessionUser from '../hooks/useSessionUser';
 import './estudiante.css';
 
@@ -80,14 +81,15 @@ const Calificaciones = () => {
 
   return (
     <div className="ver-calificaciones-wrapper">
-      <header className="ver-calificaciones-header text-center py-4 border-bottom">
+      <Header />
+      <section className="ver-calificaciones-header text-center py-4 border-bottom">
         <Container>
           <h1 className="h2 fw-bold">📊 Calificaciones del Becario</h1>
           <p className="text-muted">
             Consulta las evaluaciones registradas para tus reportes de avance y obtén un resumen actualizado de tu desempeño.
           </p>
         </Container>
-      </header>
+      </section>
 
       <Container className="py-4 d-flex justify-content-center">
         <Card className="calificaciones-card" style={{ width: '800px' }}>
@@ -152,12 +154,6 @@ const Calificaciones = () => {
         </Card>
       </Container>
 
-      <footer className="ver-calificaciones-footer text-center py-3 mt-4 border-top">
-        <p className="mb-0">Dirección de Ciencia e Innovación Tecnología – Universidad Autónoma Tomás Frías</p>
-        <small className="text-muted">
-          Versión 1.0.3 – {new Date().toLocaleDateString('es-BO', { year: 'numeric', month: 'long', day: 'numeric' })}
-        </small>
-      </footer>
     </div>
   );
 };

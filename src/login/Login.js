@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/universidad.png";
+import Header from "../components/Header";
 import locked from "../assets/locked-padlock.png";
 import "../App.css";
 
@@ -62,10 +62,7 @@ function Login() {
 
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="logo_universidad" alt="Logo universidad" />
-        <h1>DEPARTAMENTO PERSONAL DE DOCENTE</h1>
-      </header>
+      <Header />
 
       <div className="l_container">
         <div className="login">

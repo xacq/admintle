@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Container, Row, Col, Card, Table, Badge, Button, Modal, Form, Alert, Spinner } from 'react-bootstrap';
+import Header from '../components/Header';
 import useSessionUser from '../hooks/useSessionUser';
 import './docente.css';
 
@@ -121,14 +122,15 @@ const RevisarReportes = () => {
 
   return (
     <div className="revisar-reportes-wrapper">
-      <header className="revisar-reportes-header text-center py-4 border-bottom">
+      <Header />
+      <section className="revisar-reportes-header text-center py-4 border-bottom">
         <Container>
           <h1 className="h2 fw-bold">Revisión de Reportes de Avance</h1>
           <p className="text-muted">
             Gestiona los reportes pendientes de tus becarios, registra observaciones y calificaciones.
           </p>
         </Container>
-      </header>
+      </section>
 
       <Container className="py-4">
         {error && (
@@ -305,14 +307,6 @@ const RevisarReportes = () => {
         )}
       </Modal>
 
-      <footer className="revisar-reportes-footer text-center py-3 mt-4 border-top">
-        <p className="mb-0">
-          Dirección de Ciencia e Innovación Tecnología – Universidad Autónoma Tomás Frías
-        </p>
-        <small className="text-muted">
-          Versión 1.0.3 – {new Date().toLocaleDateString('es-BO', { year: 'numeric', month: 'long', day: 'numeric' })}
-        </small>
-      </footer>
     </div>
   );
 };
