@@ -23,7 +23,7 @@ class BecaController extends Controller
         $estadoFiltro = $request->input('estado');
 
         if (! $request->boolean('include_archived') && $estadoFiltro !== 'Archivada') {
-            $query->where('estado', '!=', 'Archivada');
+            $query->where('archivada', false);
         }
 
         if ($request->filled('tutor_id')) {
@@ -61,6 +61,10 @@ class BecaController extends Controller
             'estado' => $data['estado'],
             'titulo_proyecto' => $data['tituloProyecto'],
             'area_investigacion' => $data['areaInvestigacion'],
+            'archivada' => false,
+            'fecha_archivo' => null,
+            'fecha_cierre' => null,
+            'cerrada_por' => null,
         ]);
 
         $beca->load(['becario.role', 'tutor.role', 'evaluacionFinal', 'cerradaPor']);
@@ -147,7 +151,9 @@ class BecaController extends Controller
             ], 422);
         }
 
-        if ($beca->estado === 'Archivada') {
+        $data = $this->validateArchive($request);
+
+        if ($beca->estado === 'Archivada' && $beca->archivada) {
             $beca->load(['becario.role', 'tutor.role', 'evaluacionFinal', 'cerradaPor']);
             $beca->loadAvg('reportes', 'calificacion');
 
@@ -156,16 +162,50 @@ class BecaController extends Controller
                 ->setStatusCode(200);
         }
 
-        $data = $this->validateArchive($request);
+        $now = Carbon::now();
 
-        $beca->update([
+        $updates = [
             'estado' => 'Archivada',
-            'fecha_cierre' => Carbon::now(),
-            'cerrada_por' => $data['cerradaPorId'] ?? null,
-        ]);
+            'archivada' => true,
+            'fecha_archivo' => $now,
+        ];
+
+        if (! $beca->fecha_cierre) {
+            $updates['fecha_cierre'] = $now;
+        }
+
+        if (array_key_exists('cerradaPorId', $data)) {
+            $updates['cerrada_por'] = $data['cerradaPorId'];
+        }
+
+        $beca->update($updates);
 
         $beca->load(['becario.role', 'tutor.role', 'evaluacionFinal', 'cerradaPor']);
         $beca->loadAvg('reportes', 'calificacion');
+
+        return new BecaResource($beca);
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Request $request, Beca $beca)
+    {
+        if ($beca->estado === 'Archivada' && ! $request->boolean('include_archived')) {
+            return response()->json([
+                'message' => 'La beca solicitada pertenece al archivo histórico.',
+            ], 404);
+        }
+
+        $beca->load(['becario.role', 'tutor.role', 'evaluacionFinal', 'cerradaPor']);
+        $beca->loadAvg('reportes', 'calificacion');
+
+        if (! $beca->archivada && $beca->estado === 'Archivada') {
+            $beca->forceFill([
+                'archivada' => true,
+                'fecha_archivo' => $beca->fecha_archivo ?? $beca->fecha_cierre,
+            ])->save();
+        }
 
         return new BecaResource($beca);
     }
