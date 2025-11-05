@@ -38,49 +38,288 @@ import RevisarReportes from "./tutor/RevisarReportes";
 import EvaluacionFinal from "./tutor/EvaluacionFinal";
 import HistorialBecas from "./admin/HistorialBecas";
 import DetalleBeca from "./admin/DetalleBeca";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/perfil" element={<DocentePerfil />} />
-        <Route path="/buscarestudiante" element={<BuscarEstudiantes />} />
-        <Route path="/designaciones" element={<Designaciones />} />
-        <Route path="/docente" element={<Docente />} />
-        <Route path="/docenteconfig" element={<DocenteConfig />} />
-        <Route path="/historialdesignaciones" element={<HistorialDesignaciones />} />
-        <Route path="/historialestudiante" element={<HistorialEstudiante />} />
-        <Route path="/listadomaterias" element={<ListadoMaterias />} />
-        <Route path="/listaregistros" element={<ListaRegistros />} />
-        <Route path="/notificaciones" element={<Notificaciones />} />
-        <Route path="/notificacionesanteriores" element={<NotificacionesAnteriores />} />
-        <Route path="/dashboard/tutor" element={<DashboardTutor />} />
-        <Route path="/dashboard/becario" element={<DashboardBecario />} />
-        <Route path="/dashboard/admin" element={<DashboardAdmin />} />
-        <Route path="/dashboard/director" element={<DashboardDirector />} />
+        <Route
+          path="/perfil"
+          element={
+            <ProtectedRoute>
+              <DocentePerfil />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/buscarestudiante"
+          element={
+            <ProtectedRoute>
+              <BuscarEstudiantes />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/designaciones"
+          element={
+            <ProtectedRoute>
+              <Designaciones />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/docente"
+          element={
+            <ProtectedRoute>
+              <Docente />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/docenteconfig"
+          element={
+            <ProtectedRoute>
+              <DocenteConfig />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/historialdesignaciones"
+          element={
+            <ProtectedRoute>
+              <HistorialDesignaciones />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/historialestudiante"
+          element={
+            <ProtectedRoute>
+              <HistorialEstudiante />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/listadomaterias"
+          element={
+            <ProtectedRoute>
+              <ListadoMaterias />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/listaregistros"
+          element={
+            <ProtectedRoute>
+              <ListaRegistros />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notificaciones"
+          element={
+            <ProtectedRoute>
+              <Notificaciones />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notificacionesanteriores"
+          element={
+            <ProtectedRoute>
+              <NotificacionesAnteriores />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/tutor"
+          element={
+            <ProtectedRoute>
+              <DashboardTutor />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/becario"
+          element={
+            <ProtectedRoute>
+              <DashboardBecario />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/admin"
+          element={
+            <ProtectedRoute>
+              <DashboardAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/director"
+          element={
+            <ProtectedRoute>
+              <DashboardDirector />
+            </ProtectedRoute>
+          }
+        />
 
 
-        <Route path="/archivoshistoricos" element={<ArchivoHistorico />} />
-        <Route path="/centronotificaciones" element={<CentroNotificaciones />} />
-        <Route path="/centrosoporte" element={<CentroSoporte />} />
-        <Route path="/formbeca" element={<FormBeca />} />
-        <Route path="/generacionreportes" element={<GeneracionReportes />} />
-        <Route path="/evaluacionfinal" element={<EvaluacionFinal />} />
+        <Route
+          path="/archivoshistoricos"
+          element={
+            <ProtectedRoute>
+              <ArchivoHistorico />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/centronotificaciones"
+          element={
+            <ProtectedRoute>
+              <CentroNotificaciones />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/centrosoporte"
+          element={
+            <ProtectedRoute>
+              <CentroSoporte />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/formbeca"
+          element={
+            <ProtectedRoute>
+              <FormBeca />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/generacionreportes"
+          element={
+            <ProtectedRoute>
+              <GeneracionReportes />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/evaluacionfinal"
+          element={
+            <ProtectedRoute>
+              <EvaluacionFinal />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/evaluadordesempeno" element={<EvaluadorDesempeno />} />
-        <Route path="/panelauditoria" element={<PanelAuditoria />} />
-        <Route path="/panelconfiguracion" element={<PanelConfiguracion />} />
-        <Route path="/configuracion-sistema" element={<ConfiguracionSistema />} />
-        <Route path="/reportesavance" element={<ReportesAvance />} />
-        <Route path="/subirreporte" element ={<SubirReporte />} />
-        <Route path="/observaciones" element={<Observaciones />} />
-        <Route path="/calificaciones" element={<Calificaciones />} />
-        <Route path="/listabecas" element={<ListaBecas />} />
-        <Route path="/revisarreportes" element={<RevisarReportes/>} />
-        <Route path="/evaluacionfinal" element={<EvaluacionFinalForm/>} />
-        <Route path="/historialbeca" element={<HistorialBecas />} />
-        <Route path="/detallebeca/:becaId" element={<DetalleBeca />} />
+        <Route
+          path="/evaluadordesempeno"
+          element={
+            <ProtectedRoute>
+              <EvaluadorDesempeno />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/panelauditoria"
+          element={
+            <ProtectedRoute>
+              <PanelAuditoria />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/panelconfiguracion"
+          element={
+            <ProtectedRoute>
+              <PanelConfiguracion />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/configuracion-sistema"
+          element={
+            <ProtectedRoute>
+              <ConfiguracionSistema />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reportesavance"
+          element={
+            <ProtectedRoute>
+              <ReportesAvance />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/subirreporte"
+          element={
+            <ProtectedRoute>
+              <SubirReporte />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/observaciones"
+          element={
+            <ProtectedRoute>
+              <Observaciones />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/calificaciones"
+          element={
+            <ProtectedRoute>
+              <Calificaciones />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/listabecas"
+          element={
+            <ProtectedRoute>
+              <ListaBecas />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/revisarreportes"
+          element={
+            <ProtectedRoute>
+              <RevisarReportes />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/evaluacionfinal"
+          element={
+            <ProtectedRoute>
+              <EvaluacionFinalForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/historialbeca"
+          element={
+            <ProtectedRoute>
+              <HistorialBecas />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/detallebeca/:becaId"
+          element={
+            <ProtectedRoute>
+              <DetalleBeca />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );
