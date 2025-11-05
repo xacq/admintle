@@ -305,7 +305,7 @@ const ArchivoHistorico = () => {
                   </Form.Select>
                 </Col>
                 <Col md={4}>
-                  <Form.Label>Filtro por tutor o evaluador</Form.Label>
+                  <Form.Label>Filtro por tutor</Form.Label>
                   <Form.Control
                     type="text"
                     name="tutor"

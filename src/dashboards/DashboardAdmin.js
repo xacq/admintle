@@ -108,14 +108,14 @@ const DashboardAdmin = () => {
       const findRole = (...names) =>
         normalized.find((role) => names.map((name) => name.toLowerCase()).includes(role.name));
 
-      const tutorRole = findRole('tutor_evaluador', 'tutor') ?? findRole('evaluador');
+      const tutorRole = findRole('tutor_evaluador', 'tutor');
       const directorRole = findRole('director');
       const becarioRole = findRole('becario');
 
       const options = [];
 
       if (tutorRole && !options.some((option) => option.id === tutorRole.id)) {
-        options.push({ id: tutorRole.id, label: 'Tutor/Evaluador' });
+        options.push({ id: tutorRole.id, label: 'Tutor' });
       }
 
       if (directorRole && !options.some((option) => option.id === directorRole.id)) {

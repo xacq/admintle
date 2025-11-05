@@ -13,7 +13,7 @@ return new class extends Migration {
         DB::table('roles')
             ->where('name', 'tutor')
             ->update([
-                'display_name' => 'Tutor/Evaluador',
+                'display_name' => 'Tutor',
                 'updated_at' => Carbon::now(),
             ]);
     }
@@ -26,7 +26,7 @@ return new class extends Migration {
         DB::table('roles')
             ->where('name', 'tutor')
             ->update([
-                'display_name' => 'Tutor',
+                'display_name' => 'Tutor/Evaluador',
                 'updated_at' => Carbon::now(),
             ]);
     }

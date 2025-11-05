@@ -61,28 +61,28 @@ const FormBecas = () => {
       setOptionsError('');
 
       try {
-        const [investigadoresResponse, becariosResponse, evaluadoresResponse] = await Promise.all([
+        const [investigadoresResponse, becariosResponse, tutoresResponse] = await Promise.all([
           fetch('/api/roles/investigador/usuarios'),
           fetch('/api/roles/becario/usuarios'),
-          fetch('/api/roles/evaluador/usuarios'),
+          fetch('/api/roles/tutor/usuarios'),
         ]);
 
-        if (!investigadoresResponse.ok || !becariosResponse.ok || !evaluadoresResponse.ok) {
+        if (!investigadoresResponse.ok || !becariosResponse.ok || !tutoresResponse.ok) {
           throw new Error('No se pudieron cargar las listas de usuarios disponibles.');
         }
 
-        const [investigadoresData, becariosData, evaluadoresData] = await Promise.all([
+        const [investigadoresData, becariosData, tutoresData] = await Promise.all([
           investigadoresResponse.json(),
           becariosResponse.json(),
-          evaluadoresResponse.json(),
+          tutoresResponse.json(),
         ]);
 
         const investigadores = parseUsers(investigadoresData);
         const becariosRegistrados = parseUsers(becariosData);
-        const evaluadores = parseUsers(evaluadoresData);
+        const tutoresDisponibles = parseUsers(tutoresData);
 
         setBecarios(mergeUniqueUsers(investigadores, becariosRegistrados));
-        setTutores(evaluadores);
+        setTutores(tutoresDisponibles);
       } catch (error) {
         console.error(error);
         setOptionsError(error.message || 'No se pudieron cargar los datos de referencia.');
@@ -125,7 +125,7 @@ const FormBecas = () => {
     }
 
     if (!tutorId || Number.isNaN(tutorId)) {
-      setSubmitError('Selecciona el tutor o evaluador asignado.');
+      setSubmitError('Selecciona el tutor asignado.');
       return;
     }
 
@@ -320,7 +320,7 @@ const FormBecas = () => {
           </Col>
           <Col md={6} className="mb-3">
             <Form.Group controlId="formTutor">
-              <Form.Label>Tutor o evaluador</Form.Label>
+              <Form.Label>Tutor</Form.Label>
               <Form.Select
                 name="tutorId"
                 value={formData.tutorId}
