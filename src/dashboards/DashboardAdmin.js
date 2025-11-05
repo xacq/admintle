@@ -72,8 +72,12 @@ const DashboardAdmin = () => {
     }
   };
 
-  const handleVerDetalles = (codigo) => {
-    navigate('/listabecas', { state: { focusBecaCodigo: codigo } });
+  const handleVerDetalles = (becaId) => {
+    if (!becaId) {
+      return;
+    }
+
+    navigate(`/becas/${becaId}`, { state: { fromDashboard: 'admin' } });
   };
 
   const handleAccesoDirecto = (modulo) => {
@@ -218,7 +222,7 @@ const DashboardAdmin = () => {
                             <Button
                               variant="outline-primary"
                               size="sm"
-                              onClick={() => handleVerDetalles(beca.codigo)}
+                              onClick={() => handleVerDetalles(beca.id)}
                             >
                               Ver
                             </Button>

@@ -24,8 +24,10 @@ class Beca extends Model
         'fecha_inicio',
         'fecha_fin',
         'fecha_cierre',
+        'fecha_archivo',
         'cerrada_por',
         'estado',
+        'archivada',
         'titulo_proyecto',
         'area_investigacion',
     ];
@@ -39,6 +41,8 @@ class Beca extends Model
         'fecha_inicio' => 'date',
         'fecha_fin' => 'date',
         'fecha_cierre' => 'datetime',
+        'fecha_archivo' => 'datetime',
+        'archivada' => 'boolean',
     ];
 
     public function becario(): BelongsTo
