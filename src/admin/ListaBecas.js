@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useSessionUser from '../hooks/useSessionUser';
 import './admin.css';
 
@@ -41,6 +42,7 @@ const ListadoBecas = () => {
   const [archiveFeedback, setArchiveFeedback] = useState({ type: '', message: '' });
   const [statusOptions, setStatusOptions] = useState([]);
 
+  const navigate = useNavigate();
   const sessionUser = useSessionUser();
 
   const deriveStatusOptions = useCallback((items) => {
@@ -133,6 +135,10 @@ const ListadoBecas = () => {
     });
   }, [becas]);
 
+  const visibleBecas = useMemo(() => {
+    return sortedBecas.filter((beca) => !beca.archivada && beca.estado !== ARCHIVED_STATE);
+  }, [sortedBecas]);
+
   const editableStatuses = useMemo(
     () => statusOptions.filter((estado) => estado !== ARCHIVED_STATE),
     [statusOptions]
@@ -222,7 +228,7 @@ const ListadoBecas = () => {
   };
 
   const handleStartAssignTutor = (beca) => {
-    if (beca.estado === ARCHIVED_STATE) {
+    if (beca.estado === ARCHIVED_STATE || beca.archivada) {
       return;
     }
 
@@ -326,6 +332,14 @@ const ListadoBecas = () => {
 
   const handleArchive = async (beca) => {
     if (!beca?.id) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `¿Deseas archivar la beca ${beca.codigo}? Esta acción moverá el registro al historial.`
+    );
+
+    if (!confirmed) {
       return;
     }
 
@@ -434,7 +448,7 @@ const ListadoBecas = () => {
   };
 
   const handleDelete = async (beca) => {
-    if (beca.estado === ARCHIVED_STATE) {
+    if (beca.estado === ARCHIVED_STATE || beca.archivada) {
       setArchiveFeedback({
         type: 'warning',
         message: 'Las becas archivadas son de solo lectura y no se pueden eliminar.',
@@ -488,9 +502,9 @@ const ListadoBecas = () => {
 
       {loading ? (
         <div className="text-center py-5">Cargando becas...</div>
-      ) : sortedBecas.length === 0 ? (
+      ) : visibleBecas.length === 0 ? (
         <div className="alert alert-info" role="alert">
-          No hay becas registradas todavía. Crea la primera para comenzar.
+          No hay becas activas o en seguimiento registradas.
         </div>
       ) : (
         <div className="table-responsive">
@@ -504,7 +518,7 @@ const ListadoBecas = () => {
                 <th scope="col">Tutor</th>
                 <th scope="col">Fecha inicio</th>
                 <th scope="col">Fecha fin</th>
-                <th scope="col">Fecha cierre</th>
+                <th scope="col">Fecha archivo</th>
                 <th scope="col">Estado</th>
                 <th scope="col">Evaluación final</th>
                 <th scope="col" className="text-center">
@@ -513,9 +527,9 @@ const ListadoBecas = () => {
               </tr>
             </thead>
             <tbody>
-              {sortedBecas.map((beca) => {
-                const isArchived = beca.estado === ARCHIVED_STATE;
-                const canArchive = beca.estado === 'Finalizada';
+              {visibleBecas.map((beca) => {
+                const isArchived = beca.estado === ARCHIVED_STATE || beca.archivada;
+                const canArchive = beca.estado === 'Finalizada' && !beca.archivada;
 
                 return (
                   <React.Fragment key={beca.id}>
@@ -527,7 +541,7 @@ const ListadoBecas = () => {
                       <td>{renderUsuario(beca.tutor)}</td>
                       <td>{beca.fechaInicio ?? '—'}</td>
                       <td>{beca.fechaFin ?? '—'}</td>
-                      <td>{formatDate(beca.fechaCierre)}</td>
+                      <td>{formatDate(beca.fechaArchivo ?? beca.fechaCierre)}</td>
                       <td>
                         <span className={`badge ${getEstadoBadge(beca.estado)}`}>
                           {beca.estado}
@@ -552,7 +566,17 @@ const ListadoBecas = () => {
                         )}
                       </td>
                       <td className="text-center">
-                        <div className="btn-group" role="group">
+                        <div className="d-flex justify-content-center gap-2">
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-secondary"
+                            title="Ver detalle de la beca"
+                            onClick={() =>
+                              navigate(`/becas/${beca.id}`, { state: { fromListado: true } })
+                            }
+                          >
+                            <i className="bi bi-eye"></i>
+                          </button>
                           <button
                             type="button"
                             className="btn btn-sm btn-outline-primary"
@@ -575,7 +599,7 @@ const ListadoBecas = () => {
                           </button>
                           <button
                             type="button"
-                            className="btn btn-sm btn-outline-success"
+                            className="btn btn-sm btn-outline-dark"
                             title={
                               beca.estado === 'Finalizada'
                                 ? 'Cerrar beca y mover al archivo histórico'

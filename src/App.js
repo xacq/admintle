@@ -20,12 +20,13 @@ import EvaluacionFinalForm from "./docente/EvaluacionFinalForm";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 
-import ArchivoHistorico from './admin/ArchivoHistorico';
+import HistorialBecas from './admin/HistorialBecas';
 import CentroNotificaciones from './admin/CentroNotificaciones';
 import CentroSoporte from './admin/CentroSoporte';
 import FormBeca from './admin/FormBecas';
 import GeneracionReportes from './admin/GeneracionReportes';
 import ListaBecas from './admin/ListaBecas';
+import DetalleBeca from './admin/DetalleBeca';
 import EvaluadorDesempeno from './director/EvaluacionDesempeno';
 import PanelAuditoria from './admin/PanelAuditoria';
 import PanelConfiguracion from './admin/PanelConfiguracion';
@@ -59,7 +60,8 @@ function App() {
         <Route path="/dashboard/director" element={<DashboardDirector />} />
 
 
-        <Route path="/archivoshistoricos" element={<ArchivoHistorico />} />
+        <Route path="/archivoshistoricos" element={<HistorialBecas />} />
+        <Route path="/historialbecas" element={<HistorialBecas />} />
         <Route path="/centronotificaciones" element={<CentroNotificaciones />} />
         <Route path="/centrosoporte" element={<CentroSoporte />} />
         <Route path="/formbeca" element={<FormBeca />} />
@@ -75,6 +77,7 @@ function App() {
         <Route path="/observaciones" element={<Observaciones />} />
         <Route path="/calificaciones" element={<Calificaciones />} />
         <Route path="/listabecas" element={<ListaBecas />} />
+        <Route path="/becas/:becaId" element={<DetalleBeca />} />
         <Route path="/revisarreportes" element={<RevisarReportes/>} />
         <Route path="/evaluacionfinal" element={<EvaluacionFinalForm/>} />
       </Routes>

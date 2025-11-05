@@ -23,7 +23,7 @@ class BecaController extends Controller
         $estadoFiltro = $request->input('estado');
 
         if (! $request->boolean('include_archived') && $estadoFiltro !== 'Archivada') {
-            $query->where('estado', '!=', 'Archivada');
+            $query->where('archivada', false);
         }
 
         if ($request->filled('tutor_id')) {
@@ -59,6 +59,8 @@ class BecaController extends Controller
             'fecha_inicio' => $data['fechaInicio'],
             'fecha_fin' => $data['fechaFin'] ?? null,
             'estado' => $data['estado'],
+            'archivada' => false,
+            'fecha_archivo' => null,
             'titulo_proyecto' => $data['tituloProyecto'],
             'area_investigacion' => $data['areaInvestigacion'],
         ]);
@@ -71,6 +73,18 @@ class BecaController extends Controller
             ->setStatusCode(201);
     }
 
+    public function show(Request $request, Beca $beca)
+    {
+        if (! $request->boolean('include_archived') && $beca->archivada) {
+            abort(404);
+        }
+
+        $beca->load(['becario.role', 'tutor.role', 'evaluacionFinal', 'cerradaPor'])
+            ->loadAvg('reportes', 'calificacion');
+
+        return new BecaResource($beca);
+    }
+
     /**
      * Update the specified resource in storage.
      */
@@ -78,7 +92,7 @@ class BecaController extends Controller
     {
         $data = $this->validateData($request, $beca);
 
-        if ($beca->estado === 'Archivada') {
+        if ($beca->archivada) {
             return response()->json([
                 'message' => 'No es posible modificar una beca que ya fue archivada.',
             ], 422);
@@ -103,7 +117,7 @@ class BecaController extends Controller
 
     public function assignTutor(Request $request, Beca $beca)
     {
-        if ($beca->estado === 'Archivada') {
+        if ($beca->archivada) {
             return response()->json([
                 'message' => 'No es posible reasignar tutores a una beca archivada.',
             ], 422);
@@ -126,7 +140,7 @@ class BecaController extends Controller
      */
     public function destroy(Beca $beca)
     {
-        if ($beca->estado === 'Archivada') {
+        if ($beca->archivada) {
             return response()->json([
                 'message' => 'No es posible eliminar becas archivadas.',
             ], 422);
@@ -147,7 +161,7 @@ class BecaController extends Controller
             ], 422);
         }
 
-        if ($beca->estado === 'Archivada') {
+        if ($beca->archivada) {
             $beca->load(['becario.role', 'tutor.role', 'evaluacionFinal', 'cerradaPor']);
             $beca->loadAvg('reportes', 'calificacion');
 
@@ -156,10 +170,18 @@ class BecaController extends Controller
                 ->setStatusCode(200);
         }
 
+        if ($beca->estado !== 'Finalizada') {
+            return response()->json([
+                'message' => 'Solo las becas finalizadas pueden archivarse.',
+            ], 422);
+        }
+
         $data = $this->validateArchive($request);
 
         $beca->update([
             'estado' => 'Archivada',
+            'archivada' => true,
+            'fecha_archivo' => Carbon::now(),
             'fecha_cierre' => Carbon::now(),
             'cerrada_por' => $data['cerradaPorId'] ?? null,
         ]);

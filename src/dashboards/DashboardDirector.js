@@ -178,8 +178,12 @@ const DashboardDirector = () => {
     return Number.isNaN(fecha.getTime()) ? '—' : fecha.toLocaleDateString('es-BO');
   };
 
-  const handleVerDetalles = (codigo) => {
-    navigate('/listabecas', { state: { focusBecaCodigo: codigo } });
+  const handleVerDetalles = (becaId) => {
+    if (!becaId) {
+      return;
+    }
+
+    navigate(`/becas/${becaId}`, { state: { fromDashboard: 'director' } });
   };
 
   const handleAccesoDirecto = (modulo) => {
@@ -398,7 +402,7 @@ const DashboardDirector = () => {
                             <Button
                               variant="outline-primary"
                               size="sm"
-                              onClick={() => handleVerDetalles(beca.codigo)}
+                              onClick={() => handleVerDetalles(beca.id)}
                             >
                               Ver detalles
                             </Button>

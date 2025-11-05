@@ -178,6 +178,8 @@ class DocenteModuleSeeder extends Seeder
 
         $userIds = DB::table('users')->pluck('id', 'username');
 
+        $fechaArchivo = Carbon::now()->subWeeks(2);
+
         DB::table('becas')->insert([
             [
                 'codigo' => 'PI-UATF-041',
@@ -186,7 +188,9 @@ class DocenteModuleSeeder extends Seeder
                 'fecha_inicio' => '2024-02-15',
                 'fecha_fin' => '2024-11-30',
                 'estado' => 'Activa',
+                'archivada' => false,
                 'fecha_cierre' => null,
+                'fecha_archivo' => null,
                 'cerrada_por' => null,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
@@ -198,7 +202,9 @@ class DocenteModuleSeeder extends Seeder
                 'fecha_inicio' => '2024-03-10',
                 'fecha_fin' => '2024-12-20',
                 'estado' => 'En evaluación',
+                'archivada' => false,
                 'fecha_cierre' => null,
+                'fecha_archivo' => null,
                 'cerrada_por' => null,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
@@ -210,7 +216,9 @@ class DocenteModuleSeeder extends Seeder
                 'fecha_inicio' => '2023-09-01',
                 'fecha_fin' => '2024-06-30',
                 'estado' => 'Archivada',
-                'fecha_cierre' => Carbon::now()->subWeeks(2),
+                'archivada' => true,
+                'fecha_cierre' => $fechaArchivo,
+                'fecha_archivo' => $fechaArchivo,
                 'cerrada_por' => $userIds['director'] ?? null,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
@@ -222,7 +230,9 @@ class DocenteModuleSeeder extends Seeder
                 'fecha_inicio' => '2024-04-01',
                 'fecha_fin' => '2024-12-15',
                 'estado' => 'Activa',
+                'archivada' => false,
                 'fecha_cierre' => null,
+                'fecha_archivo' => null,
                 'cerrada_por' => null,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
