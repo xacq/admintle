@@ -36,6 +36,8 @@ import Observaciones from "./becario/Observaciones";
 import Calificaciones from "./becario/Calificaciones";
 import RevisarReportes from "./tutor/RevisarReportes";
 import EvaluacionFinal from "./tutor/EvaluacionFinal";
+import HistorialBecas from "./admin/HistorialBecas";
+import DetalleBeca from "./admin/DetalleBeca";
 
 function App() {
   return (
@@ -77,6 +79,8 @@ function App() {
         <Route path="/listabecas" element={<ListaBecas />} />
         <Route path="/revisarreportes" element={<RevisarReportes/>} />
         <Route path="/evaluacionfinal" element={<EvaluacionFinalForm/>} />
+        <Route path="/historialbeca" element={<HistorialBecas />} />
+        <Route path="/detallebeca" element={<DetalleBeca />} />
       </Routes>
     </Router>
   );

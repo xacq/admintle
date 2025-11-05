@@ -472,3 +472,70 @@ pre {
     font-size: 1.5rem;
   }
 }
+
+/* src/components/HistorialBecas.css */
+
+.historial-becas-wrapper {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Encabezado */
+.historial-becas-header {
+  background-color: #ffffff;
+  padding: 1rem 0;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.historial-becas-header h1 {
+  color: #343a40;
+}
+
+/* Contenido principal */
+.historial-becas-main {
+  flex-grow: 1;
+  padding: 2rem 0;
+}
+
+/* Tarjetas y Tabla */
+.card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Footer */
+.historial-becas-footer {
+  background-color: #ffffff;
+  padding: 1rem 0;
+  border-top: 1px solid #dee2e6;
+  margin-top: auto;
+}
+
+/* src/components/DetalleBeca.css */
+
+.field-label {
+  font-weight: 600;
+  color: #495057;
+  text-align: right;
+}
+
+/* Estilo para la tarjeta de evaluación para que destaque un poco */
+.evaluation-card {
+  border-left: 4px solid #0d6efd;
+}
+
+/* Asegura que los botones dentro de las celdas de la tabla no se desalineen */
+td .btn-link {
+  padding: 0;
+  font-size: 0.875rem;
+  vertical-align: baseline;
+}
