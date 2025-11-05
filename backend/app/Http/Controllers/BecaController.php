@@ -302,7 +302,7 @@ class BecaController extends Controller
      */
     protected function validateArchive(Request $request): array
     {
-        $roles = Role::whereIn('name', ['administrador', 'director'])
+        $roles = Role::whereIn('name', ['administrador', 'admin', 'director'])
             ->pluck('id')
             ->all();
 
