@@ -225,7 +225,7 @@ class BecaController extends Controller
         $becarioRoles = Role::whereIn('name', ['investigador', 'becario'])
             ->pluck('id')
             ->all();
-        $evaluadorRoleId = Role::where('name', 'evaluador')->value('id');
+        $tutorRoleId = Role::where('name', 'tutor')->value('id');
 
         $data = $request->validate([
             'codigo' => [
@@ -246,9 +246,9 @@ class BecaController extends Controller
             'tutorId' => [
                 'required',
                 'integer',
-                Rule::exists('users', 'id')->where(function ($query) use ($evaluadorRoleId) {
-                    if ($evaluadorRoleId) {
-                        $query->where('role_id', $evaluadorRoleId);
+                Rule::exists('users', 'id')->where(function ($query) use ($tutorRoleId) {
+                    if ($tutorRoleId) {
+                        $query->where('role_id', $tutorRoleId);
                     }
                 }),
             ],
@@ -280,15 +280,15 @@ class BecaController extends Controller
      */
     protected function validateTutorAssignment(Request $request): array
     {
-        $evaluadorRoleId = Role::where('name', 'evaluador')->value('id');
+        $tutorRoleId = Role::where('name', 'tutor')->value('id');
 
         return $request->validate([
             'tutorId' => [
                 'required',
                 'integer',
-                Rule::exists('users', 'id')->where(function ($query) use ($evaluadorRoleId) {
-                    if ($evaluadorRoleId) {
-                        $query->where('role_id', $evaluadorRoleId);
+                Rule::exists('users', 'id')->where(function ($query) use ($tutorRoleId) {
+                    if ($tutorRoleId) {
+                        $query->where('role_id', $tutorRoleId);
                     }
                 }),
             ],

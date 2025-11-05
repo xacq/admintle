@@ -29,7 +29,7 @@ class ReporteInstitucionalController extends Controller
             ->select('users.id', 'users.name', DB::raw('COUNT(becas.id) as becas_asignadas'))
             ->join('roles', 'users.role_id', '=', 'roles.id')
             ->leftJoin('becas', 'becas.tutor_id', '=', 'users.id')
-            ->where('roles.name', 'evaluador')
+            ->where('roles.name', 'tutor')
             ->groupBy('users.id', 'users.name')
             ->orderByDesc('becas_asignadas')
             ->orderBy('users.name')
