@@ -1158,6 +1158,22 @@ header img{
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
+.panel-input {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  background-color: #ffffff;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.panel-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
 .panel-select {
   width: 100%;
   border-radius: 12px;

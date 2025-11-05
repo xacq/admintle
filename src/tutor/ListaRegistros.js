@@ -24,7 +24,7 @@ const ListaRegistros = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [recordsPerPage, setRecordsPerPage] = useState(25);
   const [selectedReporte, setSelectedReporte] = useState(null);
-  const [formState, setFormState] = useState({ estado: 'Pendiente', observaciones: '' });
+  const [formState, setFormState] = useState({ estado: 'Pendiente', observaciones: '', calificacion: '' });
   const [panelError, setPanelError] = useState('');
   const [panelSuccess, setPanelSuccess] = useState('');
   const [saving, setSaving] = useState(false);
@@ -115,6 +115,10 @@ const ListaRegistros = () => {
     setFormState({
       estado: reporte?.estado || 'Pendiente',
       observaciones: reporte?.observaciones || '',
+      calificacion:
+        reporte?.calificacion !== null && reporte?.calificacion !== undefined
+          ? String(reporte.calificacion)
+          : '',
     });
     setPanelError('');
     setPanelSuccess('');
@@ -126,13 +130,25 @@ const ListaRegistros = () => {
     }
 
     setSelectedReporte(null);
-    setFormState({ estado: 'Pendiente', observaciones: '' });
+    setFormState({ estado: 'Pendiente', observaciones: '', calificacion: '' });
     setPanelError('');
     setPanelSuccess('');
   };
 
   const handleFormChange = (event) => {
     const { name, value } = event.target;
+    if (name === 'calificacion') {
+      const cleanedValue = value.replace(/[^0-9]/g, '');
+      if (cleanedValue === '') {
+        setFormState((prev) => ({ ...prev, [name]: '' }));
+        return;
+      }
+
+      const numericValue = Math.min(Number(cleanedValue), 100);
+      setFormState((prev) => ({ ...prev, [name]: String(numericValue) }));
+      return;
+    }
+
     setFormState((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -154,6 +170,10 @@ const ListaRegistros = () => {
         body: JSON.stringify({
           estado: formState.estado,
           observaciones: formState.observaciones?.trim() ? formState.observaciones.trim() : null,
+          calificacion:
+            formState.calificacion !== '' && formState.calificacion !== null
+              ? Number(formState.calificacion)
+              : null,
         }),
       });
 
@@ -172,6 +192,10 @@ const ListaRegistros = () => {
       setFormState({
         estado: payload?.estado || 'Pendiente',
         observaciones: payload?.observaciones || '',
+        calificacion:
+          payload?.calificacion !== null && payload?.calificacion !== undefined
+            ? String(payload.calificacion)
+            : '',
       });
       setPanelSuccess('La revisión se guardó correctamente.');
     } catch (err) {
@@ -253,6 +277,7 @@ const ListaRegistros = () => {
                   <th>Título</th>
                   <th>Fecha de envío</th>
                   <th>Estado</th>
+                  <th>Calificación</th>
                   <th>Observaciones</th>
                   <th>Archivo</th>
                   <th>Acciones</th>
@@ -261,21 +286,21 @@ const ListaRegistros = () => {
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan="8" className="no-data-message">
+                    <td colSpan="9" className="no-data-message">
                       Cargando reportes…
                     </td>
                   </tr>
                 )}
                 {error && !loading && (
                   <tr>
-                    <td colSpan="8" className="no-data-message">
+                    <td colSpan="9" className="no-data-message">
                       {error}
                     </td>
                   </tr>
                 )}
                 {!loading && !error && visible.length === 0 && (
                   <tr>
-                    <td colSpan="8" className="no-data-message">
+                    <td colSpan="9" className="no-data-message">
                       Ningún reporte disponible para mostrar.
                     </td>
                   </tr>
@@ -293,6 +318,11 @@ const ListaRegistros = () => {
                       </td>
                       <td>
                         <span className={estadoClassName(reporte.estado)}>{reporte.estado}</span>
+                      </td>
+                      <td>
+                        {reporte.calificacion !== null && reporte.calificacion !== undefined
+                          ? `${Number(reporte.calificacion)} / 100`
+                          : 'Sin registro'}
                       </td>
                       <td className="observaciones-cell">
                         {reporte.observaciones ? (
@@ -404,6 +434,24 @@ const ListaRegistros = () => {
                     value={formState.observaciones}
                     onChange={handleFormChange}
                     placeholder="Escribe recomendaciones, ajustes requeridos o comentarios de seguimiento."
+                    disabled={saving}
+                  />
+                </div>
+
+                <div className="panel-section">
+                  <label className="panel-label" htmlFor="calificacion">
+                    Calificación (0 – 100)
+                  </label>
+                  <input
+                    id="calificacion"
+                    name="calificacion"
+                    type="number"
+                    min="0"
+                    max="100"
+                    className="panel-input"
+                    value={formState.calificacion}
+                    onChange={handleFormChange}
+                    placeholder="Opcional"
                     disabled={saving}
                   />
                 </div>
