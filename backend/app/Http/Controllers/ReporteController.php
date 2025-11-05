@@ -17,7 +17,7 @@ class ReporteController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Reporte::with(['beca', 'becario', 'tutor'])->orderByDesc('fecha_envio');
+        $query = Reporte::with(['beca.evaluacionFinal', 'becario', 'tutor'])->orderByDesc('fecha_envio');
 
         if ($request->filled('becario_id')) {
             $query->where('becario_id', $request->integer('becario_id'));
@@ -79,7 +79,7 @@ class ReporteController extends Controller
             'estado' => 'Pendiente',
         ]);
 
-        $reporte->load(['beca', 'becario', 'tutor']);
+        $reporte->load(['beca.evaluacionFinal', 'becario', 'tutor']);
 
         return (new ReporteResource($reporte))
             ->response()
@@ -91,7 +91,7 @@ class ReporteController extends Controller
      */
     public function show(Reporte $reporte)
     {
-        $reporte->load(['beca', 'becario', 'tutor']);
+        $reporte->load(['beca.evaluacionFinal', 'becario', 'tutor']);
 
         return new ReporteResource($reporte);
     }
@@ -114,7 +114,7 @@ class ReporteController extends Controller
             'fecha_revision' => now(),
         ])->save();
 
-        $reporte->load(['beca', 'becario', 'tutor']);
+        $reporte->load(['beca.evaluacionFinal', 'becario', 'tutor']);
 
         return new ReporteResource($reporte);
     }

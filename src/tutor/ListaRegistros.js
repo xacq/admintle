@@ -28,6 +28,14 @@ const ListaRegistros = () => {
   const [panelError, setPanelError] = useState('');
   const [panelSuccess, setPanelSuccess] = useState('');
   const [saving, setSaving] = useState(false);
+  const [finalEvaluationState, setFinalEvaluationState] = useState({
+    estadoFinal: 'Pendiente',
+    observacionesFinales: '',
+    calificacionFinal: '',
+  });
+  const [finalEvalSaving, setFinalEvalSaving] = useState(false);
+  const [finalEvalError, setFinalEvalError] = useState('');
+  const [finalEvalSuccess, setFinalEvalSuccess] = useState('');
 
   useEffect(() => {
     if (user === null) {
@@ -122,6 +130,18 @@ const ListaRegistros = () => {
     });
     setPanelError('');
     setPanelSuccess('');
+    const evaluacion = reporte?.beca?.evaluacionFinal;
+    setFinalEvaluationState({
+      estadoFinal: evaluacion?.estadoFinal ?? 'Pendiente',
+      observacionesFinales: evaluacion?.observacionesFinales ?? '',
+      calificacionFinal:
+        evaluacion?.calificacionFinal !== null && evaluacion?.calificacionFinal !== undefined
+          ? String(evaluacion.calificacionFinal)
+          : '',
+    });
+    setFinalEvalError('');
+    setFinalEvalSuccess('');
+    setFinalEvalSaving(false);
   };
 
   const handleCancelarSeleccion = () => {
@@ -133,6 +153,10 @@ const ListaRegistros = () => {
     setFormState({ estado: 'Pendiente', observaciones: '', calificacion: '' });
     setPanelError('');
     setPanelSuccess('');
+    setFinalEvaluationState({ estadoFinal: 'Pendiente', observacionesFinales: '', calificacionFinal: '' });
+    setFinalEvalError('');
+    setFinalEvalSuccess('');
+    setFinalEvalSaving(false);
   };
 
   const handleFormChange = (event) => {
@@ -150,6 +174,140 @@ const ListaRegistros = () => {
     }
 
     setFormState((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFinalEvaluationChange = (event) => {
+    const { name, value } = event.target;
+
+    if (name === 'calificacionFinal') {
+      if (value === '') {
+        setFinalEvaluationState((prev) => ({ ...prev, calificacionFinal: '' }));
+        return;
+      }
+
+      const numericValue = Number(value);
+      if (Number.isNaN(numericValue)) {
+        return;
+      }
+
+      const clampedValue = Math.min(Math.max(numericValue, 0), 10);
+      setFinalEvaluationState((prev) => ({ ...prev, calificacionFinal: clampedValue.toString() }));
+      return;
+    }
+
+    setFinalEvaluationState((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const syncEvaluacionFinal = (becaData) => {
+    if (!becaData?.id) {
+      return;
+    }
+
+    setReportes((prev) =>
+      prev.map((reporte) =>
+        reporte.beca?.id === becaData.id
+          ? {
+              ...reporte,
+              beca: {
+                ...(reporte.beca ?? {}),
+                ...becaData,
+                evaluacionFinal: becaData.evaluacionFinal ?? null,
+              },
+            }
+          : reporte,
+      ),
+    );
+
+    setSelectedReporte((prev) => {
+      if (!prev?.beca?.id || prev.beca.id !== becaData.id) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        beca: {
+          ...(prev.beca ?? {}),
+          ...becaData,
+          evaluacionFinal: becaData.evaluacionFinal ?? null,
+        },
+      };
+    });
+  };
+
+  const handleGuardarEvaluacionFinal = async () => {
+    if (!selectedReporte?.beca?.id || !user?.id) {
+      return;
+    }
+
+    setFinalEvalSaving(true);
+    setFinalEvalError('');
+    setFinalEvalSuccess('');
+    setPanelError('');
+    setPanelSuccess('');
+
+    const payload = {
+      becaId: selectedReporte.beca.id,
+      tutorId: user.id,
+      observacionesFinales: finalEvaluationState.observacionesFinales.trim()
+        ? finalEvaluationState.observacionesFinales.trim()
+        : null,
+      calificacionFinal:
+        finalEvaluationState.calificacionFinal === ''
+          ? null
+          : Number(finalEvaluationState.calificacionFinal),
+      estadoFinal: finalEvaluationState.estadoFinal,
+    };
+
+    const evaluacionActual = selectedReporte.beca.evaluacionFinal;
+    const method = evaluacionActual?.id ? 'PUT' : 'POST';
+    const url = evaluacionActual?.id
+      ? `/api/evaluaciones/${evaluacionActual.id}`
+      : '/api/evaluaciones';
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseBody = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message =
+          responseBody?.message ||
+          (responseBody?.errors && Object.values(responseBody.errors).flat().join(' ')) ||
+          'No se pudo guardar la evaluación final.';
+        throw new Error(message);
+      }
+
+      const becaData =
+        responseBody && typeof responseBody === 'object' && !Array.isArray(responseBody)
+          ? responseBody.data ?? responseBody
+          : null;
+
+      if (becaData?.id) {
+        syncEvaluacionFinal(becaData);
+
+        const evaluacion = becaData.evaluacionFinal ?? null;
+        setFinalEvaluationState({
+          estadoFinal: evaluacion?.estadoFinal ?? 'Pendiente',
+          observacionesFinales: evaluacion?.observacionesFinales ?? '',
+          calificacionFinal:
+            evaluacion?.calificacionFinal !== null && evaluacion?.calificacionFinal !== undefined
+              ? String(evaluacion.calificacionFinal)
+              : '',
+        });
+      }
+
+      setFinalEvalSuccess('La evaluación final se guardó correctamente.');
+    } catch (err) {
+      setFinalEvalError(err.message || 'No se pudo guardar la evaluación final.');
+    } finally {
+      setFinalEvalSaving(false);
+    }
   };
 
   const handleGuardar = async () => {
@@ -188,6 +346,9 @@ const ListaRegistros = () => {
       }
 
       setReportes((prev) => prev.map((reporte) => (reporte.id === payload.id ? payload : reporte)));
+      if (payload?.beca?.id) {
+        syncEvaluacionFinal(payload.beca);
+      }
       setSelectedReporte(payload);
       setFormState({
         estado: payload?.estado || 'Pendiente',
@@ -195,6 +356,16 @@ const ListaRegistros = () => {
         calificacion:
           payload?.calificacion !== null && payload?.calificacion !== undefined
             ? String(payload.calificacion)
+            : '',
+      });
+      const updatedEvaluacion = payload?.beca?.evaluacionFinal;
+      setFinalEvaluationState({
+        estadoFinal: updatedEvaluacion?.estadoFinal ?? 'Pendiente',
+        observacionesFinales: updatedEvaluacion?.observacionesFinales ?? '',
+        calificacionFinal:
+          updatedEvaluacion?.calificacionFinal !== null &&
+          updatedEvaluacion?.calificacionFinal !== undefined
+            ? String(updatedEvaluacion.calificacionFinal)
             : '',
       });
       setPanelSuccess('La revisión se guardó correctamente.');
@@ -278,6 +449,7 @@ const ListaRegistros = () => {
                   <th>Fecha de envío</th>
                   <th>Estado</th>
                   <th>Calificación</th>
+                  <th>Evaluación final</th>
                   <th>Observaciones</th>
                   <th>Archivo</th>
                   <th>Acciones</th>
@@ -286,21 +458,21 @@ const ListaRegistros = () => {
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan="9" className="no-data-message">
+                    <td colSpan="10" className="no-data-message">
                       Cargando reportes…
                     </td>
                   </tr>
                 )}
                 {error && !loading && (
                   <tr>
-                    <td colSpan="9" className="no-data-message">
+                    <td colSpan="10" className="no-data-message">
                       {error}
                     </td>
                   </tr>
                 )}
                 {!loading && !error && visible.length === 0 && (
                   <tr>
-                    <td colSpan="9" className="no-data-message">
+                    <td colSpan="10" className="no-data-message">
                       Ningún reporte disponible para mostrar.
                     </td>
                   </tr>
@@ -323,6 +495,12 @@ const ListaRegistros = () => {
                         {reporte.calificacion !== null && reporte.calificacion !== undefined
                           ? `${Number(reporte.calificacion)} / 100`
                           : 'Sin registro'}
+                      </td>
+                      <td>
+                        {reporte.beca?.evaluacionFinal?.calificacionFinal !== null &&
+                        reporte.beca?.evaluacionFinal?.calificacionFinal !== undefined
+                          ? `${Number(reporte.beca.evaluacionFinal.calificacionFinal).toFixed(2)} / 10`
+                          : 'Sin registrar'}
                       </td>
                       <td className="observaciones-cell">
                         {reporte.observaciones ? (
@@ -472,6 +650,86 @@ const ListaRegistros = () => {
                     <option value="Aprobado">Aprobado</option>
                     <option value="Devuelto">Devuelto</option>
                   </select>
+                </div>
+
+                <div className="panel-section">
+                  <h5 className="panel-title">Evaluación final de la beca</h5>
+                  <p className="panel-description">
+                    Registra la calificación final (escala de 0 a 10) y el estado correspondiente
+                    para la beca seleccionada. Esta información se mostrará en el listado de becas.
+                  </p>
+                </div>
+
+                <div className="panel-section">
+                  <label className="panel-label" htmlFor="calificacionFinal">
+                    Calificación final (0 – 10)
+                  </label>
+                  <input
+                    id="calificacionFinal"
+                    name="calificacionFinal"
+                    type="number"
+                    min="0"
+                    max="10"
+                    step="0.01"
+                    className="panel-input"
+                    value={finalEvaluationState.calificacionFinal}
+                    onChange={handleFinalEvaluationChange}
+                    placeholder="Opcional"
+                    disabled={finalEvalSaving || !selectedReporte?.beca?.id}
+                  />
+                </div>
+
+                <div className="panel-section">
+                  <label className="panel-label" htmlFor="estadoFinal">
+                    Estado final de la beca
+                  </label>
+                  <select
+                    id="estadoFinal"
+                    name="estadoFinal"
+                    className="panel-select"
+                    value={finalEvaluationState.estadoFinal}
+                    onChange={handleFinalEvaluationChange}
+                    disabled={finalEvalSaving || !selectedReporte?.beca?.id}
+                  >
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Aprobado">Aprobado</option>
+                    <option value="Reprobado">Reprobado</option>
+                    <option value="Concluido">Concluido</option>
+                  </select>
+                </div>
+
+                <div className="panel-section">
+                  <label className="panel-label" htmlFor="observacionesFinales">
+                    Observaciones finales (opcional)
+                  </label>
+                  <textarea
+                    id="observacionesFinales"
+                    name="observacionesFinales"
+                    className="panel-textarea"
+                    rows={3}
+                    value={finalEvaluationState.observacionesFinales}
+                    onChange={handleFinalEvaluationChange}
+                    placeholder="Registra conclusiones o recomendaciones finales para la beca."
+                    disabled={finalEvalSaving || !selectedReporte?.beca?.id}
+                  />
+                </div>
+
+                {finalEvalError && (
+                  <p className="panel-feedback panel-feedback--error">{finalEvalError}</p>
+                )}
+                {finalEvalSuccess && (
+                  <p className="panel-feedback panel-feedback--success">{finalEvalSuccess}</p>
+                )}
+
+                <div className="panel-section">
+                  <button
+                    type="button"
+                    className="primary-btn"
+                    onClick={handleGuardarEvaluacionFinal}
+                    disabled={finalEvalSaving || !selectedReporte?.beca?.id}
+                  >
+                    {finalEvalSaving ? 'Guardando…' : 'Guardar evaluación final'}
+                  </button>
                 </div>
 
                 {panelError && <p className="panel-feedback panel-feedback--error">{panelError}</p>}
