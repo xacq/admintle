@@ -31,6 +31,14 @@ class ReporteResource extends JsonResource
                 return [
                     'id' => $this->beca->id,
                     'codigo' => $this->beca->codigo,
+                    'evaluacionFinal' => $this->beca->evaluacionFinal ? [
+                        'id' => $this->beca->evaluacionFinal->id,
+                        'calificacionFinal' => $this->beca->evaluacionFinal->calificacion_final,
+                        'observacionesFinales' => $this->beca->evaluacionFinal->observaciones_finales,
+                        'estadoFinal' => $this->beca->evaluacionFinal->estado_final,
+                        'fechaRegistro' => $this->beca->evaluacionFinal->created_at?->toIso8601String(),
+                        'fechaActualizacion' => $this->beca->evaluacionFinal->updated_at?->toIso8601String(),
+                    ] : null,
                 ];
             }),
             'becario' => $this->whenLoaded('becario', function () {
