@@ -27,7 +27,7 @@ class DocenteModuleSeeder extends Seeder
         $roles = [
             [
                 'name' => 'tutor',
-                'display_name' => 'Tutor',
+                'display_name' => 'Tutor/Evaluador',
                 'dashboard_route' => '/dashboard/tutor',
                 'created_at' => $timestamp,
                 'updated_at' => $timestamp,
