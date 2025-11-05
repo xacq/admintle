@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Badge,
@@ -53,38 +53,58 @@ const DetalleBeca = () => {
   const [beca, setBeca] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retryFlag, setRetryFlag] = useState(0);
 
-  useEffect(() => {
-    if (!becaId) {
-      setError('Identificador de beca no válido.');
-      setLoading(false);
-      return;
-    }
+  const loadDetalle = useCallback(
+    async (options = {}) => {
+      if (!becaId) {
+        setError('Identificador de beca no válido.');
+        setBeca(null);
+        setLoading(false);
+        return;
+      }
 
-    const loadDetalle = async () => {
+      const { signal } = options;
+
       setLoading(true);
       setError('');
 
       try {
-        const response = await fetch(`/api/becas/${becaId}?include_archived=1`);
+        const response = await fetch(`/api/becas/${becaId}?include_archived=1`, { signal });
         if (!response.ok) {
-          throw new Error(`Error ${response.status}`);
+          const message = `Error ${response.status}`;
+          throw new Error(message);
         }
 
         const payload = await response.json();
         const data = payload?.data ?? payload;
-        setBeca(data);
+        if (!signal?.aborted) {
+          setBeca(data);
+        }
       } catch (err) {
+        if (signal?.aborted) {
+          return;
+        }
+        setBeca(null);
         setError(err.message || 'No se pudo cargar el detalle de la beca.');
       } finally {
-        setLoading(false);
+        if (!signal?.aborted) {
+          setLoading(false);
+        }
       }
-    };
+    },
+    [becaId]
+  );
 
-    loadDetalle();
-  }, [becaId]);
+  useEffect(() => {
+    const controller = new AbortController();
+    loadDetalle({ signal: controller.signal });
+
+    return () => controller.abort();
+  }, [loadDetalle, retryFlag]);
 
   const evaluacion = useMemo(() => beca?.evaluacionFinal ?? null, [beca]);
+  const archivada = Boolean(beca?.archivada || beca?.estado === 'Archivada');
 
   const handleVolver = () => {
     if (location.state?.fromHistorial) {
@@ -100,6 +120,10 @@ const DetalleBeca = () => {
     navigate(-1);
   };
 
+  const handleRetry = () => {
+    setRetryFlag((prev) => prev + 1);
+  };
+
   return (
     <div className="archivo-historico-wrapper">
       <Container>
@@ -108,8 +132,11 @@ const DetalleBeca = () => {
         </Button>
 
         {error && (
-          <Alert variant="danger" className="mb-4">
-            {error}
+          <Alert variant="danger" className="mb-4 d-flex justify-content-between align-items-center">
+            <span>{error}</span>
+            <Button variant="outline-light" size="sm" onClick={handleRetry} disabled={loading}>
+              Reintentar
+            </Button>
           </Alert>
         )}
 
@@ -125,6 +152,13 @@ const DetalleBeca = () => {
         ) : (
           <Row className="g-4">
             <Col xl={8}>
+              {archivada && (
+                <Alert variant="info" className="mb-4">
+                  Esta beca fue archivada el {formatFecha(beca?.fechaArchivo ?? beca?.fechaCierre)}
+                  {beca?.cerradaPor?.nombre ? ` por ${beca.cerradaPor.nombre}` : ''}. Todos sus
+                  datos se conservan para consulta histórica.
+                </Alert>
+              )}
               <Card>
                 <Card.Header as="h5" className="fw-semibold">
                   Información general
