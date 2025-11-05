@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Container, Card, Row, Col, ProgressBar, Table, Badge, Alert, Button, Spinner } from 'react-bootstrap';
+import Header from '../components/Header';
 import useSessionUser from '../hooks/useSessionUser';
 import './estudiante.css';
 
@@ -85,14 +86,15 @@ const ReportesAvance = () => {
 
   return (
     <div className="reportes-avance-wrapper">
-      <header className="reportes-avance-header text-center py-4 border-bottom">
+      <Header />
+      <section className="reportes-avance-header text-center py-4 border-bottom">
         <Container>
           <h1 className="h2 fw-bold">Mis reportes de avance</h1>
           <p className="text-muted">
             Consulta el estado de los informes enviados y las observaciones registradas por tu tutor.
           </p>
         </Container>
-      </header>
+      </section>
 
       <Container className="py-4">
         {error && (
@@ -252,14 +254,6 @@ const ReportesAvance = () => {
         </Row>
       </Container>
 
-      <footer className="reportes-avance-footer text-center py-3 mt-4 border-top">
-        <p className="mb-0">
-          Dirección de Ciencia e Innovación Tecnología – Universidad Autónoma Tomás Frías
-        </p>
-        <small className="text-muted">
-          Versión 1.0.3 – {new Date().toLocaleDateString('es-BO', { year: 'numeric', month: 'long', day: 'numeric' })}
-        </small>
-      </footer>
     </div>
   );
 };

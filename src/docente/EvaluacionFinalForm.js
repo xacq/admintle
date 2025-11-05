@@ -12,6 +12,7 @@ import {
   Row,
   Col,
 } from 'react-bootstrap';
+import Header from '../components/Header';
 import useSessionUser from '../hooks/useSessionUser';
 import './docente.css';
 
@@ -228,7 +229,8 @@ const EvaluacionFinalForm = () => {
 
   return (
     <div className="evaluacion-final-wrapper">
-      <header className="evaluacion-final-header text-center py-4 border-bottom">
+      <Header />
+      <section className="evaluacion-final-header text-center py-4 border-bottom">
         <Container>
           <Row className="align-items-center">
             <Col md={3} className="text-start">
@@ -253,7 +255,7 @@ const EvaluacionFinalForm = () => {
             </Col>
           </Row>
         </Container>
-      </header>
+      </section>
 
       <Container className="py-4">
         {error && (
@@ -473,14 +475,6 @@ const EvaluacionFinalForm = () => {
         )}
       </Modal>
 
-      <footer className="evaluacion-final-footer text-center py-3 mt-4 border-top">
-        <p className="mb-0">
-          Dirección de Ciencia e Innovación Tecnología – Universidad Autónoma Tomás Frías
-        </p>
-        <small className="text-muted">
-          {new Date().toLocaleDateString('es-BO', { year: 'numeric', month: 'long', day: 'numeric' })}
-        </small>
-      </footer>
     </div>
   );
 };

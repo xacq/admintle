@@ -430,7 +430,7 @@ const ListaRegistros = () => {
                 {panelSuccess && <p className="panel-feedback panel-feedback--success">{panelSuccess}</p>}
               </div>
 
-              <footer className="revision-panel__footer">
+              <div className="revision-panel__footer">
                 <button
                   type="button"
                   className="secondary-btn"
@@ -447,7 +447,7 @@ const ListaRegistros = () => {
                 >
                   {saving ? 'Guardando…' : 'Guardar revisión'}
                 </button>
-              </footer>
+              </div>
             </section>
           )}
         </div>

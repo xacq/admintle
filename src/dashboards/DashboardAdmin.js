@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Container, Row, Col, Card, Table, Badge, Button, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import Header from '../components/Header';
 import useSessionUser from '../hooks/useSessionUser';
 import '../admin/admin.css';
 
@@ -94,7 +95,8 @@ const DashboardAdmin = () => {
 
   return (
     <div className="dashboard-admin-wrapper">
-      <header className="dashboard-header text-center py-4 border-bottom">
+      <Header />
+      <section className="dashboard-header text-center py-4 border-bottom">
         <Container>
           <Row className="align-items-center">
             <Col md={3} className="text-start">
@@ -118,7 +120,7 @@ const DashboardAdmin = () => {
             </Col>
           </Row>
         </Container>
-      </header>
+      </section>
 
       <Container className="py-4">
         <Row className="g-3 mb-4">
@@ -280,7 +282,7 @@ const DashboardAdmin = () => {
         </Row>
       </Container>
 
-      <footer className="dashboard-footer text-center py-3 mt-4 border-top">
+      <div className="dashboard-footer text-center py-3 mt-4 border-top">
         <p className="mb-0">
           Dirección de Ciencia e Innovación Tecnológica – Universidad Autónoma Tomás Frías
         </p>
@@ -292,7 +294,7 @@ const DashboardAdmin = () => {
             day: 'numeric',
           })}
         </small>
-      </footer>
+      </div>
     </div>
   );
 };

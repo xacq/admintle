@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Container, Card, Badge, Button, Alert, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import Header from '../components/Header';
 import useSessionUser from '../hooks/useSessionUser';
 import './estudiante.css';
 
@@ -141,14 +142,15 @@ const Observaciones = () => {
 
   return (
     <div className="observaciones-tutor-wrapper">
-      <header className="observaciones-header text-center py-4 border-bottom">
+      <Header />
+      <section className="observaciones-header text-center py-4 border-bottom">
         <Container>
           <h1 className="h2 fw-bold">🗒️ Observaciones del Tutor</h1>
           <p className="text-muted">
             Aquí puedes revisar los comentarios y recomendaciones registrados por tu tutor sobre tus reportes.
           </p>
         </Container>
-      </header>
+      </section>
 
       <Container className="py-4 d-flex justify-content-center">
         <Card className="observaciones-card" style={{ width: '700px' }}>
@@ -233,14 +235,6 @@ const Observaciones = () => {
         </Card>
       </Container>
 
-      <footer className="observaciones-footer text-center py-3 mt-4 border-top">
-        <p className="mb-0">
-          Dirección de Ciencia e Innovación Tecnología – Universidad Autónoma Tomás Frías
-        </p>
-        <small className="text-muted">
-          Versión 1.0.3 – {new Date().toLocaleDateString('es-BO', { year: 'numeric', month: 'long', day: 'numeric' })}
-        </small>
-      </footer>
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Container, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import Header from '../components/Header';
 import useSessionUser from '../hooks/useSessionUser';
 import './estudiante.css';
 
@@ -153,14 +154,15 @@ const SubirReporte = () => {
 
   return (
     <div className="subir-reporte-wrapper">
-      <header className="subir-reporte-header text-center py-4 border-bottom">
+      <Header />
+      <section className="subir-reporte-header text-center py-4 border-bottom">
         <Container>
           <h1 className="h2 fw-bold">📤 Subir Nuevo Reporte de Avance</h1>
           <p className="text-muted">
             Complete los siguientes campos para registrar su informe parcial. El tutor recibirá una notificación automática.
           </p>
         </Container>
-      </header>
+      </section>
 
       <Container className="py-4 d-flex justify-content-center">
         <Card className="form-card" style={{ width: '640px' }}>
@@ -268,14 +270,6 @@ const SubirReporte = () => {
         </Card>
       </Container>
 
-      <footer className="subir-reporte-footer text-center py-3 mt-4 border-top">
-        <p className="mb-0">
-          Dirección de Ciencia e Innovación Tecnología – Universidad Autónoma Tomás Frías
-        </p>
-        <small className="text-muted">
-          Versión 1.0.3 – {fechaEnvio}
-        </small>
-      </footer>
     </div>
   );
 };

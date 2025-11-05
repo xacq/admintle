@@ -15,6 +15,7 @@ import {
   ListGroup,
   Spinner,
 } from 'react-bootstrap';
+import Header from '../components/Header';
 import useSessionUser from '../hooks/useSessionUser';
 import './admin.css';
 
@@ -247,7 +248,9 @@ const ArchivoHistorico = () => {
   }, [proyectos]);
 
   return (
-    <Container fluid className="archivo-historico-wrapper">
+    <div className="archivo-historico-page">
+      <Header />
+      <Container fluid className="archivo-historico-wrapper">
       {/* 1. Encabezado principal */}
       <div className="text-center mb-4">
         <h1 className="h2 fw-bold d-inline-flex align-items-center">
@@ -586,11 +589,12 @@ const ArchivoHistorico = () => {
       </Modal>
 
       {/* Pie institucional */}
-      <footer className="text-center py-3 mt-5 border-top">
-        <p className="mb-1">Dirección de Ciencia e Innovación Tecnológica – UATF</p>
-        <p className="mb-0 small text-muted">{new Date().toLocaleDateString('es-BO')}</p>
-      </footer>
-    </Container>
+        <div className="text-center py-3 mt-5 border-top">
+          <p className="mb-1">Dirección de Ciencia e Innovación Tecnológica – UATF</p>
+          <p className="mb-0 small text-muted">{new Date().toLocaleDateString('es-BO')}</p>
+        </div>
+      </Container>
+    </div>
   );
 };
 
