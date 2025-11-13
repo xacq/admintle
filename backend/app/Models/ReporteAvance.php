@@ -11,6 +11,11 @@ class ReporteAvance extends Model
     use HasFactory;
 
     /**
+     * The table associated with the model.
+     */
+    protected $table = 'reportes_avance';
+
+    /**
      * @var list<string>
      */
     protected $fillable = [
