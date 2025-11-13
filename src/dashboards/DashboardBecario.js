@@ -106,6 +106,9 @@ const DashboardBecario = () => {
       case 'Subir Nuevo Reporte de Avance':
         navigate('/subirreporte');
         break;
+      case 'Consultar Reportes del Tutor':
+        navigate('/reportesavance');
+        break;
       case 'Revisar Observaciones del Tutor':
         navigate('/observaciones');
         break;
@@ -310,6 +313,14 @@ const DashboardBecario = () => {
                     disabled={!beca}
                   >
                     🗒️ Revisar Observaciones del Tutor
+                  </Button>
+                  <Button
+                    variant="outline-primary"
+                    className="mb-3 w-100"
+                    onClick={() => handleAccesoDirecto('Consultar Reportes del Tutor')}
+                    disabled={!beca}
+                  >
+                    📑 Consultar Reportes del Tutor
                   </Button>
                   <Button
                     variant="secondary"

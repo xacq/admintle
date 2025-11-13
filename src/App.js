@@ -30,7 +30,7 @@ import EvaluadorDesempeno from './director/EvaluacionDesempeno';
 import PanelAuditoria from './admin/PanelAuditoria';
 import PanelConfiguracion from './admin/PanelConfiguracion';
 import ConfiguracionSistema from './admin/ConfiguracionSistema';
-import ReportesAvance from './becario/ReportesAvance';
+import MisReportes from './becario/MisReportes';
 import SubirReporte from "./becario/SubirReporte";
 import Observaciones from "./becario/Observaciones";
 import Calificaciones from "./becario/Calificaciones";
@@ -252,7 +252,7 @@ function App() {
           path="/reportesavance"
           element={
             <ProtectedRoute>
-              <ReportesAvance />
+              <MisReportes />
             </ProtectedRoute>
           }
         />
