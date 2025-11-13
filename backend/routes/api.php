@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BecaController;
 use App\Http\Controllers\EvaluacionController;
+use App\Http\Controllers\ReporteAvanceController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\ReporteInstitucionalController;
 use App\Http\Controllers\SupportTicketController;
@@ -21,6 +22,7 @@ Route::middleware('api')->group(function () {
     Route::apiResource('reportes', ReporteController::class);
     Route::get('/reportes/{reporte}/archivo', [ReporteController::class, 'download'])
         ->name('reportes.download');
+    Route::apiResource('reportes-avance', ReporteAvanceController::class);
     Route::get('/reportes-institucionales/resumen', [ReporteInstitucionalController::class, 'summary']);
     Route::apiResource('evaluaciones', EvaluacionController::class)->only(['index', 'store', 'update']);
 

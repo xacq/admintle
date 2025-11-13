@@ -153,7 +153,7 @@ const DashboardTutor = () => {
   const handleAccesoDirecto = (modulo) => {
     switch (modulo) {
       case 'Revisar Reportes de Avance':
-        navigate('/listaregistros');
+        navigate('/revisarreportes');
         break;
       case 'Registrar Evaluación de Desempeño':
         navigate('/evaluacionfinal');
