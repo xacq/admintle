@@ -270,13 +270,7 @@ const PanelConfiguracion = () => {
     }
   };
 
-  const handleMantenimiento = (accion) => {
-    alert(`Ejecutando acción de mantenimiento: ${accion} (simulación)`);
-  };
 
-  const handleRespaldo = (accion) => {
-    alert(`Realizando acción de respaldo: ${accion} (simulación)`);
-  };
 
   const handleAbrirModalUsuario = (usuario = null) => {
     if (usuario) {

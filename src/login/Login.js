@@ -21,6 +21,7 @@ function Login() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({ username, password }),
       });
@@ -97,7 +98,9 @@ function Login() {
                 />
               </div>
 
-              <a href="#">RECORDAR</a>
+              <button type="button" className="link-button" disabled>
+                RECORDAR
+              </button>
 
               <div className="button_container">
                 <button className="button_login" type="submit" disabled={submitting}>

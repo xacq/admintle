@@ -393,8 +393,10 @@ const ListaRegistros = () => {
                 <h3>Revisión de reportes de avance</h3>
               </div>
 
-              <div className='right_title'>
-                <a href='#'>Principal</a> / <a href='#'>Tutor</a> / <a href='#'>Reportes</a>
+              <div className='right_title' aria-label="Ruta de navegaci\u00f3n">
+                <span className="breadcrumb-part">Principal</span> /{' '}
+                <span className="breadcrumb-part">Tutor</span> /{' '}
+                <span className="breadcrumb-part" aria-current="page">Reportes</span>
               </div>
             </div>
 
