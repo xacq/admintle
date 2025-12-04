@@ -51,8 +51,8 @@ El backend vive en la carpeta `backend/` y utiliza PostgreSQL como motor de base
 1. Inicia el backend de Laravel. Para que el proxy del frontend funcione se recomienda escuchar en el puerto `4000`:
    ```bash
    cd backend
-   php artisan serve --host=0.0.0.0 --port=4000
-   ```
+   php artisan serve --host=127.0.0.1 --port=4000
+   
 2. En otra terminal, levanta el servidor de desarrollo de React desde la raíz del proyecto:
    ```bash
    npm start

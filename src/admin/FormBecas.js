@@ -237,14 +237,14 @@ const FormBecas = () => {
         <Row>
           <Col md={6} className="mb-3">
             <Form.Group controlId="formCodigo">
-              <Form.Label>Código de beca</Form.Label>
+              <Form.Label>Carnet de identidad</Form.Label>
               <Form.Control
                 type="text"
                 name="codigo"
                 value={formData.codigo}
                 onChange={handleChange}
                 maxLength={255}
-                placeholder="Ej. BEC-2024-001"
+                placeholder="10254587"
                 required
                 disabled={isSubmitting}
               />
@@ -285,7 +285,7 @@ const FormBecas = () => {
         </Form.Group>
 
         <Form.Group className="mb-3" controlId="formAreaInvestigacion">
-          <Form.Label>Área de investigación</Form.Label>
+          <Form.Label>Carrera</Form.Label>
           <Form.Control
             type="text"
             name="areaInvestigacion"

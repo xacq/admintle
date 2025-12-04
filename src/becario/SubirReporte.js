@@ -11,6 +11,12 @@ const initialForm = {
   archivo: null,
 };
 
+const INFORMES = [
+  { value: 'primer_informe', label: 'Primer informe' },
+  { value: 'segundo_informe', label: 'Segundo informe' },
+  { value: 'tercer_informe', label: 'Tercer informe' },
+];
+
 const SubirReporte = () => {
   const navigate = useNavigate();
   const user = useSessionUser();
@@ -200,16 +206,25 @@ const SubirReporte = () => {
 
                 <Form onSubmit={handleSubmit}>
                   <Form.Group className="mb-4">
-                    <Form.Label>Título del reporte</Form.Label>
-                    <Form.Control
-                      type="text"
+                    <Form.Label>Selecciona el informe</Form.Label>
+                    <Form.Select
                       name="titulo"
                       value={formData.titulo}
                       onChange={handleChange}
-                      placeholder="Ejemplo: Avance del segundo trimestre"
                       required
                       disabled={submitting}
-                    />
+                      className={formData.titulo === '' ? 'is-invalid' : ''}
+                    >
+                      <option value="">-- Selecciona uno de los informes --</option>
+                      {INFORMES.map((informe) => (
+                        <option key={informe.value} value={informe.value}>
+                          {informe.label}
+                        </option>
+                      ))}
+                    </Form.Select>
+                    <Form.Control.Feedback type="invalid">
+                      Por favor selecciona un informe.
+                    </Form.Control.Feedback>
                   </Form.Group>
 
                   <Form.Group className="mb-4">

@@ -68,7 +68,7 @@ function Login() {
       <div className="l_container">
         <div className="login">
           <div className="content_login">
-            <h3>SISTEMA ODISEO</h3>
+            <h3>SISTEMA DE BECA AUXILIAR DE INVESTIGACION</h3>
             <h5>UNIVERSIDAD AUTÓNOMA "TOMÁS FRÍAS"</h5>
 
             <form className="data_content" onSubmit={handleLogin}>
