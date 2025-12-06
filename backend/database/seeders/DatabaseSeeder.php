@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
             SystemParameterSeeder::class,
             RolesSeeder::class,
             UsersSeeder::class,
+            CareerSeeder::class,
+            UniversityMemberSeeder::class,
         ]);
     }
 }
