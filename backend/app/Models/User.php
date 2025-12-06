@@ -21,10 +21,14 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'username',
+        'username', // SE MANTIENE
         'password',
-        'is_active',
-        'role_id',
+        'is_active', // SE MANTIENE
+        'role_id',   // SE MANTIENE (Relación con tabla roles)
+        
+        // --- NUEVOS CAMPOS ---
+        'career_id',
+        'university_member_id',
     ];
 
     /**
@@ -47,12 +51,32 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'is_active' => 'boolean',
+            'is_active' => 'boolean', // SE MANTIENE
         ];
     }
 
+    // --- RELACIONES EXISTENTES ---
+    
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    // --- RELACIONES NUEVAS ---
+
+    public function career(): BelongsTo
+    {
+        return $this->belongsTo(Career::class);
+    }
+
+    public function universityMember(): BelongsTo
+    {
+        return $this->belongsTo(UniversityMember::class);
+    }
+    
+    // Helper opcional: Para verificar roles usando el nombre del rol (asumiendo que tu tabla roles tiene columna 'name')
+    public function hasRole($roleName)
+    {
+        return $this->role && $this->role->name === $roleName;
     }
 }
